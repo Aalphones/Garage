@@ -5,11 +5,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
     <title>GARAGE</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/garage/css/base.css">
 </head>
 <body>
-    <main>
+    <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+    <main id="inhalt">
         <h1>GARAGE</h1>
-        <p>Your agents. Your cars. – im Aufbau.</p>
+        <p id="status" role="status">Lädt …</p>
+
+        <section id="login" aria-labelledby="login-heading" hidden>
+            <h2 id="login-heading">Anmelden</h2>
+            <form id="login-form" method="post" action="/garage/">
+                <label for="login-email">E-Mail</label>
+                <input id="login-email" name="email" type="email" autocomplete="username" required>
+                <label for="login-password">Passwort</label>
+                <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+                <p id="login-error" class="error" role="alert" tabindex="-1" hidden></p>
+                <button type="submit">Anmelden</button>
+            </form>
+            <p class="hint">Ein Konto gibt es nur mit Einladung.</p>
+        </section>
+
+        <section id="account" aria-labelledby="account-heading" hidden>
+            <h2 id="account-heading">Konto: <span id="user-name"></span></h2>
+
+            <h3>Garagen</h3>
+            <ul id="garage-list" class="plain-list"></ul>
+            <p id="garage-empty" hidden>Du bist noch in keiner Garage. Eine Einladung legt sie an.</p>
+
+            <h3>Feste Zugänge</h3>
+            <p class="hint">Ein fester Zugang ist ein Schlüssel für ein Programm, das keine Anmeldung per Browser kann, etwa Claude Code. Er gilt nur für deine Garagen.</p>
+            <p id="token-list-error" class="error" role="alert" tabindex="-1" hidden></p>
+            <ul id="token-list" class="plain-list"></ul>
+            <p id="token-empty" hidden>Noch keine festen Zugänge. Lege unten einen an, um ein Programm zu verbinden.</p>
+
+            <div id="token-reveal" class="reveal" role="status" tabindex="-1" hidden>
+                <strong>Wird nur jetzt angezeigt.</strong>
+                <code id="token-secret" class="secret"></code>
+                <button id="token-copy" type="button">Kopieren</button>
+                <small id="token-copy-status"></small>
+            </div>
+
+            <form id="token-form" method="post" action="/garage/">
+                <h4>Neuen Zugang anlegen</h4>
+                <label for="token-name">Name</label>
+                <input id="token-name" name="name" type="text" required maxlength="40" pattern="[a-z0-9][a-z0-9\-]{0,39}" autocomplete="off" aria-describedby="token-name-hint">
+                <small id="token-name-hint">Kleinbuchstaben, Ziffern und Bindestriche, zum Beispiel claude-code. Daran erkennst du den Zugang später wieder.</small>
+
+                <fieldset>
+                    <legend>Berechtigungen</legend>
+                    <label class="check" for="scope-read">
+                        <input id="scope-read" type="checkbox" name="scope" value="garage:read" checked>
+                        <span>Lesen<small>garage:read – darf Garagen, Fahrzeuge und ihre Daten lesen.</small></span>
+                    </label>
+                    <label class="check" for="scope-write">
+                        <input id="scope-write" type="checkbox" name="scope" value="garage:write" checked>
+                        <span>Schreiben<small>garage:write – darf Fahrzeuge anlegen und Daten ergänzen. Löschen kann ein Agent nie.</small></span>
+                    </label>
+                    <label class="check" for="scope-files">
+                        <input id="scope-files" type="checkbox" name="scope" value="garage:files">
+                        <span>Dateien<small>garage:files – darf Belege und Fotos hochladen. In dieser Version noch ohne Wirkung.</small></span>
+                    </label>
+                </fieldset>
+
+                <label for="token-days">Laufzeit in Tagen</label>
+                <input id="token-days" name="expires_days" type="number" min="1" max="3650" step="1" inputmode="numeric" aria-describedby="token-days-hint">
+                <small id="token-days-hint">1 bis 3650. Leer lassen, dann läuft der Zugang nie ab. Du kannst ihn jederzeit widerrufen.</small>
+
+                <p id="token-form-error" class="error" role="alert" tabindex="-1" hidden></p>
+                <button type="submit">Zugang anlegen</button>
+            </form>
+
+            <button id="logout" type="button">Abmelden</button>
+        </section>
     </main>
+    <script type="module" src="/garage/js/account.js"></script>
 </body>
 </html>

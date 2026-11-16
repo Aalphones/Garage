@@ -20,7 +20,7 @@ Eine Domäne `<x>` (vehicle, event, task, measurement, tire, part, document, inb
 | Im Repo | Auf dem Server (`www/`) | Inhalt |
 |---|---|---|
 | `app/` | `garage-app/` | gesamter PHP-Code, Migrationen, Texte für Agenten, `.env`, `storage/` — gesperrt (ADR-002) |
-| `web/` | `garage/` | Brücke `index.php`, `.htaccess` (Rewrite, eigene CSP), Oberfläche (`index.html`, später `js/`, `css/`) |
+| `web/` | `garage/` | Brücke `index.php`, `.htaccess` (Rewrite, eigene CSP), Oberfläche: Seiten `index.html` (Anmeldung + Konto), `einladung.html` direkt in `web/` (Unterordner gingen an die Brücke), Skripte in `js/`, Stil in `css/` |
 | — | `.htaccess` an der Wurzel | gehört DISPATCH; leitet `/.well-known/<art>/garage…` an die Brücke (ADR-001) |
 | `deploy.cmd`, `deploy.env.example` | — | Deploy (ADR-003); Vorlage für `deploy.env` (nicht im Git) |
 | `dev-router.php`, `dev.env.example` | — | lokaler Server `php -S localhost:8081 dev-router.php`, Vorlage für `app/.env.local` |
@@ -35,13 +35,20 @@ Eine Domäne `<x>` (vehicle, event, task, measurement, tire, part, document, inb
 | `index.php` | registriert alle Routen am `Http\Router` (Tabelle: [`routes.md`](routes.md)) |
 | `src/Http/` | `Router` (Methode + Pfad mit `{id}`/`{slug}`, 405/404), `Request`, `Response` |
 | `src/Db/` | `Connection` (PDO, UTC), `Migrator` (ohne Transaktion, Anweisungen einzeln), `Transaction` |
-| `src/Auth/` | `DeployToken`, `Jwt` (Access-JWT), `LoginThrottle`, `UserSession` (Login/Refresh/Logout), `ApiAuth` (JWT → `Actor`, nur Deploy-Token), `Scopes`; feste und OAuth-Tokens folgen |
-| `src/Api/` | `HealthController`, `DeployController`, `AuthController`, `InvitationController`, `MeController`, `ApiErrors` (Fehlercode → Status) |
-| `src/Domain/` | `DomainError`, `Actor`; Konten und Garagen: `UserRepository`, `GarageRepository`, `InvitationService`/`InvitationRepository`, `TokenRepository` (Sitzungen), `AuditRepository` |
+| `src/Auth/` | `DeployToken`, `Jwt` (Access-JWT), `LoginThrottle`, `UserSession` (Login/Refresh/Logout), `ApiAuth` (JWT → `Actor`, nur Deploy-Token), `Scopes`; OAuth-Tokens folgen |
+| `src/Api/` | `HealthController`, `DeployController`, `AuthController`, `InvitationController`, `MeController`, `TokenController`, `ApiErrors` (Fehlercode → Status) |
+| `src/Domain/` | `DomainError`, `Actor`; Konten und Garagen: `UserRepository`, `GarageRepository`, `InvitationService`/`InvitationRepository`, `TokenService` (feste `gmcp_`-Tokens), `TokenRepository` (Sitzungen und feste Tokens), `AuditRepository` |
 | `src/Util/` | `Env`, `Log` |
 | `src/Mcp/`, `src/OAuth/`, `mcp/` | ab Meilenstein 1, aus DISPATCH kopiert (ADR-005) |
 | `migrations/` | nummerierte SQL-Dateien (Spalten: [`models.md`](models.md)) |
 | `storage/` | `logs/`, `documents/` — nur auf dem Server und lokal, nicht im Git |
+
+## Ordner in `web/`
+
+| Ordner | Aufgabe |
+|---|---|
+| `js/` | ES-Module: `api.js` (Access-Token im Speicher, Refresh bei 401, `login`/`logout`/`restore`), `dom.js` (Bauhelfer, Fehlermeldung mit Fokus), `account.js` (Einstieg `index.html`), `token.js` (feste Zugänge), `invitation.js` (Einstieg `einladung.html`) |
+| `css/` | `base.css`: funktionaler Platzhalter (Systemschrift, eine Spalte, hell/dunkel) bis zum Oberflächen-Meilenstein |
 
 ## Faustregeln
 

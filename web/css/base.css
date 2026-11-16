@@ -1,0 +1,159 @@
+/* Funktionaler Platzhalter: Gestaltung folgt im Oberflächen-Meilenstein. */
+:root {
+    color-scheme: light dark;
+    --background: #ffffff;
+    --foreground: #111111;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #111111;
+        --foreground: #eeeeee;
+    }
+}
+
+[hidden] {
+    display: none !important;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: system-ui, sans-serif;
+    line-height: 1.5;
+}
+
+main {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+a {
+    color: inherit;
+}
+
+h1,
+h2 {
+    line-height: 1.2;
+}
+
+fieldset {
+    margin: 0 0 1rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--foreground);
+}
+
+label {
+    display: block;
+    margin-top: 1rem;
+    font-weight: 600;
+}
+
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='number'] {
+    display: block;
+    width: 100%;
+    min-height: 2.75rem;
+    margin-top: 0.25rem;
+    padding: 0.5rem;
+    border: 1px solid var(--foreground);
+    background: var(--background);
+    color: inherit;
+    font: inherit;
+}
+
+.check {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin-top: 0.5rem;
+    font-weight: 400;
+}
+
+.check input {
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: 0.125rem 0 0;
+}
+
+small,
+.hint {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 400;
+}
+
+button {
+    min-height: 2.75rem;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--foreground);
+    background: var(--background);
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button[disabled] {
+    opacity: 0.6;
+    cursor: default;
+}
+
+:focus-visible {
+    outline: 3px solid var(--foreground);
+    outline-offset: 2px;
+}
+
+.error {
+    margin: 1rem 0 0;
+    padding: 0.5rem 0.75rem;
+    border: 2px solid var(--foreground);
+    font-weight: 600;
+}
+
+.skip-link {
+    position: absolute;
+    left: 0.5rem;
+    top: -4rem;
+    padding: 0.5rem 1rem;
+    background: var(--background);
+    border: 2px solid var(--foreground);
+}
+
+.skip-link:focus {
+    top: 0.5rem;
+}
+
+.plain-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.plain-list li {
+    padding: 0.75rem 0;
+    border-top: 1px solid var(--foreground);
+}
+
+.reveal {
+    margin: 1rem 0;
+    padding: 0.75rem;
+    border: 2px solid var(--foreground);
+}
+
+.secret {
+    display: block;
+    margin: 0.5rem 0;
+    overflow-wrap: anywhere;
+    font-family: ui-monospace, monospace;
+}

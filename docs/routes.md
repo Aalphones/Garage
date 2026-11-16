@@ -14,6 +14,11 @@ Quelle: `app/index.php`. Alle Pfade absolut; die Brücke liegt unter `/garage/` 
 | POST | `/garage/api/auth/logout` | `Api\AuthController::logout` | Cookie, `X-Garage: 1` | 204 |
 | POST | `/garage/api/auth/logout-all` | `Api\AuthController::logoutAll` | JWT | 204; widerruft nur die Sitzungen des angemeldeten Nutzers |
 | GET | `/garage/api/me` | `Api\MeController::show` | JWT | `{user:{id,name,email}, garages:[{id,name,role}]}`; 401 ohne gültiges JWT |
+| GET | `/garage/api/tokens` | `Api\TokenController::list` | JWT | `{tokens:[{id,name,scopes,expires_at,last_used_at,created_at}]}` — nur feste Tokens des Nutzers, ohne widerrufene, nie Klartext oder Hash |
+| POST | `/garage/api/tokens` | `Api\TokenController::create` | JWT | 201 `{token,id,name,scopes,expires_at}` — `token` (`gmcp_` + 64 Hex) nur in dieser Antwort; Body `name` (`^[a-z0-9][a-z0-9-]{0,39}$`), `scopes` (Standard `garage:read garage:write`), `expires_days` (1–3650 oder `null`); 409 `name_taken` (je Nutzer unter den aktiven), 422 `invalid_value` |
+| DELETE | `/garage/api/tokens/{id}` | `Api\TokenController::revoke` | JWT | 204; fremdes, unbekanntes oder schon widerrufenes Token → 404 `not_found` (nie 403) |
+
+Ein `gmcp_`-Token als Bearer an diesen Routen ergibt 401: sie nehmen nur Access-JWTs.
 
 Ohne `GARAGE_JWT_SECRET` (mindestens 64 Zeichen) antworten Anmeldung und Annahme mit 503 `not_configured`.
 
@@ -24,4 +29,3 @@ Fehler immer als JSON `{"error": "…", "message": "…"}`; unbekannter Pfad 404
 - `POST /garage/mcp` — MCP-Endpunkt
 - `/garage/oauth/{authorize,token,revoke}` — OAuth-Server, Aussteller `https://quantum-canvas.de/garage`
 - `GET /.well-known/oauth-protected-resource/garage/mcp`, `/.well-known/oauth-authorization-server/garage` — Discovery, von DISPATCHs Wurzel-`.htaccess` an die Brücke geleitet
-- `/garage/api/tokens` — feste Tokens im Konto (Phase 2)
