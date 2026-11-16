@@ -8,7 +8,7 @@ Quelle des Umfangs: [`../../PROJECT.md`](../../PROJECT.md) → Meilenstein 1. Vo
 
 | # | Phase | Rating | Status |
 |---|---|---|---|
-| 1 | [Konten und Sitzung](phase-1-konten-und-sitzung.md) — Tabellen, Einladung, Passwort-Login, Akteur | heikel | pending |
+| 1 | [Konten und Sitzung](phase-1-konten-und-sitzung.md) — Tabellen, Einladung, Passwort-Login, Akteur | heikel | complete (2026-11-16; zwei Fälle offen, siehe Phase-Datei) |
 | 2 | [Konto-Seiten und feste Tokens](phase-2-konto-seiten.md) — Anmeldung, Einladung annehmen, Tokens im Browser | standard | pending |
 | 3 | [OAuth und Zustimmung](phase-3-oauth.md) — Discovery, Authorize/Token, Zustimmungsseite mit Anmeldung | heikel | pending |
 | 4 | [MCP und Fahrzeug-Tools](phase-4-mcp-fahrzeuge.md) — Protokollschicht, vier Tools, Fakten mit Herkunft | heikel | pending |

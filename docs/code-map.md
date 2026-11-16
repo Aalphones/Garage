@@ -1,6 +1,6 @@
 # Code-Map — GARAGE
 
-Feature → Ordner. Bewusst grob, keine Zeilennummern. Steht seit dem Aufsetzen: Gerüst (Bootstrap, Http, Env, Log, Migrator, Brücke, Dev-Router, Deploy). Übrige Ordner entstehen mit ihren Meilensteinen.
+Feature → Ordner. Bewusst grob, keine Zeilennummern. Steht: Gerüst (Bootstrap, Http, Env, Log, Migrator, Brücke, Dev-Router, Deploy) und Konten (Einladung, Anmeldung, Akteur). Übrige Ordner entstehen mit ihren Meilensteinen.
 
 ## Namensschema (erst raten, dann suchen)
 
@@ -34,10 +34,10 @@ Eine Domäne `<x>` (vehicle, event, task, measurement, tire, part, document, inb
 | `config.php` | Basis-URL (Domain), Basis-Pfad `/garage`, Pfade |
 | `index.php` | registriert alle Routen am `Http\Router` (Tabelle: [`routes.md`](routes.md)) |
 | `src/Http/` | `Router` (Methode + Pfad mit `{id}`/`{slug}`, 405/404), `Request`, `Response` |
-| `src/Db/` | `Connection` (PDO, UTC), `Migrator` (ohne Transaktion, Anweisungen einzeln) |
-| `src/Auth/` | `DeployToken`; ab Meilenstein 1 Anmeldung, Tokens, Scopes |
-| `src/Api/` | `HealthController`, `DeployController`; ab Meilenstein 1 Controller je Domäne |
-| `src/Domain/` | `DomainError`; ab Meilenstein 1 Services und Repositories je Domäne, `Actor` |
+| `src/Db/` | `Connection` (PDO, UTC), `Migrator` (ohne Transaktion, Anweisungen einzeln), `Transaction` |
+| `src/Auth/` | `DeployToken`, `Jwt` (Access-JWT), `LoginThrottle`, `UserSession` (Login/Refresh/Logout), `ApiAuth` (JWT → `Actor`, nur Deploy-Token), `Scopes`; feste und OAuth-Tokens folgen |
+| `src/Api/` | `HealthController`, `DeployController`, `AuthController`, `InvitationController`, `MeController`, `ApiErrors` (Fehlercode → Status) |
+| `src/Domain/` | `DomainError`, `Actor`; Konten und Garagen: `UserRepository`, `GarageRepository`, `InvitationService`/`InvitationRepository`, `TokenRepository` (Sitzungen), `AuditRepository` |
 | `src/Util/` | `Env`, `Log` |
 | `src/Mcp/`, `src/OAuth/`, `mcp/` | ab Meilenstein 1, aus DISPATCH kopiert (ADR-005) |
 | `migrations/` | nummerierte SQL-Dateien (Spalten: [`models.md`](models.md)) |

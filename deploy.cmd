@@ -40,6 +40,7 @@ call :needValue GARAGE_DB_NAME
 call :needValue GARAGE_DB_USER
 call :needValue GARAGE_DB_PASSWORD
 call :needValue GARAGE_DEPLOY_TOKEN
+call :needValue GARAGE_JWT_SECRET
 if defined MISSING goto :fail
 
 rem Der Token geht in einen HTTP-Header und in die .env: nur Buchstaben und Ziffern,
@@ -48,6 +49,17 @@ echo(!GARAGE_DEPLOY_TOKEN!| findstr /r /x "[A-Za-z0-9][A-Za-z0-9]*" >nul
 if errorlevel 1 (
     echo [FEHLER] GARAGE_DEPLOY_TOKEN darf nur Buchstaben und Ziffern enthalten.
     echo          Erzeugen: php -r "echo bin2hex(random_bytes(32));"
+    goto :fail
+)
+
+rem Der JWT-Schluessel kommt in die .env: gleiche Zeichenregel, mindestens 64 Zeichen.
+echo(!GARAGE_JWT_SECRET!| findstr /r /x "[A-Za-z0-9][A-Za-z0-9]*" >nul
+if errorlevel 1 (
+    echo [FEHLER] GARAGE_JWT_SECRET darf nur Buchstaben und Ziffern enthalten.
+    goto :fail
+)
+if "!GARAGE_JWT_SECRET:~63,1!"=="" (
+    echo [FEHLER] GARAGE_JWT_SECRET braucht mindestens 64 Zeichen, empfohlen sind 96.
     goto :fail
 )
 
@@ -107,6 +119,7 @@ echo [3/7] app\.env schreiben ...
 >>"app\.env" echo GARAGE_DB_USER='!GARAGE_DB_USER!'
 >>"app\.env" echo GARAGE_DB_PASSWORD='!GARAGE_DB_PASSWORD!'
 >>"app\.env" echo GARAGE_DEPLOY_TOKEN='!GARAGE_DEPLOY_TOKEN!'
+>>"app\.env" echo GARAGE_JWT_SECRET='!GARAGE_JWT_SECRET!'
 
 rem Vorlauf: WinSCP legt Zielordner beim Abgleich nicht selbst an. Existieren sie
 rem schon, meldet mkdir einen Fehler - deshalb laeuft das getrennt und ungeprueft.
