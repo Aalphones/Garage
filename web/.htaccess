@@ -9,6 +9,10 @@ DirectoryIndex index.html
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
+    # Die Startseite ausdruecklich: mod_rewrite laeuft vor DirectoryIndex, /garage/ ist fuer
+    # die Bedingung unten keine Datei und landete sonst als 404 in der Bruecke.
+    RewriteRule ^$ index.html [L]
+
     # Vorhandene Dateien (Oberflaeche, Assets) direkt ausliefern, alles andere an die Bruecke.
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
