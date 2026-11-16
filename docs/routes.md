@@ -34,6 +34,19 @@ Ohne `GARAGE_JWT_SECRET` (mindestens 64 Zeichen) antworten Anmeldung und Annahme
 
 Fehler immer als JSON `{"error": "…", "message": "…"}`; unbekannter Pfad 404 `not_found`, falsche Methode 405 mit `Allow`.
 
-## Vorgesehen (Meilenstein 1)
+## MCP-Endpunkt
 
-- `POST /garage/mcp` — MCP-Endpunkt
+| Methode | Pfad | Controller | Schutz | Antwort |
+|---|---|---|---|---|
+| POST | `/garage/mcp` | `McpMcpController::handle` | `gmcp_`- oder `goa_`-Token als Bearer; Nutzer muss `aktiv` sein | JSON-RPC 2.0, eine Nachricht je Anfrage (kein Batch); ohne `id` → 202; ohne Token 401 mit `WWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource/garage/mcp", scope="…"` (bei ungültigem Token zusätzlich `error="invalid_token"`); fremder `Origin` → 403; Token ohne Scope für ein Tool → 403, Fehler `-32003`, `insufficient_scope` |
+
+Methoden: `initialize` (ältere Clients), `server/discover` (2026-07-28), `ping`, `tools/list` (nur Tools der Scopes des Tokens), `tools/call`, `resources/list`/`templates/list`/`read` und `prompts/list`/`get` (Kataloge leer, brauchen `garage:read`).
+
+| Tool | Scope | Eingabe | Ausgabe (Kern) |
+|---|---|---|---|
+| `list_vehicles` | read | — | `{garages:[{id,name,role,vehicles:[{id,label,status,marke,modell,fin,open_items}]}]}`, auch leere Garagen |
+| `get_vehicle` | read | `vehicle_id` | `{vehicle:{id,garage_id,label,status}, facts:{<feld>:{value,source,source_url,confidence,actor,recorded_at}}, disputed:[{field,value,source,confidence,open_item_id}]}`; Ganzzahlfelder als Zahl |
+| `create_vehicle` | write | `label`, optional `garage_id`, optional `facts` | `{vehicle_id,garage_id,label,facts:[…]}`; mehrere beschreibbare Garagen ohne `garage_id` → `invalid_value` |
+| `set_vehicle_facts` | write | `vehicle_id`, `facts:[{field,value,source,source_url?,confidence}]` | `{vehicle_id,facts:[{field,value,result,open_item_id?}]}`, `result` = `angelegt`|`aktualisiert`|`unveraendert`|`klaerfall` |
+
+Tool-Fehler kommen als Ergebnis mit `isError: true` und `{error,message,details}`: `not_found` (fremdes oder unbekanntes Fahrzeug/Garage), `forbidden` (Rolle `lesend`), `invalid_value` (mit Feldname und Beispiel), `invalid_argument` (Pflichtargument fehlt oder falscher Typ).

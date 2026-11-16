@@ -11,6 +11,7 @@ use Garage\Api\TokenController;
 use Garage\Api\OAuthController;
 use Garage\Http\Request;
 use Garage\Http\Router;
+use Garage\Mcp\McpController;
 use Garage\OAuth\AuthorizeController;
 use Garage\OAuth\DiscoveryController;
 use Garage\OAuth\TokenController as OAuthTokenController;
@@ -48,5 +49,7 @@ $router->add('GET', '/garage/api/oauth/requests/{slug}', static fn (array $param
 $router->add('POST', '/garage/api/oauth/consent', static fn () => (new OAuthController($config))->consent($request));
 $router->add('GET', '/garage/api/oauth/grants', static fn () => (new OAuthController($config))->grants($request));
 $router->add('DELETE', '/garage/api/oauth/grants/{slug}', static fn (array $parameters) => (new OAuthController($config))->disconnect($request, (string) $parameters['slug']));
+
+$router->add('POST', '/garage/mcp', static fn () => (new McpController($config))->handle($request));
 
 $router->dispatch($request);

@@ -28,6 +28,8 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 | Kilometerprognose | Aus den Kilometerständen geschätzter heutiger Stand; geschätzte Werte tragen „≈". |
 | Herkunft (`source`) | Woher eine Angabe stammt: Beleg, Nutzer, Recherche, Agent, Werkstatt. Pflichtfeld jeder Faktenzeile. |
 | Konfidenz | Sicherheit einer Angabe: bestätigt, wahrscheinlich, unsicher. |
+| Fakt (`vehicle_facts`) | Eine Angabe zu einem Fahrzeug: Feld, Wert, Herkunft, Konfidenz, Akteur, Zeitpunkt. Ein Fahrzeug hat je Feld höchstens einen aktuellen Fakt. |
+| aktuell / abgelöst / strittig | Status eines Fakts: gilt jetzt · wurde durch einen neueren ersetzt (bleibt als Verlauf) · widerspricht einem bestätigten Wert und wartet auf einen Menschen. |
 | Klärfall (`open_items`) | Offener Punkt: Konflikt zweier Werte, Nachfrage oder Beobachtung. Lösen dürfen nur Menschen. |
 
 ## Belege

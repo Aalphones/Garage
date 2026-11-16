@@ -11,7 +11,7 @@ Quelle des Umfangs: [`../../PROJECT.md`](../../PROJECT.md) → Meilenstein 1. Vo
 | 1 | [Konten und Sitzung](phase-1-konten-und-sitzung.md) — Tabellen, Einladung, Passwort-Login, Akteur | heikel | complete (2026-11-16; zwei Fälle offen, siehe Phase-Datei) |
 | 2 | [Konto-Seiten und feste Tokens](phase-2-konto-seiten.md) — Anmeldung, Einladung annehmen, Tokens im Browser | standard | complete (2026-11-16) |
 | 3 | [OAuth und Zustimmung](phase-3-oauth.md) — Discovery, Authorize/Token, Zustimmungsseite mit Anmeldung | heikel | complete (2026-11-16; echte claude.ai-Verbindung offen, siehe FINDINGS) |
-| 4 | [MCP und Fahrzeug-Tools](phase-4-mcp-fahrzeuge.md) — Protokollschicht, vier Tools, Fakten mit Herkunft | heikel | pending |
+| 4 | [MCP und Fahrzeug-Tools](phase-4-mcp-fahrzeuge.md) — Protokollschicht, vier Tools, Fakten mit Herkunft | heikel | complete (2026-11-17; echte claude.ai-Verbindung offen, siehe FINDINGS) |
 | 5 | [Abschluss auf Strato](phase-5-abschluss.md) — Fernprüfung, Doku, Meilenstein abhaken | mechanisch | pending |
 
 Jede Phase endet mit `deploy.cmd` und Prüfung auf Strato: lokal gibt es kein MySQL (geprüft 2026-11-16: kein MySQL-Dienst, keine `app/.env.local`).
