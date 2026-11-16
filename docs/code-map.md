@@ -1,6 +1,6 @@
 # Code-Map — GARAGE
 
-Feature → Ordner. Bewusst grob, keine Zeilennummern. Steht: Gerüst (Bootstrap, Http, Env, Log, Migrator, Brücke, Dev-Router, Deploy) und Konten (Einladung, Anmeldung, Akteur). Übrige Ordner entstehen mit ihren Meilensteinen.
+Feature → Ordner. Bewusst grob, keine Zeilennummern. Steht: Gerüst (Bootstrap, Http, Env, Log, Migrator, Brücke, Dev-Router, Deploy) und Konten (Einladung, Anmeldung, Akteur), OAuth-Server. Übrige Ordner entstehen mit ihren Meilensteinen.
 
 ## Namensschema (erst raten, dann suchen)
 
@@ -20,7 +20,7 @@ Eine Domäne `<x>` (vehicle, event, task, measurement, tire, part, document, inb
 | Im Repo | Auf dem Server (`www/`) | Inhalt |
 |---|---|---|
 | `app/` | `garage-app/` | gesamter PHP-Code, Migrationen, Texte für Agenten, `.env`, `storage/` — gesperrt (ADR-002) |
-| `web/` | `garage/` | Brücke `index.php`, `.htaccess` (Rewrite, eigene CSP), Oberfläche: Seiten `index.html` (Anmeldung + Konto), `einladung.html` direkt in `web/` (Unterordner gingen an die Brücke), Skripte in `js/`, Stil in `css/` |
+| `web/` | `garage/` | Brücke `index.php`, `.htaccess` (Rewrite, eigene CSP), Oberfläche: Seiten `index.html` (Anmeldung + Konto), `einladung.html`, `zustimmung.html` direkt in `web/` (Unterordner gingen an die Brücke), Skripte in `js/`, Stil in `css/` |
 | — | `.htaccess` an der Wurzel | gehört DISPATCH; leitet `/.well-known/<art>/garage…` an die Brücke (ADR-001) |
 | `deploy.cmd`, `deploy.env.example` | — | Deploy (ADR-003); Vorlage für `deploy.env` (nicht im Git) |
 | `dev-router.php`, `dev.env.example` | — | lokaler Server `php -S localhost:8081 dev-router.php`, Vorlage für `app/.env.local` |
@@ -35,11 +35,12 @@ Eine Domäne `<x>` (vehicle, event, task, measurement, tire, part, document, inb
 | `index.php` | registriert alle Routen am `Http\Router` (Tabelle: [`routes.md`](routes.md)) |
 | `src/Http/` | `Router` (Methode + Pfad mit `{id}`/`{slug}`, 405/404), `Request`, `Response` |
 | `src/Db/` | `Connection` (PDO, UTC), `Migrator` (ohne Transaktion, Anweisungen einzeln), `Transaction` |
-| `src/Auth/` | `DeployToken`, `Jwt` (Access-JWT), `LoginThrottle`, `UserSession` (Login/Refresh/Logout), `ApiAuth` (JWT → `Actor`, nur Deploy-Token), `Scopes`; OAuth-Tokens folgen |
-| `src/Api/` | `HealthController`, `DeployController`, `AuthController`, `InvitationController`, `MeController`, `TokenController`, `ApiErrors` (Fehlercode → Status) |
+| `src/Auth/` | `DeployToken`, `Jwt` (Access-JWT), `LoginThrottle`, `UserSession` (Login/Refresh/Logout), `ApiAuth` (JWT → `Actor`, nur Deploy-Token), `Scopes` |
+| `src/Api/` | `HealthController`, `DeployController`, `AuthController`, `InvitationController`, `MeController`, `TokenController`, `OAuthController` (Zustimmung, verbundene Apps), `ApiErrors` (Fehlercode → Status) |
 | `src/Domain/` | `DomainError`, `Actor`; Konten und Garagen: `UserRepository`, `GarageRepository`, `InvitationService`/`InvitationRepository`, `TokenService` (feste `gmcp_`-Tokens), `TokenRepository` (Sitzungen und feste Tokens), `AuditRepository` |
-| `src/Util/` | `Env`, `Log` |
-| `src/Mcp/`, `src/OAuth/`, `mcp/` | ab Meilenstein 1, aus DISPATCH kopiert (ADR-005) |
+| `src/OAuth/` | OAuth-Server aus DISPATCH (ADR-005), nur CIMD-Clients: `Discovery`/`DiscoveryController` (Aussteller mit Pfad `/garage`), `AuthorizeController`, `Consent` (nur Mensch im Browser), `TokenIssuer` (Code-Tausch, Rotation, `authenticate` für den MCP-Endpunkt), `TokenController`, `ClientRegistry` (CIMD-Abruf), `OAuthRepository` |
+| `src/Util/` | `Env`, `Log`, `HttpClient`/`HttpResponse` (einziger Weg nach außen, SSRF-Schutz) |
+| `src/Mcp/`, `mcp/` | ab Phase 4, aus DISPATCH kopiert (ADR-005) |
 | `migrations/` | nummerierte SQL-Dateien (Spalten: [`models.md`](models.md)) |
 | `storage/` | `logs/`, `documents/` — nur auf dem Server und lokal, nicht im Git |
 
@@ -47,7 +48,7 @@ Eine Domäne `<x>` (vehicle, event, task, measurement, tire, part, document, inb
 
 | Ordner | Aufgabe |
 |---|---|
-| `js/` | ES-Module: `api.js` (Access-Token im Speicher, Refresh bei 401, `login`/`logout`/`restore`), `dom.js` (Bauhelfer, Fehlermeldung mit Fokus), `account.js` (Einstieg `index.html`), `token.js` (feste Zugänge), `invitation.js` (Einstieg `einladung.html`) |
+| `js/` | ES-Module: `api.js` (Access-Token im Speicher, Refresh bei 401, `login`/`logout`/`restore`), `dom.js` (Bauhelfer, Fehlermeldung mit Fokus), `account.js` (Einstieg `index.html`), `login.js` (Anmeldeformular, geteilt), `token.js` (feste Zugänge), `grant.js` (verbundene Apps), `invitation.js` (Einstieg `einladung.html`), `consent.js` (Einstieg `zustimmung.html`) |
 | `css/` | `base.css`: funktionaler Platzhalter (Systemschrift, eine Spalte, hell/dunkel) bis zum Oberflächen-Meilenstein |
 
 ## Faustregeln

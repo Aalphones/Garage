@@ -8,8 +8,12 @@ use Garage\Api\HealthController;
 use Garage\Api\InvitationController;
 use Garage\Api\MeController;
 use Garage\Api\TokenController;
+use Garage\Api\OAuthController;
 use Garage\Http\Request;
 use Garage\Http\Router;
+use Garage\OAuth\AuthorizeController;
+use Garage\OAuth\DiscoveryController;
+use Garage\OAuth\TokenController as OAuthTokenController;
 
 $config = require __DIR__ . '/bootstrap.php';
 
@@ -32,5 +36,17 @@ $router->add('GET', '/garage/api/me', static fn () => (new MeController())->show
 $router->add('GET', '/garage/api/tokens', static fn () => (new TokenController())->list($request));
 $router->add('POST', '/garage/api/tokens', static fn () => (new TokenController())->create($request));
 $router->add('DELETE', '/garage/api/tokens/{id}', static fn (array $parameters) => (new TokenController())->revoke($request, (int) $parameters['id']));
+
+// Discovery liegt mit Pfad-Suffix an der Domain-Wurzel; DISPATCHs Wurzel-.htaccess leitet sie hierher (ADR-001).
+$router->add('GET', '/.well-known/oauth-protected-resource/garage/mcp', static fn () => (new DiscoveryController($config))->protectedResource());
+$router->add('GET', '/.well-known/oauth-authorization-server/garage', static fn () => (new DiscoveryController($config))->authorizationServer());
+$router->add('GET', '/garage/oauth/authorize', static fn () => (new AuthorizeController($config))->handle($request));
+$router->add('POST', '/garage/oauth/token', static fn () => (new OAuthTokenController($config))->token($request));
+$router->add('POST', '/garage/oauth/revoke', static fn () => (new OAuthTokenController($config))->revoke($request));
+
+$router->add('GET', '/garage/api/oauth/requests/{slug}', static fn (array $parameters) => (new OAuthController($config))->request($request, (string) $parameters['slug']));
+$router->add('POST', '/garage/api/oauth/consent', static fn () => (new OAuthController($config))->consent($request));
+$router->add('GET', '/garage/api/oauth/grants', static fn () => (new OAuthController($config))->grants($request));
+$router->add('DELETE', '/garage/api/oauth/grants/{slug}', static fn (array $parameters) => (new OAuthController($config))->disconnect($request, (string) $parameters['slug']));
 
 $router->dispatch($request);

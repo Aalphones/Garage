@@ -23,6 +23,7 @@ final class ApiErrors
         'invitation_not_found' => 404,
         'email_taken' => 409,
         'name_taken' => 409,
+        'request_expired' => 410,
         'invitation_used' => 410,
         'invitation_expired' => 410,
         'too_many_attempts' => 429,

@@ -77,6 +77,12 @@
                 <button type="submit">Zugang anlegen</button>
             </form>
 
+            <h3>Verbundene Apps</h3>
+            <p class="hint">Apps wie Claude oder ChatGPT, denen du den Zugriff erlaubt hast. Du kannst sie jederzeit trennen.</p>
+            <p id="grant-list-error" class="error" role="alert" tabindex="-1" hidden></p>
+            <ul id="grant-list" class="plain-list"></ul>
+            <p id="grant-empty" hidden>Noch keine App verbunden. Trage in Claude oder ChatGPT die Adresse <code>https://quantum-canvas.de/garage/mcp</code> ein, um eine zu verbinden.</p>
+
             <button id="logout" type="button">Abmelden</button>
         </section>
     </main>

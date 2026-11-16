@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <meta name="referrer" content="no-referrer">
+    <title>Verbindung erlauben – GARAGE</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/garage/css/base.css">
+</head>
+<body>
+    <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+    <main id="inhalt">
+        <h1>GARAGE</h1>
+        <p id="status" role="status">Lädt …</p>
+
+        <section id="login" aria-labelledby="login-heading" hidden>
+            <h2 id="login-heading">Anmelden, um die Verbindung zu prüfen</h2>
+            <form id="login-form" method="post" action="/garage/zustimmung.html">
+                <label for="login-email">E-Mail</label>
+                <input id="login-email" name="email" type="email" autocomplete="username" required>
+                <label for="login-password">Passwort</label>
+                <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+                <p id="login-error" class="error" role="alert" tabindex="-1" hidden></p>
+                <button type="submit">Anmelden</button>
+            </form>
+        </section>
+
+        <section id="consent" aria-labelledby="consent-heading" hidden>
+            <h2 id="consent-heading">Verbindung anfragen</h2>
+            <p>Angemeldet als <strong id="consent-user"></strong>. <button id="switch-account" type="button" class="link-button">Anderes Konto</button></p>
+
+            <dl class="facts">
+                <dt>App</dt>
+                <dd id="consent-app"></dd>
+                <dt>Ausgewiesen von</dt>
+                <dd><strong id="consent-host"></strong></dd>
+                <dt>Antwort geht an</dt>
+                <dd id="consent-redirect"></dd>
+            </dl>
+            <p id="consent-loopback" class="error" hidden>Die Antwort geht an ein Programm auf diesem Gerät. Erlaube nur, wenn du gerade selbst in Claude Code die Anmeldung gestartet hast.</p>
+
+            <form id="consent-form" method="post" action="/garage/zustimmung.html">
+                <fieldset>
+                    <legend>Die App darf in deinen Garagen</legend>
+                    <div id="consent-scopes"></div>
+                </fieldset>
+                <p id="consent-offline" class="hint" hidden>Bleibt verbunden, bis du die App unter „Verbundene Apps“ im Konto trennst.</p>
+                <p class="hint">Löschen, Fahrzeuge übergeben und Mitglieder verwalten kann keine App – das bleibt bei dir.</p>
+                <p id="consent-error" class="error" role="alert" tabindex="-1" hidden></p>
+                <button id="consent-allow" type="submit">Erlauben</button>
+                <button id="consent-deny" type="button">Ablehnen</button>
+                <p id="consent-expiry" class="hint"></p>
+            </form>
+        </section>
+    </main>
+    <script type="module" src="/garage/js/consent.js"></script>
+</body>
+</html>

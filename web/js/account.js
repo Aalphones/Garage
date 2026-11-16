@@ -1,6 +1,8 @@
 // Einstieg für index.html: Sitzung wiederherstellen, dann Anmeldeformular oder Konto zeigen.
-import { login, logout, request, restore } from './api.js';
-import { clearChildren, element, hideError, showError } from './dom.js';
+import { logout, request, restore } from './api.js';
+import { clearChildren, element } from './dom.js';
+import { setupGrants } from './grant.js';
+import { setupLogin } from './login.js';
 import { setupTokens } from './token.js';
 
 const statusLine = document.getElementById('status');
@@ -13,6 +15,7 @@ const garageList = document.getElementById('garage-list');
 const garageEmpty = document.getElementById('garage-empty');
 const logoutButton = document.getElementById('logout');
 const tokens = setupTokens();
+const grants = setupGrants();
 
 function showLogin(message) {
     accountSection.hidden = true;
@@ -38,23 +41,10 @@ async function showAccount() {
     loginSection.hidden = true;
     accountSection.hidden = false;
     statusLine.textContent = '';
-    await tokens.load();
+    await Promise.all([tokens.load(), grants.load()]);
 }
 
-loginForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    hideError(loginError);
-    const submitButton = loginForm.querySelector('button[type="submit"]');
-    submitButton.disabled = true;
-    try {
-        await login(loginForm.elements.email.value.trim(), loginForm.elements.password.value);
-        loginForm.reset();
-        await showAccount();
-    } catch (error) {
-        showError(loginError, error.message);
-    }
-    submitButton.disabled = false;
-});
+setupLogin(loginForm, loginError, showAccount);
 
 logoutButton.addEventListener('click', async () => {
     try {
@@ -62,9 +52,11 @@ logoutButton.addEventListener('click', async () => {
     } catch (error) {
         showLogin('Die Abmeldung auf dem Server ist fehlgeschlagen: ' + error.message);
         tokens.clear();
+        grants.clear();
         return;
     }
     tokens.clear();
+    grants.clear();
     showLogin('Abgemeldet.');
 });
 

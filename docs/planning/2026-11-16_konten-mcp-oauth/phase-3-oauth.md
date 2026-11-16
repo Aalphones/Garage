@@ -12,43 +12,52 @@ Rating: **heikel** (Sicherheit, Umbau von einem Inhaber auf viele Nutzer).
 
 ## Abnahmekriterien
 
-- [ ] `GET https://quantum-canvas.de/.well-known/oauth-protected-resource/garage/mcp` → `resource` = `https://quantum-canvas.de/garage/mcp`, `authorization_servers` = `["https://quantum-canvas.de/garage"]`, `scopes_supported` = drei `garage:`-Scopes, `resource_name` = `GARAGE`.
-- [ ] `GET https://quantum-canvas.de/.well-known/oauth-authorization-server/garage` → `issuer` = `https://quantum-canvas.de/garage`, Endpunkte `…/garage/oauth/authorize|token|revoke`, `client_id_metadata_document_supported: true`.
-- [ ] `authorize` mit gültiger CIMD-`client_id`, PKCE S256 → 302 auf `/garage/zustimmung.html?anfrage=<32 hex>`; kaputter Client oder Rückadresse → 302 auf `/garage/zustimmung.html?fehler=…`, nie an die Rückadresse.
-- [ ] Zustimmungsseite ohne Sitzung zeigt erst die Anmeldung (dasselbe Formular wie `/garage/`), danach die Anfrage: App-Name, **Host der App** hervorgehoben, Rückadresse-Host, Häkchen je angefragtem Scope mit Erklärung, Hinweis „Bleibt verbunden, bis du trennst“ bei `offline_access`, Knöpfe „Erlauben“ und „Ablehnen“, angemeldet als `<Name>` mit „Anderes Konto“.
-- [ ] „Erlauben“ setzt `oauth_codes.user_id` = angemeldeter Nutzer; der Token-Tausch legt `goa_`/`gor_` mit derselben `user_id` an. Code doppelt eingelöst → ganze Familie widerrufen (wie DISPATCH).
-- [ ] `GET /garage/api/oauth/grants` listet nur die Verbindungen des angemeldeten Nutzers; `DELETE …/grants/{family}` einer fremden Familie → 404.
-- [ ] Konto-Seite `/garage/` hat den Abschnitt „Verbundene Apps“ (App-Name, Host, Scopes, verbunden seit, zuletzt genutzt, Knopf „Trennen“).
-- [ ] `resource` ungleich `https://quantum-canvas.de/garage/mcp` → `invalid_target`.
+- [x] `GET https://quantum-canvas.de/.well-known/oauth-protected-resource/garage/mcp` → `resource` = `https://quantum-canvas.de/garage/mcp`, `authorization_servers` = `["https://quantum-canvas.de/garage"]`, `scopes_supported` = drei `garage:`-Scopes, `resource_name` = `GARAGE`.
+- [x] `GET https://quantum-canvas.de/.well-known/oauth-authorization-server/garage` → `issuer` = `https://quantum-canvas.de/garage`, Endpunkte `…/garage/oauth/authorize|token|revoke`, `client_id_metadata_document_supported: true`.
+- [x] `authorize` mit gültiger CIMD-`client_id`, PKCE S256 → 302 auf `/garage/zustimmung.html?anfrage=<32 hex>`; kaputter Client oder Rückadresse → 302 auf `/garage/zustimmung.html?fehler=…`, nie an die Rückadresse.
+- [x] Zustimmungsseite ohne Sitzung zeigt erst die Anmeldung (dasselbe Formular wie `/garage/`), danach die Anfrage: App-Name, **Host der App** hervorgehoben, Rückadresse-Host, Häkchen je angefragtem Scope mit Erklärung, Hinweis „Bleibt verbunden, bis du trennst“ bei `offline_access`, Knöpfe „Erlauben“ und „Ablehnen“, angemeldet als `<Name>` mit „Anderes Konto“.
+- [x] „Erlauben“ setzt `oauth_codes.user_id` = angemeldeter Nutzer; der Token-Tausch legt `goa_`/`gor_` mit derselben `user_id` an. Code doppelt eingelöst → ganze Familie widerrufen (wie DISPATCH).
+- [x] `GET /garage/api/oauth/grants` listet nur die Verbindungen des angemeldeten Nutzers; `DELETE …/grants/{family}` einer fremden Familie → 404.
+- [x] Konto-Seite `/garage/` hat den Abschnitt „Verbundene Apps“ (App-Name, Host, Scopes, verbunden seit, zuletzt genutzt, Knopf „Trennen“).
+- [x] `resource` ungleich `https://quantum-canvas.de/garage/mcp` → `invalid_target`.
 
 ## Checkliste
 
 ### Datenbank
-- [ ] `app/migrations/005_oauth.sql` aus DISPATCH `014_oauth.sql`: `oauth_clients.kind` ENUM('cimd'); `secret_hash` entfällt; `oauth_codes` zusätzlich `user_id` INT UNSIGNED NULL FK→users (gesetzt beim Übergang `pending → approved`).
+- [x] `app/migrations/005_oauth.sql` aus DISPATCH `014_oauth.sql`: `oauth_clients.kind` ENUM('cimd'); `secret_hash` entfällt; `oauth_codes` zusätzlich `user_id` INT UNSIGNED NULL FK→users (gesetzt beim Übergang `pending → approved`).
 
 ### Kopieren und umbauen
-- [ ] `app/src/Util/HttpClient.php`, `HttpResponse.php` unverändert bis auf Namespace (SSRF-Schutz bleibt Grenze für CIMD-Abrufe).
-- [ ] `app/config.php`: Schlüssel `oauth` aus DISPATCH, `default_scopes` = `['garage:read','garage:write']`.
-- [ ] `OAuth/ClientRegistry.php`: alles zu manuellen Clients streichen (`createManual`, `listManual`, `revokeManual`, `resolveManual`, Präfixe `dcl_`/`dcs_`); `resolve` kennt nur CIMD.
-- [ ] `OAuth/Discovery.php`: `RESOURCE_PATH` `/garage/mcp`, `METADATA_PATH` `/.well-known/oauth-protected-resource/garage/mcp`, Endpunkte unter `/garage/oauth/`, `issuer` = `base_url` + `/garage`, `resource_name` `GARAGE`, `token_endpoint_auth_methods_supported` = `['none']`; `CHALLENGE_SCOPE` = `garage:read garage:write`. `base()` liefert weiter nur die Domain; den Aussteller baut eine neue Methode `issuer()`.
-- [ ] `OAuth/AuthorizeController.php`: `CONSENT_PATH` = `/garage/zustimmung.html`, Scope-Prüfung gegen `garage:`-Scopes, `iss` = `Discovery::issuer()`.
-- [ ] `OAuth/Consent.php`: `decide(...)` verlangt einen Akteur mit `via = 'web'` und schreibt dessen `userId` per `OAuthRepository::transition(..., userId)` in die Anfrage; `iss` = `issuer()`.
-- [ ] `OAuth/TokenIssuer.php`: Präfixe `goa_`/`gor_`, `authenticateClient` nur `none` (öffentliche Clients mit PKCE); `issuePair` und `refresh` übernehmen `user_id` aus Code bzw. Refresh-Token; `authenticate()` liefert `{id, user_id, name, scopes}` und lehnt ab, wenn der Nutzer `gesperrt` ist; `grants(Actor)`/`disconnect(family, Actor)` nur eigene.
-- [ ] `OAuth/OAuthRepository.php`, `OAuthError.php`, `Redirect.php`, `DiscoveryController.php`, `TokenController.php` (als `OAuth/TokenController`) mit Namespace und Pfaden.
-- [ ] `TokenRepository`: `insertOAuth(..., userId)`, `findOAuthByHash` und `findActiveOAuthAccess` liefern `user_id`, `listGrants(userId)`, `findOAuthFamily(family, userId)`, `revokeOtherRefresh`, `revokeByClient`.
-- [ ] `app/src/Api/OAuthController.php` aus DISPATCH, alle Methoden über `ApiAuth::user`.
-- [ ] Routen in `app/index.php` (Tabelle README, Phase 3).
+- [x] `app/src/Util/HttpClient.php`, `HttpResponse.php` unverändert bis auf Namespace (SSRF-Schutz bleibt Grenze für CIMD-Abrufe).
+- [x] `app/config.php`: Schlüssel `oauth` aus DISPATCH, `default_scopes` = `['garage:read','garage:write']`.
+- [x] `OAuth/ClientRegistry.php`: alles zu manuellen Clients streichen (`createManual`, `listManual`, `revokeManual`, `resolveManual`, Präfixe `dcl_`/`dcs_`); `resolve` kennt nur CIMD.
+- [x] `OAuth/Discovery.php`: `RESOURCE_PATH` `/garage/mcp`, `METADATA_PATH` `/.well-known/oauth-protected-resource/garage/mcp`, Endpunkte unter `/garage/oauth/`, `issuer` = `base_url` + `/garage`, `resource_name` `GARAGE`, `token_endpoint_auth_methods_supported` = `['none']`; `CHALLENGE_SCOPE` = `garage:read garage:write`. `base()` liefert weiter nur die Domain; den Aussteller baut eine neue Methode `issuer()`.
+- [x] `OAuth/AuthorizeController.php`: `CONSENT_PATH` = `/garage/zustimmung.html`, Scope-Prüfung gegen `garage:`-Scopes, `iss` = `Discovery::issuer()`.
+- [x] `OAuth/Consent.php`: `decide(...)` verlangt einen Akteur mit `via = 'web'` und schreibt dessen `userId` per `OAuthRepository::transition(..., userId)` in die Anfrage; `iss` = `issuer()`.
+- [x] `OAuth/TokenIssuer.php`: Präfixe `goa_`/`gor_`, `authenticateClient` nur `none` (öffentliche Clients mit PKCE); `issuePair` und `refresh` übernehmen `user_id` aus Code bzw. Refresh-Token; `authenticate()` liefert `{id, user_id, name, scopes}` und lehnt ab, wenn der Nutzer `gesperrt` ist; `grants(Actor)`/`disconnect(family, Actor)` nur eigene.
+- [x] `OAuth/OAuthRepository.php`, `OAuthError.php`, `Redirect.php`, `DiscoveryController.php`, `TokenController.php` (als `OAuth/TokenController`) mit Namespace und Pfaden.
+- [x] `TokenRepository`: `insertOAuth(..., userId)`, `findOAuthByHash` und `findActiveOAuthAccess` liefern `user_id`, `listGrants(userId)`, `findOAuthFamily(family, userId)`, `revokeOtherRefresh`. (`revokeByClient` entfällt: es diente nur dem Widerruf manueller Clients.)
+- [x] `app/src/Api/OAuthController.php` aus DISPATCH, alle Methoden über `ApiAuth::user`.
+- [x] Routen in `app/index.php` (Tabelle README, Phase 3).
 
 ### Oberfläche
-- [ ] `web/zustimmung.html` + `web/js/consent.js` nach DISPATCH `zustimmung.js`; Anmeldung über `web/js/api.js`; „Anderes Konto“ = `logout()` und zurück zum Formular.
-- [ ] `web/js/grant.js` + Abschnitt „Verbundene Apps“ in `web/js/account.js`.
+- [x] `web/zustimmung.html` + `web/js/consent.js` nach DISPATCH `zustimmung.js`; Anmeldung über `web/js/api.js`; „Anderes Konto“ = `logout()` und zurück zum Formular.
+- [x] `web/js/grant.js` + Abschnitt „Verbundene Apps“ in `web/js/account.js`.
 
 ### Prüfen (auf Strato, nach `deploy.cmd`)
-- [ ] Discovery-Antworten per `curl` gegen AK.
-- [ ] Echte Verbindung aus claude.ai (Einstellungen → Connectors → eigene URL `https://quantum-canvas.de/garage/mcp`). Erwartet bis Phase 4: Anmeldung und Zustimmung laufen durch, der MCP-Aufruf selbst endet mit 404 — das belegt OAuth, nicht MCP. Schlägt schon die Discovery fehl: im Log nachsehen, welche `/.well-known/…`-Adresse abgefragt wurde, und in `FINDINGS.md` festhalten.
-- [ ] Abweisungen: fremde Familie trennen → 404; Code zweimal tauschen → `invalid_grant` und Familie widerrufen; falsche `resource` → `invalid_target`.
+- [x] Discovery-Antworten per `curl` gegen AK.
+- [ ] **Offen — braucht die Anmeldung des Benutzers bei claude.ai (siehe `FINDINGS.md` → Phase 5):** Echte Verbindung aus claude.ai (Einstellungen → Connectors → eigene URL `https://quantum-canvas.de/garage/mcp`). Erwartet bis Phase 4: Anmeldung und Zustimmung laufen durch, der MCP-Aufruf selbst endet mit 404 — das belegt OAuth, nicht MCP. Schlägt schon die Discovery fehl: im Log nachsehen, welche `/.well-known/…`-Adresse abgefragt wurde, und in `FINDINGS.md` festhalten.
+- [x] Abweisungen: fremde Familie trennen → 404; Code zweimal tauschen → `invalid_grant` und Familie widerrufen; falsche `resource` → `invalid_target`.
+- [x] Ersatz für die echte Verbindung: voller Ablauf per curl mit dem CIMD-Dokument von claude.ai als Client und Testkonten (Einladung → Konto → `authorize` → Zustimmung → Token → Refresh-Rotation → Trennen), dazu Mandantentrennung mit zwei Konten.
 
 ### Doku
-- [ ] `docs/models.md`, `docs/routes.md`, `docs/code-map.md` (`OAuth/`, `Util/HttpClient`).
+- [x] `docs/models.md`, `docs/routes.md`, `docs/code-map.md` (`OAuth/`, `Util/HttpClient`).
 
 ## Report-Back
+
+Status: **complete (2026-11-16)**, bis auf die echte claude.ai-Verbindung (offen → `FINDINGS.md`, Phase 5).
+
+- Umgesetzt und auf Strato deployt (Rauchtest grün, Migration `005_oauth.sql` gelaufen). Beide Discovery-Dokumente stimmen mit den AK; der OAuth-Ablauf ist per curl komplett belegt, auch Code-Wiederverwendung (ganze Familie widerrufen), falsche `resource` (`invalid_target`), Scope-Verengung beim Refresh, Fremdzugriff (404) und Ablehnen.
+- Abweichungen: (1) `revokeByClient` entfällt (kein manueller Client mehr). (2) Neu `web/js/login.js`: das Anmeldeformular teilen sich `index.html` und `zustimmung.html`; `account.js` nutzt es jetzt auch. (3) `config.php` bekommt zusätzlich den Schlüssel `http` (für den HTTP-Client, `GARAGE_ALLOW_PRIVATE_IPS` nur lokal). (4) `ApiErrors`: `request_expired` → 410. (5) `TokenIssuer::revoke` ohne Client-Geheimnis (nur öffentliche Clients; Besitz des Tokens genügt). (6) Der Widerruf trägt `user_id` ins Audit-Log.
+- 🟡 Nicht gesehen: Zustimmungsseite und „Verbundene Apps“ im Browser (kein Browser-Werkzeug in dieser Session); belegt ist nur ihre API und die JS-Syntax. Vor Abnahme einmal bei 360 px hell/dunkel ansehen.
+- 🟡 Nicht belegt: ob claude.ai/ChatGPT den Pfad-Aussteller finden (siehe `FINDINGS.md`).
+- Testkonten `test-oauth-…@example.invalid` und `test-cross-A/B-…@example.invalid` (je mit „Testgarage Phase 3“) liegen auf Strato; Sperren geht erst mit Datenbankzugriff.
