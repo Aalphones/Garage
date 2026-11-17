@@ -6,6 +6,8 @@ Quelle der Wahrheit sind die Migrationen in `app/migrations/`. Geplantes Modell 
 
 `008_record.sql` legt `registrations` und `equipment` an und erweitert drei Tabellen: `vehicle_facts.field` auf VARCHAR(120) (Spezifikationen `spec.<bereich>.<schluessel>`), `open_items.proposal_json` (Vorschlag am Klärfall), `audit_log.vehicle_id` mit Index `(vehicle_id, created_at)` (Verlauf je Fahrzeug).
 
+`009_event.sql` legt `workshops`, `events`, `event_items` und `odometer_readings` an (Phase 2: Scheckheft und Kilometer).
+
 ## Bestehende Tabellen
 
 | Tabelle | Spalten | Angelegt von |
@@ -32,8 +34,17 @@ Listen-Tabellen (Datensatz-Abgleich, ADR-009) tragen alle denselben Herkunftsblo
 |---|---|---|---|
 | `registrations` | `plate` VARCHAR(15), `valid_from` DATE, `valid_to` DATE NULL, `holder` VARCHAR(120) NULL, `holder_address` VARCHAR(200) NULL | `plate` + `valid_from` | `008_record.sql` |
 | `equipment` | `name` VARCHAR(160), `code` VARCHAR(20) NULL, `category` ENUM(`serie`,`sonder`), `list_price_cents` INT UNSIGNED NULL | `name` | `008_record.sql` |
+| `events` | `kind` ENUM(`inspektion`,`reparatur`,`hu`,`reifen`,`schaden`,`rueckruf`,`kauf`,`sonstiges`), `title` VARCHAR(200), `performed_on` DATE, `invoiced_on` DATE NULL, `odometer_km` INT UNSIGNED NULL, `workshop_id` FK `workshops` NULL, `invoice_number` VARCHAR(60) NULL, `order_number` VARCHAR(60) NULL, `net_cents`/`vat_cents`/`gross_cents` INT UNSIGNED NULL, `digital_service_record` TINYINT(1) NULL; Index `(vehicle_id, status, performed_on)`, `(workshop_id, invoice_number)` | mit Rechnungsnummer: `workshop_id` + `invoice_number`; ohne: `kind` + `performed_on` + `workshop_id` (`EventService` übergibt den Schlüssel) | `009_event.sql` |
 
-Der Schlüssel steht in `RecordMerger::TABLES`; ein weiterer Satz mit demselben Schlüssel wird abgeglichen statt angelegt.
+Der Schlüssel steht in `RecordMerger::TABLES`; ein weiterer Satz mit demselben Schlüssel wird abgeglichen statt angelegt. Ein Schlüsselwert darf `NULL` sein (Ereignis ohne Werkstatt); die Suche vergleicht mit `<=>`.
+
+Weitere Tabellen aus `009_event.sql`:
+
+| Tabelle | Spalten | Hinweis |
+|---|---|---|
+| `workshops` | `id` PK, `garage_id`, `name` VARCHAR(120), `city` VARCHAR(80) (leer statt NULL), `manufacturer_partner` TINYINT(1) NULL, `actor`, `created_at`; UNIQUE `(garage_id, name, city)` | je Garage, Groß-/Kleinschreibung egal; `manufacturer_partner` wird nur gesetzt, solange es unbekannt ist (`WorkshopRepository::findOrCreate`) |
+| `event_items` | `id` PK, `garage_id`, `event_id` FK, `line_no` SMALLINT, `item_type` ENUM(`arbeit`,`teil`,`material`,`pauschale`), `description` VARCHAR(200), `task_key` VARCHAR(41) NULL, `part_number` VARCHAR(60) NULL, `manufacturer` VARCHAR(80) NULL, `quantity` DECIMAL(12,3) NULL, `unit` VARCHAR(10) NULL, `net_cents` INT NULL (negativ für Rabatte), `status` ENUM(`aktiv`,`abgeloest`), `created_at`; Index `(event_id, status)`, `(task_key)` | Positionen sind ein Ganzes: abweichende Positionen ändern nichts, sondern öffnen einen Klärfall (`proposal_json.items`) |
+| `odometer_readings` | `id` PK, `garage_id`, `vehicle_id` FK, `read_on` DATE, `km` INT UNSIGNED, `event_id` NULL, `note` VARCHAR(200) NULL, `reading_status` ENUM(`gueltig`,`strittig`,`verworfen`), Herkunftsblock; Index `(vehicle_id, reading_status, read_on)`, `(event_id)` | Vorwärts-Regel: ADR-011; kein `RecordMerger` |
 
 `tokens` mit `kind` `oauth_access`/`oauth_refresh` trägt `user_id` des zustimmenden Nutzers, `client_id` und `family` (Verbindung); eine Familie ist eine „verbundene App“.
 

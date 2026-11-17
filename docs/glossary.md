@@ -20,7 +20,7 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 | Begriff | Bedeutung |
 |---|---|
 | Akte (Dossier) | Alles zu einem Fahrzeug; als Markdown über `get_dossier` und als Druckansicht. |
-| Ereignis (`events`) | Ein datierter Vorgang am Fahrzeug: Inspektion, Reparatur, HU, Reifen, Schaden, Rückruf, Kauf. Eindeutig über Fahrzeug, Werkstatt und Rechnungsnummer. |
+| Ereignis (`events`) | Ein datierter Vorgang am Fahrzeug: Inspektion, Reparatur, HU, Reifen, Schaden, Rückruf, Kauf. Eindeutig über Werkstatt und Rechnungsnummer, ohne Rechnungsnummer über Art, Leistungsdatum und Werkstatt. |
 | Position (`event_items`) | Eine Zeile eines Ereignisses: Arbeit, Teil, Material oder Pauschale. |
 | Wartungsaufgabe (`tasks`) | Wiederkehrende Arbeit an einem Fahrzeug, etwa Ölwechsel. |
 | Intervallregel (`task_rules`) | Wann eine Wartungsaufgabe fällig wird: km, Monate, Erstintervall, fest oder flexibel; mit Quelle und Konfidenz. |
@@ -33,6 +33,9 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 | Klärfall (`open_items`) | Offener Punkt: Konflikt zweier Werte, Nachfrage oder Beobachtung. Lösen dürfen nur Menschen. Bei einem Konflikt trägt er den Vorschlag (`proposal_json`), damit der neue Wert nicht neu erfasst werden muss. |
 | Datensatz-Abgleich (`RecordMerger`) | Regel für Listen wie Zulassung und Ausstattung: derselbe natürliche Schlüssel ergibt keinen zweiten Datensatz, sondern ergänzt leere Spalten, aktualisiert nicht bestätigte Werte oder wird Klärfall. Ergebnisse: angelegt · ergaenzt · aktualisiert · unveraendert · klaerfall. |
 | Spezifikation (`spec.<bereich>.<schluessel>`) | Technischer Wert eines Fahrzeugs (Ölsorte, Füllmenge, Reifendruck) als Fakt mit Herkunft; Einheit steht im Wert. Eintrag über `set_spec`. |
+| Werkstatt (`workshops`) | Betrieb, der ein Ereignis ausführt; je Garage über Name + Ort erkannt, mit optionalem Vermerk „Vertragswerkstatt“. |
+| Trockenlauf (`validate_service_event`) | Rechnet ein Ereignis vollständig durch (Abgleich, Klärfälle, Kilometerstand) und rollt am Ende zurück: zeigt, was geschähe, speichert nichts; IDs sind vorläufig. |
+| Strittiger Stand | Kilometerstand, der einem früheren größeren oder späteren kleineren widerspricht (Kilometer laufen nur vorwärts, ADR-011): gespeichert, aber ohne Wirkung auf die Prognose, bis ein Mensch entscheidet. |
 | Zulassung (`registrations`) | Kennzeichen eines Fahrzeugs ab einem Datum, optional mit Halter; mehrere über die Zeit. Schlüssel: Kennzeichen + gültig ab. |
 | Ausstattung (`equipment`) | Serien- oder Sonderausstattung mit optionalem Code und Listenpreis. Schlüssel: Name. |
 
