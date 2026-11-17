@@ -264,7 +264,8 @@ final class EventService
     {
         $proposalItems = array_map(self::proposalItem(...), $parsed['items']);
         foreach ($this->openItems->findOpenByRef(self::TABLE, $eventId, $actor) as $openItem) {
-            if (($openItem['proposal']['items'] ?? null) === $proposalItems) {
+            $storedItems = $openItem['proposal']['items'] ?? null;
+            if (is_array($storedItems) && self::sortedKeys($storedItems) === self::sortedKeys($proposalItems)) {
                 return $openItem['id'];
             }
         }
@@ -284,6 +285,21 @@ final class EventService
         $this->audit->record($actor, 'events.items_dispute', sprintf('events:%d', $eventId), $vehicle['garage_id'], ['count' => $storedCount], ['count' => count($proposalItems), 'open_item_id' => $openItemId], $vehicle['id']);
 
         return $openItemId;
+    }
+
+    /**
+     * Die JSON-Spalte der Datenbank sortiert Objektschlüssel um; verglichen wird deshalb ohne Rücksicht auf die Schlüsselreihenfolge.
+     *
+     * @param list<array<string, string>> $items
+     * @return list<array<string, string>>
+     */
+    private static function sortedKeys(array $items): array
+    {
+        return array_map(static function (array $item): array {
+            ksort($item);
+
+            return $item;
+        }, $items);
     }
 
     /**
