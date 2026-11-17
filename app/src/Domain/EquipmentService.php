@@ -60,7 +60,7 @@ final class EquipmentService
                 'name' => (string) $row['name'],
                 'code' => $row['code'] === null ? null : (string) $row['code'],
                 'category' => (string) $row['category'],
-                'list_price_eur' => $row['list_price_cents'] === null ? null : self::centsToEuro((int) $row['list_price_cents']),
+                'list_price_eur' => $row['list_price_cents'] === null ? null : Money::centsToEuro((int) $row['list_price_cents']),
                 'source' => (string) $row['source'],
                 'confidence' => (string) $row['confidence'],
             ];
@@ -113,10 +113,5 @@ final class EquipmentService
             'category' => Validate::enum($prefix . 'category', $item['category'] ?? null, self::CATEGORIES),
             'list_price_cents' => Validate::euroToCents($prefix . 'list_price_eur', $item['list_price_eur'] ?? null),
         ];
-    }
-
-    private static function centsToEuro(int $cents): string
-    {
-        return sprintf('%d.%02d', intdiv($cents, 100), $cents % 100);
     }
 }
