@@ -169,6 +169,57 @@ final class OdometerRepository
     }
 
     /**
+     * Stände mit Herkunft, nach Datum und Wert; unabhängig vom Status (auch strittige und verworfene).
+     *
+     * @param list<int> $ids
+     * @return list<array{id: int, read_on: string, km: int, reading_status: string, source: string, source_url: string|null, confidence: string, actor: string}>
+     */
+    public function findByIds(array $ids, Actor $actor): array
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === [] || $ids === []) {
+            return [];
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf(
+                "SELECT id, read_on, km, reading_status, source, source_url, confidence, actor FROM odometer_readings
+                 WHERE id IN (%s) AND status = 'aktiv' AND garage_id IN (%s) ORDER BY read_on, km, id",
+                implode(', ', array_fill(0, count($ids), '?')),
+                implode(', ', array_fill(0, count($garageIds), '?'))
+            )
+        );
+        $statement->execute([...$ids, ...$garageIds]);
+
+        return array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'],
+            'read_on' => (string) $row['read_on'],
+            'km' => (int) $row['km'],
+            'reading_status' => (string) $row['reading_status'],
+            'source' => (string) $row['source'],
+            'source_url' => $row['source_url'] === null ? null : (string) $row['source_url'],
+            'confidence' => (string) $row['confidence'],
+            'actor' => (string) $row['actor'],
+        ], $statement->fetchAll());
+    }
+
+    public function setStatus(int $id, string $readingStatus, Actor $actor): void
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return;
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf(
+                "UPDATE odometer_readings SET reading_status = ?, updated_at = UTC_TIMESTAMP() WHERE id = ? AND status = 'aktiv' AND garage_id IN (%s)",
+                implode(', ', array_fill(0, count($garageIds), '?'))
+            )
+        );
+        $statement->execute([$readingStatus, $id, ...$garageIds]);
+    }
+
+    /**
      * @param list<array<string, mixed>> $rows
      * @return list<array{id: int, read_on: string, km: int}>
      */

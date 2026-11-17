@@ -52,4 +52,28 @@ final class RecordRepository
 
         return $statement->fetchAll();
     }
+
+    /**
+     * Ein aktiver Datensatz mit allen Spalten samt Herkunft; `$table` ist eine Tabelle des Datensatz-Abgleichs.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function find(string $table, int $id, Actor $actor): ?array
+    {
+        if (!isset(RecordMerger::TABLES[$table])) {
+            throw new InvalidArgumentException(sprintf('Tabelle „%s“ ist nicht lesbar.', $table));
+        }
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return null;
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf("SELECT * FROM %s WHERE id = ? AND status = 'aktiv' AND garage_id IN (%s)", $table, implode(', ', array_fill(0, count($garageIds), '?')))
+        );
+        $statement->execute([$id, ...$garageIds]);
+        $row = $statement->fetch();
+
+        return $row === false ? null : $row;
+    }
 }

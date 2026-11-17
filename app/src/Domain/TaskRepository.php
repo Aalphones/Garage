@@ -69,11 +69,11 @@ final class TaskRepository
     }
 
     /**
-     * Die aktuelle Regel einer Aufgabe, gesperrt für die Transaktion.
+     * Die aktuelle Regel einer Aufgabe, gesperrt für die Transaktion (`$lock`, nur beim Schreiben sinnvoll).
      *
      * @return array{id: int, interval_km: int|null, interval_months: int|null, first_km: int|null, first_months: int|null, mode: string, valid_from: string, source: string, source_url: string|null, confidence: string}|null
      */
-    public function currentRule(int $taskId, Actor $actor): ?array
+    public function currentRule(int $taskId, Actor $actor, bool $lock = true): ?array
     {
         $garageIds = $actor->garageIds();
         if ($garageIds === []) {
@@ -83,14 +83,54 @@ final class TaskRepository
         $statement = $this->pdo->prepare(
             sprintf(
                 "SELECT id, interval_km, interval_months, first_km, first_months, mode, valid_from, source, source_url, confidence
-                 FROM task_rules WHERE task_id = ? AND rule_status = 'aktuell' AND garage_id IN (%s) ORDER BY id DESC LIMIT 1 FOR UPDATE",
-                self::placeholders($garageIds)
+                 FROM task_rules WHERE task_id = ? AND rule_status = 'aktuell' AND garage_id IN (%s) ORDER BY id DESC LIMIT 1%s",
+                self::placeholders($garageIds),
+                $lock ? ' FOR UPDATE' : ''
             )
         );
         $statement->execute([$taskId, ...$garageIds]);
         $row = $statement->fetch();
 
         return $row === false ? null : self::rule($row);
+    }
+
+    /**
+     * Eine Regel (auch abgelöste) samt ihrer Aufgabe, zum Auflösen eines Klärfalls.
+     *
+     * @return array{task: array{id: int, garage_id: int, vehicle_id: int, task_key: string, title: string}, rule: array{id: int, interval_km: int|null, interval_months: int|null, first_km: int|null, first_months: int|null, mode: string, valid_from: string, source: string, source_url: string|null, confidence: string}}|null
+     */
+    public function findRuleWithTask(int $ruleId, Actor $actor): ?array
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return null;
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf(
+                'SELECT t.id AS task_id, t.garage_id, t.vehicle_id, t.task_key, t.title, r.id, r.interval_km, r.interval_months, r.first_km, r.first_months,
+                        r.mode, r.valid_from, r.source, r.source_url, r.confidence
+                 FROM task_rules r JOIN tasks t ON t.id = r.task_id AND t.garage_id = r.garage_id
+                 WHERE r.id = ? AND r.garage_id IN (%s)',
+                self::placeholders($garageIds)
+            )
+        );
+        $statement->execute([$ruleId, ...$garageIds]);
+        $row = $statement->fetch();
+        if ($row === false) {
+            return null;
+        }
+
+        return [
+            'task' => [
+                'id' => (int) $row['task_id'],
+                'garage_id' => (int) $row['garage_id'],
+                'vehicle_id' => (int) $row['vehicle_id'],
+                'task_key' => (string) $row['task_key'],
+                'title' => (string) $row['title'],
+            ],
+            'rule' => self::rule($row),
+        ];
     }
 
     /**

@@ -83,6 +83,49 @@ final class RecordMerger
     }
 
     /**
+     * „Neuer Wert gilt“: setzt die Spalte aus dem Vorschlag eines Klärfalls und die Herkunft der Zeile auf die des Vorschlags.
+     * Der Aufrufer (`OpenItemService::resolve`) hat das Fahrzeug gesperrt und schreibt den Audit-Eintrag.
+     *
+     * @param array<string, mixed> $proposal field, value, source, source_url, confidence
+     * @return array{before: array<string, string|null>, after: array<string, string|null>}
+     */
+    public function applyProposal(string $table, int $rowId, array $proposal, Actor $actor): array
+    {
+        $definition = self::TABLES[$table] ?? throw new InvalidArgumentException(sprintf('Tabelle „%s“ ist nicht für den Abgleich vorgesehen.', $table));
+        $field = $proposal['field'] ?? null;
+        $value = $proposal['value'] ?? null;
+        if (!is_string($field) || !in_array($field, $definition['columns'], true) || !is_string($value)) {
+            throw new LogicException(sprintf('Der Vorschlag passt nicht zu %s: Spalte „%s“ ist dort nicht abgleichbar.', $table, is_string($field) ? $field : '(fehlt)'));
+        }
+        $provenance = Provenance::validate($proposal, 'proposal');
+
+        $garageIds = $actor->garageIds();
+        $statement = $this->pdo->prepare(
+            sprintf(
+                "SELECT %s AS stored, source, source_url, confidence FROM %s WHERE id = ? AND status = 'aktiv' AND garage_id IN (%s) FOR UPDATE",
+                $field,
+                $table,
+                implode(', ', array_fill(0, count($garageIds), '?'))
+            )
+        );
+        $statement->execute([$rowId, ...$garageIds]);
+        $existing = $statement->fetch();
+        if ($existing === false) {
+            throw new DomainError('not_found', sprintf('Der Datensatz (%s) zu diesem Klärfall existiert nicht mehr.', $definition['label']));
+        }
+
+        $update = $this->pdo->prepare(
+            sprintf('UPDATE %s SET %s = ?, source = ?, source_url = ?, confidence = ?, updated_at = UTC_TIMESTAMP() WHERE id = ? AND garage_id IN (%s)', $table, $field, implode(', ', array_fill(0, count($garageIds), '?')))
+        );
+        $update->execute([$value, $provenance['source'], $provenance['source_url'], $provenance['confidence'], $rowId, ...$garageIds]);
+
+        return [
+            'before' => [$field => $existing['stored'] === null ? null : (string) $existing['stored'], 'source' => (string) $existing['source'], 'confidence' => (string) $existing['confidence']],
+            'after' => [$field => $value, 'source' => $provenance['source'], 'confidence' => $provenance['confidence']],
+        ];
+    }
+
+    /**
      * @param array<string, string|null> $values
      * @param list<string> $keyColumns
      * @param list<string> $compareColumns

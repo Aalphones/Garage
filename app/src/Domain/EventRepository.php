@@ -118,6 +118,20 @@ final class EventRepository
         return $statement->fetchAll();
     }
 
+    /** Löst alle aktiven Positionen ab; sie bleiben als Verlauf stehen. */
+    public function supersedeItems(int $eventId, Actor $actor): void
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return;
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf("UPDATE event_items SET status = 'abgeloest' WHERE event_id = ? AND status = 'aktiv' AND garage_id IN (%s)", implode(', ', array_fill(0, count($garageIds), '?')))
+        );
+        $statement->execute([$eventId, ...$garageIds]);
+    }
+
     /** @param list<array<string, string|null>> $items validierte Positionen; `line_no` ergibt sich aus der Reihenfolge */
     public function insertItems(int $garageId, int $eventId, array $items): void
     {

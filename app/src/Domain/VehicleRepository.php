@@ -199,6 +199,39 @@ final class VehicleRepository
         $statement->execute([self::FACT_SUPERSEDED, $factId, ...$garageIds]);
     }
 
+    public function setFactStatus(int $factId, string $status, Actor $actor): void
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return;
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf('UPDATE vehicle_facts SET status = ? WHERE id = ? AND garage_id IN (%s)', self::placeholders($garageIds))
+        );
+        $statement->execute([$status, $factId, ...$garageIds]);
+    }
+
+    /** @return array{id: int, vehicle_id: int, field: string, value: string, source: string, source_url: string|null, confidence: string, actor: string, created_at: string, status: string}|null */
+    public function findFact(int $factId, Actor $actor): ?array
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return null;
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf(
+                'SELECT id, vehicle_id, field, value, source, source_url, confidence, actor, created_at, status FROM vehicle_facts WHERE id = ? AND garage_id IN (%s)',
+                self::placeholders($garageIds)
+            )
+        );
+        $statement->execute([$factId, ...$garageIds]);
+        $row = $statement->fetch();
+
+        return $row === false ? null : self::fact($row) + ['vehicle_id' => (int) $row['vehicle_id'], 'status' => (string) $row['status']];
+    }
+
     /**
      * @param list<int> $vehicleIds
      * @return array<int, int> Fahrzeug-ID => Zahl offener Klärfälle

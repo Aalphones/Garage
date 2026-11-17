@@ -66,6 +66,32 @@ final class EventService
     }
 
     /**
+     * „Neue Positionen gelten“ (Klärfall auflösen): die aktiven Positionen werden abgelöst, die Positionen des Vorschlags
+     * treten an ihre Stelle. Läuft in der Transaktion des Aufrufers, der das Fahrzeug gesperrt hat.
+     *
+     * @param array<string, mixed> $proposal `items` in der Form der Eingabe von `record_service_event`
+     * @return array{before: int, after: int} Zahl der Positionen vorher und nachher
+     */
+    public function replaceItems(int $eventId, array $proposal, Actor $actor): array
+    {
+        $items = self::parseItems($proposal['items'] ?? null);
+        if ($items === []) {
+            throw new DomainError('invalid_value', 'Der Vorschlag enthält keine Positionen.');
+        }
+
+        $event = $this->events->find($eventId, $actor);
+        if ($event === null) {
+            throw new DomainError('not_found', 'Das Ereignis zu diesem Klärfall existiert nicht mehr.');
+        }
+
+        $before = count($this->events->activeItems($eventId, $actor));
+        $this->events->supersedeItems($eventId, $actor);
+        $this->events->insertItems((int) $event['garage_id'], $eventId, $items);
+
+        return ['before' => $before, 'after' => count($items)];
+    }
+
+    /**
      * Neueste zuerst.
      *
      * @return list<array<string, mixed>>
