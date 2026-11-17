@@ -3,6 +3,7 @@ import { logout, request, restore } from './api.js';
 import { clearChildren, element } from './dom.js';
 import { setupGrants } from './grant.js';
 import { setupLogin } from './login.js';
+import { setupOpenItems } from './openitem.js';
 import { setupTokens } from './token.js';
 
 const statusLine = document.getElementById('status');
@@ -16,6 +17,7 @@ const garageEmpty = document.getElementById('garage-empty');
 const logoutButton = document.getElementById('logout');
 const tokens = setupTokens();
 const grants = setupGrants();
+const openItems = setupOpenItems();
 
 function showLogin(message) {
     accountSection.hidden = true;
@@ -41,7 +43,7 @@ async function showAccount() {
     loginSection.hidden = true;
     accountSection.hidden = false;
     statusLine.textContent = '';
-    await Promise.all([tokens.load(), grants.load()]);
+    await Promise.all([tokens.load(), grants.load(), openItems.load()]);
 }
 
 setupLogin(loginForm, loginError, showAccount);
@@ -53,10 +55,12 @@ logoutButton.addEventListener('click', async () => {
         showLogin('Die Abmeldung auf dem Server ist fehlgeschlagen: ' + error.message);
         tokens.clear();
         grants.clear();
+        openItems.clear();
         return;
     }
     tokens.clear();
     grants.clear();
+    openItems.clear();
     showLogin('Abgemeldet.');
 });
 

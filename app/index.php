@@ -7,6 +7,7 @@ use Garage\Api\DeployController;
 use Garage\Api\HealthController;
 use Garage\Api\InvitationController;
 use Garage\Api\MeController;
+use Garage\Api\OpenItemController;
 use Garage\Api\TokenController;
 use Garage\Api\OAuthController;
 use Garage\Http\Request;
@@ -37,6 +38,9 @@ $router->add('GET', '/garage/api/me', static fn () => (new MeController())->show
 $router->add('GET', '/garage/api/tokens', static fn () => (new TokenController())->list($request));
 $router->add('POST', '/garage/api/tokens', static fn () => (new TokenController())->create($request));
 $router->add('DELETE', '/garage/api/tokens/{id}', static fn (array $parameters) => (new TokenController())->revoke($request, (int) $parameters['id']));
+
+$router->add('GET', '/garage/api/open-items', static fn () => (new OpenItemController())->list($request));
+$router->add('POST', '/garage/api/open-items/{id}/resolve', static fn (array $parameters) => (new OpenItemController())->resolve($request, (int) $parameters['id']));
 
 // Discovery liegt mit Pfad-Suffix an der Domain-Wurzel; DISPATCHs Wurzel-.htaccess leitet sie hierher (ADR-001).
 $router->add('GET', '/.well-known/oauth-protected-resource/garage/mcp', static fn () => (new DiscoveryController($config))->protectedResource());

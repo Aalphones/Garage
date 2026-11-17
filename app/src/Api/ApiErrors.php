@@ -21,6 +21,7 @@ final class ApiErrors
         'forbidden' => 403,
         'not_found' => 404,
         'invitation_not_found' => 404,
+        'already_resolved' => 409,
         'email_taken' => 409,
         'name_taken' => 409,
         'request_expired' => 410,
