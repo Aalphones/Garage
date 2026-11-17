@@ -13,7 +13,7 @@ Quelle des Umfangs: [`../../PROJECT.md`](../../PROJECT.md) → Meilenstein 2, Fa
 | 3 | [Wartungsplan und Fälligkeiten](phase-3-wartungsplan.md) — Aufgaben, Intervallregeln, Kilometerprognose, Fälligkeitsrechnung | heikel | complete |
 | 4 | [Messwerte, Reifen, Teile, Schäden, Rückrufe, Notizen](phase-4-messwerte-reifen-teile.md) | standard | complete |
 | 5 | [Klärfälle, Verlauf, Suche](phase-5-klaerfaelle.md) — Tools, Web-API zum Lösen, Platzhalter-Seite | heikel | complete |
-| 6 | [Akte, Resources, Prompts](phase-6-akte.md) — `get_dossier`, `garage://`-Resources, zwei Prompts, Server-Anweisungen | standard | pending |
+| 6 | [Akte, Resources, Prompts](phase-6-akte.md) — `get_dossier`, `garage://`-Resources, zwei Prompts, Server-Anweisungen | standard | complete |
 | 7 | [Abschluss auf Strato](phase-7-abschluss.md) — Mandanten-Liste über alle Tools, Testkonten sperren, Doku, Archiv | mechanisch | pending |
 
 Reihenfolge ist Pflicht: jede Phase baut auf den Klassen der vorigen. Jede Phase endet mit `deploy.cmd` und Prüfung per `curl` auf Strato — lokal gibt es kein MySQL (geprüft 2026-11-17: kein MySQL-Dienst, keine `app/.env.local`).

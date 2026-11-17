@@ -1,6 +1,6 @@
 # Phase 6 — Akte, Resources, Prompts
 
-Rating: **standard** (liest nur, setzt Vorhandenes zusammen). Status: **pending**.
+Rating: **standard** (liest nur, setzt Vorhandenes zusammen). Status: **complete**.
 
 ## Kontext — vorher lesen
 
@@ -12,12 +12,12 @@ Rating: **standard** (liest nur, setzt Vorhandenes zusammen). Status: **pending*
 
 ## Abnahmekriterien
 
-- [ ] `get_dossier` für das Testfahrzeug aus Phase 1–5 liefert Markdown mit allen Abschnitten in der Reihenfolge unten; leere Abschnitte erscheinen mit einem Satz „Noch nichts erfasst.“; jeder Wert trägt seine Herkunft in Klammern („(Beleg, bestätigt)“); geschätzte Werte tragen „≈“.
-- [ ] `resources/list` nennt `garage://fahrzeuge`, `garage://leitfaden/erfassung`, `garage://leitfaden/herkunft`; `resources/templates/list` nennt `garage://fahrzeug/{id}/akte` und `garage://fahrzeug/{id}/faelligkeiten`.
-- [ ] `resources/read` `garage://fahrzeug/<id>/akte` liefert denselben Text wie `get_dossier` (`mimeType` `text/markdown`); mit fremder ID → Fehler `INVALID_PARAMS` „unbekannt“ (wie unbekannte Adresse, nie ein Hinweis auf Existenz).
-- [ ] `prompts/list` nennt `beleg_erfassen` und `was_steht_an`; `prompts/get` liefert je eine Nachricht mit Arbeitsanweisung (unten).
-- [ ] `initialize`/`server/discover` liefern die neuen Server-Anweisungen.
-- [ ] Mandanten: `get_dossier` und Resources von B auf Fahrzeug A → `not_found` bzw. „unbekannt“.
+- [x] `get_dossier` für das Testfahrzeug aus Phase 1–5 liefert Markdown mit allen Abschnitten in der Reihenfolge unten; leere Abschnitte erscheinen mit einem Satz „Noch nichts erfasst.“; jeder Wert trägt seine Herkunft in Klammern („(Beleg, bestätigt)“); geschätzte Werte tragen „≈“.
+- [x] `resources/list` nennt `garage://fahrzeuge`, `garage://leitfaden/erfassung`, `garage://leitfaden/herkunft`; `resources/templates/list` nennt `garage://fahrzeug/{id}/akte` und `garage://fahrzeug/{id}/faelligkeiten`.
+- [x] `resources/read` `garage://fahrzeug/<id>/akte` liefert denselben Text wie `get_dossier` (`mimeType` `text/markdown`); mit fremder ID → Fehler `INVALID_PARAMS` „unbekannt“ (wie unbekannte Adresse, nie ein Hinweis auf Existenz).
+- [x] `prompts/list` nennt `beleg_erfassen` und `was_steht_an`; `prompts/get` liefert je eine Nachricht mit Arbeitsanweisung (unten).
+- [x] `initialize`/`server/discover` liefern die neuen Server-Anweisungen.
+- [x] Mandanten: `get_dossier` und Resources von B auf Fahrzeug A → `not_found` bzw. „unbekannt“.
 
 ## Akte — Aufbau (`app/src/Domain/DossierService.php`)
 
@@ -50,18 +50,34 @@ Datumsformat `TT.MM.JJJJ`, Zahlen mit Tausenderpunkt, Euro mit Komma und „€�
 
 ## Checkliste
 
-- [ ] `ToolResult::markdown(string $text): self` — ein Textblock mit dem Markdown, kein JSON.
-- [ ] `app/src/Domain/DossierService.php` wie oben; `app/src/Mcp/Tools/DossierTools.php`: `get_dossier` (read, Beschreibung: „Die ganze Akte als Markdown, Aufbau fest; für Export, Verkauf und als Kontext.“).
-- [ ] `Resources`, `Prompts`, `McpController` (Übergabe), zwei Leitfaden-Dateien.
-- [ ] `app/mcp/instructions.md` neu fassen: Einleitung um die neuen Bereiche erweitern; Regeln 1–5 behalten, Regel 3 ergänzen „Vor record_service_event list_events lesen; im Zweifel validate_service_event“, neue Regel 6 „Kilometerstände und Messwerte immer mit Datum; nie raten — Unleserliches wird open_item“, Regel 7 „Fälligkeiten nicht selbst rechnen, sondern get_due_items lesen“.
-- [ ] `McpController::SERVER_VERSION` auf `0.2.0`.
+- [x] `ToolResult::markdown(string $text): self` — ein Textblock mit dem Markdown, kein JSON.
+- [x] `app/src/Domain/DossierService.php` wie oben; `app/src/Mcp/Tools/DossierTools.php`: `get_dossier` (read, Beschreibung: „Die ganze Akte als Markdown, Aufbau fest; für Export, Verkauf und als Kontext.“).
+- [x] `Resources`, `Prompts`, `McpController` (Übergabe), zwei Leitfaden-Dateien.
+- [x] `app/mcp/instructions.md` neu fassen: Einleitung um die neuen Bereiche erweitern; Regeln 1–5 behalten, Regel 3 ergänzen „Vor record_service_event list_events lesen; im Zweifel validate_service_event“, neue Regel 6 „Kilometerstände und Messwerte immer mit Datum; nie raten — Unleserliches wird open_item“, Regel 7 „Fälligkeiten nicht selbst rechnen, sondern get_due_items lesen“.
+- [x] `McpController::SERVER_VERSION` auf `0.2.0`.
 
 ### Prüfen (auf Strato, nach `deploy.cmd`)
 
-- [ ] AK per `curl`; den Markdown-Text von `get_dossier` einmal vollständig lesen und gegen die Daten aus Phase 1–5 abgleichen.
+- [x] AK per `curl`; den Markdown-Text von `get_dossier` einmal vollständig lesen und gegen die Daten aus Phase 1–5 abgleichen.
 
 ### Doku
 
-- [ ] `docs/routes.md` (Tool, Resources, Prompts), `docs/code-map.md` (`Dossier*`, Leitfäden in `app/mcp/`).
+- [x] `docs/routes.md` (Tool, Resources, Prompts), `docs/code-map.md` (`Dossier*`, Leitfäden in `app/mcp/`).
 
 ## Report-Back
+
+**Ergebnis:** Phase 6 ist umgesetzt und auf Strato deployt (kein Migrationsschritt). `get_dossier` liefert die Akte als Markdown in 15 Abschnitten (`DossierService` + `DossierFormat`); `Resources` (Fahrzeugliste, Akte, Fälligkeiten, zwei Leitfäden) und `Prompts` (`beleg_erfassen`, `was_steht_an`) sind gefüllt; `instructions.md` neu; Server-Version 0.2.0. Protokollschicht unverändert bis auf die Übergabe von Diensten und Akteur an `Resources` in `McpController`.
+
+**Geprüft (curl/MCP gegen Strato, 43 Prüfungen in einem Skript, Testkonten A Inhaber, B fremd, dazu ein Token nur mit `garage:write`):** Initialize und `server/discover` mit neuen Anweisungen und Version; `tools/list` nennt `get_dossier` (read-only); Akte eines Testfahrzeugs (Stammdaten mit Klärfall, zwei Zulassungen, Ausstattung, Spezifikationen, Kilometerprognose, zwei Rechnungen mit Positionen, zwei Regeln, Messwertreihe, zwei Reifensätze, Teile, Schaden, Rückruf, Notiz, Klärfall) einmal vollständig gelesen und gegen die Eingabedaten abgeglichen; Fahrzeug ohne Daten ergibt 15 Abschnitte „Noch nichts erfasst.“; Pipe im Halter und in einer Positionsbeschreibung maskiert; Notiz-Überschriften `#` → `###`, Codeblock unberührt; Resource `…/akte` ist Zeichen für Zeichen derselbe Text wie `get_dossier`; `…/faelligkeiten` hat dieselben Aufgaben wie `get_due_items`; fremde ID, nicht vorhandene ID und ungültige Adressen (`0`, führende Null, Zusatzpfad, Query) antworten gleich mit `-32602` „unbekannt“; Nutzer B bekommt für `get_dossier` `not_found`; ein Token ohne `garage:read` sieht `get_dossier` nicht, `resources/list` → 403 `-32003`; Prompts mit und ohne Argument, unbekannter Prompt und Argument mit Zeilenumbruch → `-32602`.
+
+**Abweichungen von der Phasen-Datei:**
+- Tabellen Zulassung, Wartungsplan, Fälligkeiten tragen eine zusätzliche Spalte „Herkunft“ bzw. „Rechenweg“; Zulassung und Ausstattung zeigen Herkunft je Zeile (AK „Herkunft an jedem Wert“).
+- Neu: `OdometerRepository::latestValid`/`OdometerService::latestValid` — `validReadings` kennt keine Herkunft, die Akte zeigt sie beim letzten Stand.
+- `Prompts` hat keinen Dienst-/Akteur-Parameter (nicht nötig: reine Texte); nur `Resources` bekommt Dienste und Akteur. Das Prompt-Argument `fahrzeug` ist ein einzeiliger Text bis 80 Zeichen, sonst `-32602`.
+- Der Dienst `dossier` steht im Service-Array von `McpController::services` (neben den anderen).
+- Die Regeln der Server-Anweisungen sind neu durchnummeriert (neun statt acht): Spec-Regel 6 (Kilometer/Messwerte mit Datum) und 7 (Fälligkeiten nicht selbst rechnen) ersetzen die bisherigen 6–8, deren Inhalt (Intervalle eintragen, Reifen/Teile/Schäden, Notizen) in 7–9 aufgegangen ist.
+- Strittige Fakten in der Akte zeigen keine Adresse der Quelle (`VehicleService::get` liefert sie für `disputed` nicht); sie steht beim Klärfall.
+
+**🟡 Nicht geprüft / Rest-Risiko:** Der Leitfaden-Satz „Nutzer-Aussage → bestätigt, wenn sicher“ ist eine Annahme (Spezifikation nennt nur Beleg, Werkstatt, Webseite, Ableitung). Echte Clients (claude.ai, ChatGPT, `claude mcp add`) haben `resources/read` und `prompts/get` noch nicht gegen die Akte ausgeführt. Der Rechenweg in der Fälligkeitstabelle ist der unveränderte Text von `DueCalculator` und kann lang werden. Audit-Einträge entstehen hier nicht (nur Lesen).
+
+Testkonten dieser Phase: `test-m2-p6a|p6b-<Zeitstempel>@example.com` (vier Läufe; Garagen „Test A P6 …“, „Test B P6 …“, Fahrzeuge „Golf P6“, „Leer P6“, Token `p6-a`, `p6-a-w`, `p6-b`), passen auf `test-%@example.com`.

@@ -42,7 +42,21 @@ Fehler immer als JSON `{"error": "…", "message": "…"}`; unbekannter Pfad 404
 |---|---|---|---|---|
 | POST | `/garage/mcp` | `McpMcpController::handle` | `gmcp_`- oder `goa_`-Token als Bearer; Nutzer muss `aktiv` sein | JSON-RPC 2.0, eine Nachricht je Anfrage (kein Batch); ohne `id` → 202; ohne Token 401 mit `WWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource/garage/mcp", scope="…"` (bei ungültigem Token zusätzlich `error="invalid_token"`); fremder `Origin` → 403; Token ohne Scope für ein Tool → 403, Fehler `-32003`, `insufficient_scope` |
 
-Methoden: `initialize` (ältere Clients), `server/discover` (2026-07-28), `ping`, `tools/list` (nur Tools der Scopes des Tokens), `tools/call`, `resources/list`/`templates/list`/`read` und `prompts/list`/`get` (Kataloge leer, brauchen `garage:read`).
+Methoden: `initialize` (ältere Clients), `server/discover` (2026-07-28), `ping`, `tools/list` (nur Tools der Scopes des Tokens), `tools/call`, `resources/list`/`templates/list`/`read` und `prompts/list`/`get` (brauchen `garage:read`; Katalog unten). Server-Version `0.2.0`.
+
+| Resource | MIME | Inhalt |
+|---|---|---|
+| `garage://fahrzeuge` | `application/json` | wie `list_vehicles` (`{garages:[…]}`) |
+| `garage://fahrzeug/{id}/akte` (Template) | `text/markdown` | derselbe Text wie `get_dossier` |
+| `garage://fahrzeug/{id}/faelligkeiten` (Template) | `application/json` | wie `get_due_items` für dieses Fahrzeug, Horizont 36 Monate |
+| `garage://leitfaden/erfassung`, `garage://leitfaden/herkunft` | `text/markdown` | Dateien `app/mcp/leitfaden-*.md` |
+
+Unbekannte Adresse, ungültige ID und fremdes Fahrzeug antworten gleich: JSON-RPC-Fehler `-32602` „Resource … ist unbekannt“ (nie ein Hinweis auf Existenz).
+
+| Prompt | Argument | Inhalt |
+|---|---|---|
+| `beleg_erfassen` | `fahrzeug?` (einzeiliger Text, höchstens 80 Zeichen) | eine Nachricht: Beleg zerlegen (Leitfaden lesen), `validate_service_event`, Ergebnis zeigen, nach Okay `record_service_event` |
+| `was_steht_an` | `fahrzeug?` | eine Nachricht: `get_due_items` zusammenfassen (überfällig, 3 Monate, unbelegte Regeln), Kosten nur aus vergleichbaren Ereignissen |
 
 | Tool | Scope | Eingabe | Ausgabe (Kern) |
 |---|---|---|---|
@@ -74,5 +88,6 @@ Methoden: `initialize` (ältere Clients), `server/discover` (2026-07-28), `ping`
 | `open_item` | write | `vehicle_id`, `kind` (`nachfragen`\|`beobachten`), `text` (1–1000), `suggestion?` (1–1000) | `{open_item_id,result}`, `result` = `angelegt`\|`unveraendert` (gleicher offener Text am selben Fahrzeug → dieselbe ID); `kind: konflikt` → `invalid_value`; **kein Lösen-Tool** (nur Mensch im Browser, ADR-010) |
 | `list_changes` | read | `vehicle_id?`, `limit?` (1–200, Standard 50) | `{changes:[{id,at,actor,action,target,vehicle_id,before,after}]}` aus dem Audit-Log der eigenen Garagen, neueste zuerst; fremdes Fahrzeug → `not_found` |
 | `search` | read | `query` (3–100 Zeichen), `vehicle_id?` | `{hits:[{type,id,vehicle_id,title,snippet}]}`, `type` = `event`\|`event_item`\|`part`\|`note`\|`open_item` (Positionstreffer tragen zusätzlich `event_id`); je Quelle höchstens 10, zusammen 30; `%`, `_` wörtlich; nur offene Klärfälle, aktive Datensätze |
+| `get_dossier` | read | `vehicle_id` | die ganze Akte als **Markdown-Text** (kein JSON), 15 Abschnitte in fester Reihenfolge: Stammdaten, Zulassung, Ausstattung, Spezifikationen, Kilometerstand, Fälligkeiten, Wartungsplan, Scheckheft, Messwerte, Reifen, Teile, Schäden, Rückrufe, Notizen, Offene Klärfälle; Herkunft in Klammern an jedem Wert, geschätzte Werte mit „≈“, leere Abschnitte „Noch nichts erfasst.“; fremdes Fahrzeug → `not_found` |
 
 Tool-Fehler kommen als Ergebnis mit `isError: true` und `{error,message,details}`: `not_found` (fremdes oder unbekanntes Fahrzeug/Garage), `forbidden` (Rolle `lesend`), `invalid_value` (mit Feldname und Beispiel), `invalid_argument` (Pflichtargument fehlt oder falscher Typ).
