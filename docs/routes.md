@@ -27,6 +27,8 @@ Quelle: `app/index.php`. Alle Pfade absolut; die Brücke liegt unter `/garage/` 
 | POST | `/garage/api/oauth/consent` | `Api\OAuthController::consent` | JWT | Body `request_id`, `decision` (`allow`\|`deny`), `scopes`; `{redirect}` an die App; 410 `request_expired` (auch beim zweiten Mal), 422 `invalid_value` (Scope nicht angefragt oder keiner gewählt); schreibt `oauth_codes.user_id` |
 | GET | `/garage/api/oauth/grants` | `Api\OAuthController::grants` | JWT | `{grants:[{family,client_name,client_host,scopes,connected_at,last_used_at}]}` — nur eigene |
 | DELETE | `/garage/api/oauth/grants/{slug}` | `Api\OAuthController::disconnect` | JWT | 204; fremde oder unbekannte Familie → 404 `not_found` |
+| GET | `/garage/api/open-items` | `Api\OpenItemController::list` | JWT | `{open_items:[{id,garage_id,vehicle_id,vehicle_label,kind,text,created_by,created_at,can_resolve,decisions,current,proposed}]}` — nur offene der eigenen Garagen, neueste zuerst; `decisions` Konflikt `bestehend`/`neu`/`verwerfen`, sonst `erledigt`/`verwerfen`; `can_resolve` = Rolle `inhaber`/`mitglied` |
+| POST | `/garage/api/open-items/{id}/resolve` | `Api\OpenItemController::resolve` | JWT (nur Mensch) | Body `decision`, `note?` (0–500); 200 `{open_item_id,status,decision}`; 404 `not_found` (fremd/unbekannt), 403 `forbidden` (Rolle `lesend`), 409 `already_resolved`, 422 `invalid_value` (Entscheidung passt nicht zur Art, Notiz zu lang); ein Audit-Eintrag `open_item.resolve` (ADR-010) |
 
 Ein `gmcp_`-Token als Bearer an diesen Routen ergibt 401: sie nehmen nur Access-JWTs.
 
@@ -67,5 +69,10 @@ Methoden: `initialize` (ältere Clients), `server/discover` (2026-07-28), `ping`
 | `record_damage` | write | `vehicle_id`, `occurred_on`, `kind`, `description`, `odometer_km?`, `repaired?`, `repair_event_id?`, `appraisal?`, `diminished_value_eur?`, Herkunft | `{damage_id,result,open_item_ids}`; Schlüssel Datum + Art |
 | `record_recall` | write | `vehicle_id`, `title`, `manufacturer_code?`, `kba_reference?` (mindestens eins), `status` (`offen`\|`erledigt`\|`nicht_betroffen`), `done_on?`, `event_id?`, Herkunft | `{recall_id,result,open_item_ids}`; Schlüssel Herstellernummer + KBA-Referenz |
 | `upsert_note` | write | `vehicle_id`, `topic` (1–120), `body` (1–20.000 Zeichen, Zeilenumbrüche erlaubt) | `{note_id,revision,result}`, `result` = `angelegt` (Revision 1)\|`aktualisiert` (nächste Revision)\|`unveraendert`; keine Herkunft |
+
+| `list_open_items` | read | `vehicle_id?`, `status?` (`offen` Standard \| `geloest` \| `verworfen` \| `alle`) | `{open_items:[{id,vehicle_id,vehicle_label,kind,text,created_by,created_at,ref_table,ref_id,proposal,status,resolution,resolved_by,resolved_at}]}`; `proposal` = gespeicherter Vorschlag oder null |
+| `open_item` | write | `vehicle_id`, `kind` (`nachfragen`\|`beobachten`), `text` (1–1000), `suggestion?` (1–1000) | `{open_item_id,result}`, `result` = `angelegt`\|`unveraendert` (gleicher offener Text am selben Fahrzeug → dieselbe ID); `kind: konflikt` → `invalid_value`; **kein Lösen-Tool** (nur Mensch im Browser, ADR-010) |
+| `list_changes` | read | `vehicle_id?`, `limit?` (1–200, Standard 50) | `{changes:[{id,at,actor,action,target,vehicle_id,before,after}]}` aus dem Audit-Log der eigenen Garagen, neueste zuerst; fremdes Fahrzeug → `not_found` |
+| `search` | read | `query` (3–100 Zeichen), `vehicle_id?` | `{hits:[{type,id,vehicle_id,title,snippet}]}`, `type` = `event`\|`event_item`\|`part`\|`note`\|`open_item` (Positionstreffer tragen zusätzlich `event_id`); je Quelle höchstens 10, zusammen 30; `%`, `_` wörtlich; nur offene Klärfälle, aktive Datensätze |
 
 Tool-Fehler kommen als Ergebnis mit `isError: true` und `{error,message,details}`: `not_found` (fremdes oder unbekanntes Fahrzeug/Garage), `forbidden` (Rolle `lesend`), `invalid_value` (mit Feldname und Beispiel), `invalid_argument` (Pflichtargument fehlt oder falscher Typ).
