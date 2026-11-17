@@ -84,8 +84,11 @@ final class Validate
         return $raw;
     }
 
-    /** Zahl oder Text mit Punkt oder Komma; liefert immer genau `$scale` Nachkommastellen mit Punkt. */
-    public static function decimal(string $field, mixed $raw, int $scale, string $example): string
+    /**
+     * Zahl oder Text mit Punkt oder Komma; liefert immer genau `$scale` Nachkommastellen mit Punkt. Negativ nur auf Wunsch
+     * (Temperatur); „-0“ wird zu 0, damit der Vergleich mit dem gespeicherten Wert stimmt.
+     */
+    public static function decimal(string $field, mixed $raw, int $scale, string $example, bool $allowNegative = false): string
     {
         $text = match (true) {
             is_int($raw) => (string) $raw,
@@ -93,12 +96,16 @@ final class Validate
             is_string($raw) => trim($raw),
             default => '',
         };
-        if (preg_match(sprintf(self::DECIMAL_PATTERN, max($scale, 1)), $text) !== 1 || ($scale === 0 && str_contains($text, '.'))) {
-            throw self::invalid($field, sprintf('Erwartet wird eine Zahl ab 0 mit Punkt oder Komma, höchstens %d Nachkommastellen.', $scale), $example);
+        $isNegative = $allowNegative && str_starts_with($text, '-');
+        $unsigned = $isNegative ? substr($text, 1) : $text;
+        if (preg_match(sprintf(self::DECIMAL_PATTERN, max($scale, 1)), $unsigned) !== 1 || ($scale === 0 && str_contains($unsigned, '.'))) {
+            throw self::invalid($field, sprintf('Erwartet wird eine Zahl %s mit Punkt oder Komma, höchstens %d Nachkommastellen.', $allowNegative ? '(auch negativ)' : 'ab 0', $scale), $example);
         }
-        [$whole, $fraction] = array_pad(explode('.', str_replace(',', '.', $text), 2), 2, '');
+        [$whole, $fraction] = array_pad(explode('.', str_replace(',', '.', $unsigned), 2), 2, '');
+        $normalized = $scale === 0 ? $whole : $whole . '.' . str_pad($fraction, $scale, '0');
+        $isZero = trim($normalized, '0.') === '';
 
-        return $scale === 0 ? $whole : $whole . '.' . str_pad($fraction, $scale, '0');
+        return $isNegative && !$isZero ? '-' . $normalized : $normalized;
     }
 
     /** Euro als Zahl oder Text mit höchstens zwei Nachkommastellen → Cent als Ganzzahl-Text; negativ nur auf Wunsch (Rabatt). */

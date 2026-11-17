@@ -8,22 +8,32 @@ use Garage\Auth\McpAuth;
 use Garage\Auth\Scopes;
 use Garage\Db\Connection;
 use Garage\Domain\Actor;
+use Garage\Domain\DamageService;
 use Garage\Domain\DueService;
 use Garage\Domain\EquipmentService;
 use Garage\Domain\EventService;
+use Garage\Domain\MeasurementService;
+use Garage\Domain\NoteService;
 use Garage\Domain\OdometerService;
+use Garage\Domain\PartService;
 use Garage\Domain\RegistrationService;
 use Garage\Domain\TaskService;
+use Garage\Domain\TireService;
 use Garage\Domain\TokenService;
 use Garage\Domain\UserRepository;
 use Garage\Domain\VehicleService;
 use Garage\Http\Request;
 use Garage\Http\Response;
+use Garage\Mcp\Tools\DamageTools;
 use Garage\Mcp\Tools\EquipmentTools;
 use Garage\Mcp\Tools\EventTools;
+use Garage\Mcp\Tools\MeasurementTools;
+use Garage\Mcp\Tools\NoteTools;
 use Garage\Mcp\Tools\OdometerTools;
+use Garage\Mcp\Tools\PartTools;
 use Garage\Mcp\Tools\RegistrationTools;
 use Garage\Mcp\Tools\TaskTools;
+use Garage\Mcp\Tools\TireTools;
 use Garage\Mcp\Tools\VehicleTools;
 use Garage\OAuth\Discovery;
 use Garage\OAuth\TokenIssuer;
@@ -63,6 +73,11 @@ final class McpController
             'odometer' => new OdometerService($pdo),
             'tasks' => new TaskService($pdo),
             'due' => new DueService($pdo),
+            'measurements' => new MeasurementService($pdo),
+            'tires' => new TireService($pdo),
+            'parts' => new PartService($pdo),
+            'damages' => new DamageService($pdo),
+            'notes' => new NoteService($pdo),
             'pdo' => $pdo,
             'config' => $config,
         ];
@@ -367,6 +382,15 @@ final class McpController
         OdometerTools::register($registry, $services);
         $registry->group('Wartungsplan');
         TaskTools::register($registry, $services);
+        $registry->group('Messwerte und Reifen');
+        MeasurementTools::register($registry, $services);
+        TireTools::register($registry, $services);
+        $registry->group('Teile');
+        PartTools::register($registry, $services);
+        $registry->group('Schäden und Rückrufe');
+        DamageTools::register($registry, $services);
+        $registry->group('Notizen');
+        NoteTools::register($registry, $services);
 
         return $registry;
     }

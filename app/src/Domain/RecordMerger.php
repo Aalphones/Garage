@@ -35,6 +35,13 @@ final class RecordMerger
             'key' => ['workshop_id', 'invoice_number'],
             'columns' => ['kind', 'performed_on', 'title', 'invoiced_on', 'odometer_km', 'order_number', 'net_cents', 'vat_cents', 'gross_cents', 'digital_service_record'],
         ],
+        // Bei `sonstiges` gehört `label` zum Schlüssel, sonst ist es ''.
+        'measurements' => ['label' => 'Messwert', 'key' => ['measured_on', 'quantity', 'position', 'label'], 'columns' => ['value', 'unit', 'odometer_km', 'note', 'event_id']],
+        'tire_sets' => ['label' => 'Reifensatz', 'key' => ['label'], 'columns' => ['brand', 'model', 'size', 'season', 'dot', 'storage_location']],
+        // Leere Marke und Artikelnummer stehen als '' im Schlüssel (NULL würde nie wiedererkannt).
+        'parts' => ['label' => 'Teil', 'key' => ['component', 'brand', 'article_number'], 'columns' => ['oem_number', 'role', 'verified', 'note']],
+        'damages' => ['label' => 'Schaden', 'key' => ['occurred_on', 'kind'], 'columns' => ['description', 'odometer_km', 'repaired', 'repair_event_id', 'appraisal', 'diminished_value_cents']],
+        'recalls' => ['label' => 'Rückruf', 'key' => ['manufacturer_code', 'kba_reference'], 'columns' => ['title', 'recall_status', 'done_on', 'event_id']],
     ];
 
     private OpenItemRepository $openItems;

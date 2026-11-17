@@ -76,6 +76,25 @@ final class EventRepository
         return $row === false ? null : $row;
     }
 
+    /** Gehört das aktive Ereignis zu diesem Fahrzeug (und einer Garage des Akteurs)? */
+    public function belongsToVehicle(int $eventId, int $vehicleId, Actor $actor): bool
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return false;
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf(
+                "SELECT 1 FROM events WHERE id = ? AND vehicle_id = ? AND status = 'aktiv' AND garage_id IN (%s)",
+                implode(', ', array_fill(0, count($garageIds), '?'))
+            )
+        );
+        $statement->execute([$eventId, $vehicleId, ...$garageIds]);
+
+        return $statement->fetchColumn() !== false;
+    }
+
     /**
      * Aktive Positionen in der Reihenfolge der Rechnung.
      *

@@ -14,6 +14,13 @@ final class RecordRepository
     private const ORDER = [
         'registrations' => 'valid_from DESC, id DESC',
         'equipment' => 'category, name',
+        // Reihen je Größe und Position, innerhalb nach Datum aufsteigend (Verlauf).
+        'measurements' => 'quantity, position, label, measured_on, id',
+        'tire_sets' => 'label, id',
+        // `role` ist ein ENUM: verbaut (1) vor alternative (2).
+        'parts' => 'component, role, brand, article_number, id',
+        'damages' => 'occurred_on DESC, id DESC',
+        'recalls' => 'recall_status, title, id',
     ];
 
     public function __construct(private readonly PDO $pdo)
