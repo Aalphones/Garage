@@ -1,0 +1,87 @@
+-- Meilenstein 2, Phase 2: Scheckheft und Kilometer. Werkstaetten, Ereignisse mit Positionen, Kilometerstaende.
+CREATE TABLE workshops (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    garage_id INT UNSIGNED NOT NULL,
+    name VARCHAR(120) NOT NULL,
+    city VARCHAR(80) NOT NULL DEFAULT '',
+    manufacturer_partner TINYINT(1) NULL,
+    actor VARCHAR(160) NOT NULL,
+    created_at DATETIME NOT NULL,
+    UNIQUE KEY uq_workshops_name (garage_id, name, city)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE events (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    garage_id INT UNSIGNED NOT NULL,
+    vehicle_id INT UNSIGNED NOT NULL,
+    kind ENUM('inspektion', 'reparatur', 'hu', 'reifen', 'schaden', 'rueckruf', 'kauf', 'sonstiges') NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    performed_on DATE NOT NULL,
+    invoiced_on DATE NULL,
+    odometer_km INT UNSIGNED NULL,
+    workshop_id INT UNSIGNED NULL,
+    invoice_number VARCHAR(60) NULL,
+    order_number VARCHAR(60) NULL,
+    net_cents INT UNSIGNED NULL,
+    vat_cents INT UNSIGNED NULL,
+    gross_cents INT UNSIGNED NULL,
+    digital_service_record TINYINT(1) NULL,
+    source ENUM('beleg', 'nutzer', 'recherche', 'agent', 'werkstatt') NOT NULL,
+    source_url VARCHAR(500) NULL,
+    source_document_id INT UNSIGNED NULL,
+    confidence ENUM('bestaetigt', 'wahrscheinlich', 'unsicher') NOT NULL,
+    status ENUM('aktiv', 'geloescht') NOT NULL DEFAULT 'aktiv',
+    status_reason VARCHAR(300) NULL,
+    actor VARCHAR(160) NOT NULL,
+    user_id INT UNSIGNED NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    INDEX idx_events_vehicle (vehicle_id, status, performed_on),
+    INDEX idx_events_invoice (workshop_id, invoice_number),
+    CONSTRAINT fk_events_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles (id),
+    CONSTRAINT fk_events_workshop FOREIGN KEY (workshop_id) REFERENCES workshops (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE event_items (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    garage_id INT UNSIGNED NOT NULL,
+    event_id INT UNSIGNED NOT NULL,
+    line_no SMALLINT UNSIGNED NOT NULL,
+    item_type ENUM('arbeit', 'teil', 'material', 'pauschale') NOT NULL,
+    description VARCHAR(200) NOT NULL,
+    task_key VARCHAR(41) NULL,
+    part_number VARCHAR(60) NULL,
+    manufacturer VARCHAR(80) NULL,
+    quantity DECIMAL(12, 3) NULL,
+    unit VARCHAR(10) NULL,
+    net_cents INT NULL,
+    status ENUM('aktiv', 'abgeloest') NOT NULL DEFAULT 'aktiv',
+    created_at DATETIME NOT NULL,
+    INDEX idx_event_items_event (event_id, status),
+    INDEX idx_event_items_task (task_key),
+    CONSTRAINT fk_event_items_event FOREIGN KEY (event_id) REFERENCES events (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE odometer_readings (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    garage_id INT UNSIGNED NOT NULL,
+    vehicle_id INT UNSIGNED NOT NULL,
+    read_on DATE NOT NULL,
+    km INT UNSIGNED NOT NULL,
+    event_id INT UNSIGNED NULL,
+    note VARCHAR(200) NULL,
+    reading_status ENUM('gueltig', 'strittig', 'verworfen') NOT NULL,
+    source ENUM('beleg', 'nutzer', 'recherche', 'agent', 'werkstatt') NOT NULL,
+    source_url VARCHAR(500) NULL,
+    source_document_id INT UNSIGNED NULL,
+    confidence ENUM('bestaetigt', 'wahrscheinlich', 'unsicher') NOT NULL,
+    status ENUM('aktiv', 'geloescht') NOT NULL DEFAULT 'aktiv',
+    status_reason VARCHAR(300) NULL,
+    actor VARCHAR(160) NOT NULL,
+    user_id INT UNSIGNED NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    INDEX idx_odometer_vehicle (vehicle_id, reading_status, read_on),
+    INDEX idx_odometer_event (event_id),
+    CONSTRAINT fk_odometer_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
