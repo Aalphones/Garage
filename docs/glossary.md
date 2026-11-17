@@ -65,6 +65,7 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 | Dublette | Datei mit gleichem SHA-256 in derselben Garage; der Upload liefert das vorhandene Dokument mit `duplicate: true`. |
 | Wartet (Status) | Dokument ist angelegt, die Datei fehlt noch; der Upload auf dessen Ticket füllt genau dieses Dokument. |
 | Eingang (`inbox_items`) | In der App hochgeladene Belege, die ein Agent später abarbeitet (Weg B). |
+| Reservierung (`claimed_until`) | Ein Agent hält einen Eingangs-Eintrag mit Frist (Standard 180 Minuten); danach gilt er wieder als `neu`. Berechnet beim Lesen, kein Cron (ADR-016). |
 | Weg A / Weg B | Beleg kommt im Chat (A) oder über den Eingang der App (B) herein. |
 
 ## Kosten und Wert

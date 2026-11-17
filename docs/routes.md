@@ -29,6 +29,17 @@ Quelle: `app/index.php`. Alle Pfade absolut; die Brücke liegt unter `/garage/` 
 | DELETE | `/garage/api/oauth/grants/{slug}` | `Api\OAuthController::disconnect` | JWT | 204; fremde oder unbekannte Familie → 404 `not_found` |
 | GET | `/garage/api/open-items` | `Api\OpenItemController::list` | JWT | `{open_items:[{id,garage_id,vehicle_id,vehicle_label,kind,text,created_by,created_at,can_resolve,decisions,current,proposed}]}` — nur offene der eigenen Garagen, neueste zuerst; `decisions` Konflikt `bestehend`/`neu`/`verwerfen`, sonst `erledigt`/`verwerfen`; `can_resolve` = Rolle `inhaber`/`mitglied` |
 | POST | `/garage/api/open-items/{id}/resolve` | `Api\OpenItemController::resolve` | JWT (nur Mensch) | Body `decision`, `note?` (0–500); 200 `{open_item_id,status,decision}`; 404 `not_found` (fremd/unbekannt), 403 `forbidden` (Rolle `lesend`), 409 `already_resolved`, 422 `invalid_value` (Entscheidung passt nicht zur Art, Notiz zu lang); ein Audit-Eintrag `open_item.resolve` (ADR-010) |
+| GET | `/garage/api/documents` | `ApiDocumentController::list` | JWT | `{documents:[…]}` der eigenen Garagen, Filter `vehicle_id`, `status`, `doc_type`; mit `preview_url` und `can_edit` |
+| POST | `/garage/api/documents` | `ApiDocumentController::create` | JWT (nicht `lesend`) | multipart: `file`, bei PDFs `pages[]` (im Browser gerenderte JPEG-Seiten, höchstens 20 zu je 4 MB; für ein Foto 422), `garage_id?`, `vehicle_id?`, `doc_type?`; 201 wie `store_document` (`channel` `web`); 413/`too_large` über `max_bytes` |
+| GET | `/garage/api/documents/{id}` | `ApiDocumentController::show` | JWT | Dokument mit `pages`, `original_url`, `preview_url`, `attachments`, `text_content`, `can_edit`; fremd → 404 |
+| PATCH | `/garage/api/documents/{id}` | `ApiDocumentController::update` | JWT (nicht `lesend`) | Body `doc_type`, `vehicle_id`, `title`, `photo_tag`; das Fahrzeug lässt sich mit Anhängen nicht mehr ändern |
+| POST | `/garage/api/documents/{id}/file` | `ApiDocumentController::uploadFile` | JWT (nicht `lesend`) | füllt ein Dokument im Status `wartet` (multipart wie oben); sonst 409 `already_has_file` |
+| POST | `/garage/api/documents/{id}/discard` | `ApiDocumentController::discard` | JWT (nur Mensch) | Body `reason?`; Status `verworfen` |
+| POST | `/garage/api/documents/{id}/restore` | `ApiDocumentController::restore` | JWT (nur Mensch) | Status neu abgeleitet: ohne Datei `wartet`, mit Anhang `zugeordnet`, sonst `unzugeordnet` |
+| GET | `/garage/api/inbox` | `ApiInboxController::list` | JWT | `{items:[…]}` neueste zuerst, Filter `status`, `garage_id`; je Eintrag `effective status`, Dokumente mit `preview_url`, `can_edit`; `verworfen` nur 30 Tage |
+| POST | `/garage/api/inbox` | `ApiInboxController::create` | JWT (nicht `lesend`) | Body `document_ids` (nur Dokumente derselben Garage, nicht `wartet`/`verworfen`), `note?` (200), `vehicle_id?`; 201 |
+| POST | `/garage/api/inbox/{id}/discard` | `ApiInboxController::discard` | JWT (nur Mensch) | Eintrag `verworfen` |
+| POST | `/garage/api/inbox/{id}/restore` | `ApiInboxController::restore` | JWT (nur Mensch) | Eintrag wieder `neu` |
 
 Ein `gmcp_`-Token als Bearer an diesen Routen ergibt 401: sie nehmen nur Access-JWTs.
 
@@ -64,6 +75,7 @@ Unbekannte Adresse, ungültige ID und fremdes Fahrzeug antworten gleich: JSON-RP
 |---|---|---|
 | `beleg_erfassen` | `fahrzeug?` (einzeiliger Text, höchstens 80 Zeichen) | eine Nachricht: Beleg zerlegen (Leitfaden lesen), `validate_service_event`, Ergebnis zeigen, nach Okay `record_service_event` |
 | `was_steht_an` | `fahrzeug?` | eine Nachricht: `get_due_items` zusammenfassen (überfällig, 3 Monate, unbelegte Regeln), Kosten nur aus vergleichbaren Ereignissen |
+| `eingang_abarbeiten` | — | eine Nachricht: `list_inbox`, `claim_inbox_item`, Leitfaden lesen, erfassen wie `beleg_erfassen`, jedes Dokument mit `attach_document` anhängen, `release_inbox_item` |
 
 | Tool | Scope | Eingabe | Ausgabe (Kern) |
 |---|---|---|---|
@@ -102,5 +114,8 @@ Unbekannte Adresse, ungültige ID und fremdes Fahrzeug antworten gleich: JSON-RP
 | `attach_document` | write | `document_id`, `target` (`fahrzeug`\|`ereignis`\|`schaden`\|`rueckruf`\|`reifensatz`\|`teil`\|`messwert`\|`kilometerstand`\|`zulassung`), `target_id`, `role` (`beleg`\|`foto`\|`anhang`\|`titelbild`), `text?` | `{attachment_id,result (angelegt\|unveraendert),source_document_set}`; Rolle `beleg` setzt `source_document_id` am Ziel, wenn leer; `titelbild` nur Foto am Fahrzeug (ersetzt das alte); Dokument `wartet`/`verworfen` → `invalid_value`; Ziel fremd oder anderes Fahrzeug → `not_found`; `text` ersetzt `text_content` (ADR-013) |
 | `get_document` | read | `document_id`, `page?`, `half?` (`oben`\|`unten`) | Text-Block `{document,attachments,text_content,download_url}` plus Bildblöcke (Foto `1568.jpg`; PDF mit Seitenbildern bis zu 6); fremde ID → `not_found` |
 | `list_documents` | read | `vehicle_id?`, `status?` (`wartet`\|`unzugeordnet`\|`zugeordnet`\|`offen`\|`verworfen`\|`alle`), `doc_type?` | `{documents:[…]}`, neueste zuerst, höchstens 500 |
+| `list_inbox` | read | `status?` (`neu` Standard | `in_arbeit` | `erfasst` | `klaerfall` | `verworfen` | `alle`) | `{items:[{id,garage_id,vehicle_id,note,status,claimed_by,claimed_until,result,document_ids,created_at}]}`, älteste zuerst; abgelaufene Reservierung erscheint als `neu` (ADR-016) |
+| `claim_inbox_item` | write | `id?` (ohne: ältester freier), `minutes?` (10–720, Standard 180) | `{item,documents,not_shown?,hint?}` plus bis zu 6 Bildblöcke; `item: null`, wenn nichts frei ist; eigene Reservierung wird verlängert, fremde gültige → `invalid_value` |
+| `release_inbox_item` | write | `id`, `outcome` (`erfasst` | `klaerfall` | `zurueck`), `result?` (≤500; bei `klaerfall` Pflicht, wird offener Punkt `nachfragen`), `open_item_id?` | `{item}`; nur mit gültiger eigener Reservierung, sonst `invalid_value` „Reservierung abgelaufen …“ |
 
 Tool-Fehler kommen als Ergebnis mit `isError: true` und `{error,message,details}`: `not_found` (fremdes oder unbekanntes Fahrzeug/Garage), `forbidden` (Rolle `lesend`), `invalid_value` (mit Feldname und Beispiel), `invalid_argument` (Pflichtargument fehlt oder falscher Typ).

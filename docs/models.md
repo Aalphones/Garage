@@ -79,6 +79,13 @@ Belege (`017_document.sql`, ADR-012; alle mit `garage_id` FK, Zugriff nur über 
 
 Tokens, Einladungen und Passwörter liegen nur als Hash in der Datenbank; Klartext gibt es einmal bei der Ausgabe.
 
+### Eingang (Migration 018)
+
+| Tabelle | Spalten | Hinweis |
+|---|---|---|
+| `inbox_items` | `id` PK, `garage_id`, `vehicle_id` NULL, `note` VARCHAR(200) NULL, `status` ENUM(`neu`,`in_arbeit`,`erfasst`,`klaerfall`,`verworfen`), `claimed_by` NULL (Akteur), `claimed_user_id` NULL, `claimed_until` DATETIME NULL, `result` VARCHAR(500) NULL, `open_item_id` NULL, `actor`, `user_id`, `created_at`, `updated_at`; Index (`garage_id`,`status`,`created_at`) | Kein Job setzt die Frist zurück: `in_arbeit` mit `claimed_until` < `UTC_TIMESTAMP()` gilt als `neu` (ADR-016) |
+| `inbox_documents` | PK (`inbox_item_id`,`document_id`), `position`; Index (`inbox_item_id`,`position`) | Dokumente eines Eintrags in Reihenfolge |
+
 ## Regeln für jede neue Tabelle
 
 - Jede Tabelle mit Fakten trägt `garage_id`, `source`, `source_document_id` oder `source_url`, `confidence` und den Akteur.
