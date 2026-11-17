@@ -19,7 +19,6 @@
 **Forbidden:**
 - JS- und CSS-Bibliotheken, Webfonts, alles von fremden Servern — die CSP in `web/.htaccess` erlaubt nur `'self'`.
 - Inline-Skripte und Event-Attribute (`onclick=…`).
-- Skripte von Google oder Apple — deren Anmeldung läuft als reine Weiterleitung.
 
 ## Regeln
 

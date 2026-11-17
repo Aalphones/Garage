@@ -41,7 +41,7 @@ GARAGE ist eine Fahrzeugakte für mehrere Nutzer: KI-Agenten (ChatGPT, Claude) f
 | CI | GitHub Actions: PHP-Syntaxprüfung |
 | Lokale Entwicklung | `php -S localhost:8081 dev-router.php`, MySQL lokal |
 
-Kein Composer: das Strato-Paket hat keins, und DISPATCH zeigt, dass JWT, OAuth und OpenID-Prüfung mit PHP-Bordmitteln (`hash_hmac`, `openssl`) gehen.
+Kein Composer: das Strato-Paket hat keins, und DISPATCH zeigt, dass JWT und OAuth mit PHP-Bordmitteln (`hash_hmac`) gehen.
 
 ## Constraints
 
@@ -62,14 +62,12 @@ Grob; Detail-Phasen macht der jeweilige Plan. Jeder Meilenstein endet mit einer 
 3. **Belege und Fotos:** Dokumente, Anhänge, Upload-Tickets, Eingang; Weg A (Chat) und Weg B (Eingang) an echten Clients verproben.
 4. **Oberfläche:** Gestaltung gemeinsam in eigener Session (Design-Tokens, Komponenten, Entwurf der Hauptansichten), dann Garage, Cockpit, Scheckheft, Wartungsplan, Belege, Klärfälle.
 5. **Kosten, Verträge, Wert:** Verträge mit Beitragsperioden, Umlage, Tankbuch, Ausgaben, Zubehör, Plaketten, Bewertungen und Vergleichsinserate, Kosten- und Wert-Ansicht, iCal-Feed.
-6. **Anmeldung mit Google (und Apple), Einladungen in der Oberfläche, Migration der beiden bestehenden Akten.**
-
+6. **Einladungen in der Oberfläche, Migration der beiden bestehenden Akten.**
 ## Offene Fragen
 
 Aus dem Konzept (→ „Offene Entscheidungen"), Empfehlung jeweils dort:
 
 - Belege und Datenschutz bei fremden Nutzern: Impressum, Datenschutzerklärung, Löschkonzept; eigene Domain, sobald Fremde Konten bekommen.
-- Apple-Login: nur, wenn ein Mitglied ein iPhone nutzt (99 $ im Jahr).
 - PDFs für Agenten: Original plus erkannter Text (empfohlen) oder Seitenbilder.
 - Belegweg auf dem Handy: welcher Weg Standard wird, entscheidet die Verprobung in Meilenstein 3.
 - Gemeinsamer Kern mit DISPATCH nach Meilenstein 3 ([ADR-005](decisions/005-kern-aus-dispatch-kopiert.md)).

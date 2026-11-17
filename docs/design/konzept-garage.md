@@ -91,32 +91,9 @@ Vier Zugänge führen über drei Endpunkte in eine Domänenschicht; dort und nur
 
 Alles Berechnete entsteht beim Lesen. Bei zwei Fahrzeugen mit einigen Dutzend Ereignissen kostet das Millisekunden.
 
-## Anmeldung mit Google oder Apple
-
-Das geht, ohne dass Google oder Apple an Fahrzeugdaten kommen: Sie bestätigen nur, wer sich anmeldet. GARAGE bleibt selbst der Aussteller aller Sitzungen und Tokens, auch für die KI-Apps per MCP.
-
-Technisch ist das OpenID Connect mit Authorization Code und PKCE als reine Weiterleitung. Auf den GARAGE-Seiten läuft kein Google- oder Apple-Skript, die strenge CSP bleibt. Die ID-Tokens prüft PHP mit `openssl` gegen die veröffentlichten Schlüssel der Anbieter, ohne Composer.
-
-|  | Google | Apple |
-| --- | --- | --- |
-| Wir bekommen | `sub` als dauerhafte ID; E-Mail und `email_verified`, wenn der Scope `email` angefragt wird; Name und Bild nur mit `profile` und ohne Garantie ([Google](https://developers.google.com/identity/openid-connect/reference?hl=en)) | `sub`; E-Mail, echt oder als Weiterleitungsadresse über „E-Mail-Adresse verbergen“; den Namen nur bei der allerersten Anmeldung ([Google Cloud über Apple](https://docs.cloud.google.com/identity-platform/docs/web/apple?authuser=9)) |
-| Sie bekommen bei der Einrichtung | App-Name, Support-Adresse, Domain, Rückleit-URLs, Datenschutz-URL | Domain und Return-URLs der Services ID |
-| Sie bekommen bei jeder Anmeldung | dass dieses Google-Konto sich bei GARAGE anmeldet, samt Zeitpunkt – es passiert auf ihrer Seite | dasselbe für die Apple-ID |
-| Sie bekommen nie | Fahrzeugdaten, Belege, Fotos, Kosten, MCP-Tokens, welche KI-App sich verbindet | ebenso |
-| Aufwand | Google-Cloud-Projekt; nur `openid email profile` braucht keine Prüfung ([Unipile](https://www.unipile.com/integrating-google-oauth-2-0-user-authentication-into-your-app/)); Name und Logo auf dem Zustimmungsbildschirm brauchen eine leichtere Markenprüfung ([Google](https://support.google.com/cloud/answer/13463073?hl=id)) | Mitgliedschaft im Apple Developer Program, 99 $ im Jahr ([Coinbase Docs](https://docs.cdp.coinbase.com/embedded-wallets/social-login/apple)); Services ID, privater Schlüssel, Client-Geheimnis als selbst signiertes JWT |
-
-**Regeln:**
-
-- Konten werden über `sub` je Anbieter verknüpft, nie über die E-Mail. Google warnt selbst, dass ein Konto zu verschiedenen Zeiten verschiedene Adressen haben kann. Neue Tabelle `user_identities`: Anbieter, `sub`, E-Mail zum Zeitpunkt, verknüpft am.
-- Den Apple-Namen speichert GARAGE bei der ersten Anmeldung sofort; danach liefert Apple ihn nicht mehr.
-- Einladungen laufen über einen Link mit Token, nicht über den Abgleich der E-Mail – eine Apple-Weiterleitungsadresse passt sonst nie. Mails an solche Adressen kommen nur an, wenn die Absenderdomain bei Apple registriert ist und einen SPF-Eintrag hat ([sarunw](https://sarunw.com/posts/sign-in-with-apple-2/)).
-- Passwort-Login bleibt als Rückfall, falls ein Anbieter ausfällt oder ein Mitglied keinen der beiden nutzen will.
-- Die Zustimmungsseite für Claude und andere KI-Apps zeigt dieselben Knöpfe. Nach der Anmeldung stellt GARAGE das Token aus; der Anbieter erfährt davon nichts.
-- Sobald Fremde Konten bekommen, nennt die Datenschutzerklärung beide Anbieter.
-
 ## Datenmodell
 
-Das Modell hat 44 Tabellen in sechs Bereichen; jede Tabelle mit Fakten trägt Herkunft und Konfidenz, jede trägt `garage_id`. Berechnet und nie gespeichert werden Fälligkeiten, Kilometerprognose, Halterzahl, Scheckheft-Lücken sowie Unterhalt pro Monat und pro Kilometer.
+Das Modell hat 43 Tabellen in sechs Bereichen; jede Tabelle mit Fakten trägt Herkunft und Konfidenz, jede trägt `garage_id`. Berechnet und nie gespeichert werden Fälligkeiten, Kilometerprognose, Halterzahl, Scheckheft-Lücken sowie Unterhalt pro Monat und pro Kilometer.
 
 | Bereich | Tabelle | Inhalt |
 | --- | --- | --- |
@@ -149,7 +126,6 @@ Das Modell hat 44 Tabellen in sechs Bereichen; jede Tabelle mit Fakten trägt He
 | Kosten | `expenses` | sonstige Kosten: Kategorie, Betrag, Datum, Verteilzeitraum |
 | Kosten | `fuel_logs` | Tankbuch: Datum, km, Liter, Preis, voll getankt |
 | Querschnitt | `audit_log` | Akteur, Aktion, vorher und nachher als JSON |
-| Konten | `user_identities` | Anmeldung über Google oder Apple: Anbieter, sub, E-Mail zum Zeitpunkt, verknüpft am |
 | Fahrzeug | `accessories` | Zubehör: Bezeichnung, Kategorie, Hersteller, Artikelnummer, Kaufdatum, Preis, Garantie bis, montiert oder eingelagert, Lagerort, geht beim Verkauf mit |
 | Fahrzeug | `permits` | Plaketten, Vignetten, Ausweise: Art, Nummer, gültig von und bis, Preis |
 | Kosten | `contract_events` | Versicherungsvorgang: Art (Beitragsrechnung, Änderung, Schadenmeldung, Regulierung, Rückstufung, Kündigung), Datum, Betrag, Status, Schadennummer, Bezug zum Schaden |
@@ -458,8 +434,7 @@ Acht Meilensteine, und jeder liefert eine fertige, am Handy abgenommene Ansicht.
 
 &#91;embedded content: Meilensteine M0–M7 · je eine Ansicht und eine Abnahme\]
 
-Jede Abnahme ist Handprüfung wie bei Dispatch (ADR-004), mit festen Punkten für die Bedienung: 360 px Breite ohne waagerechtes Scrollen, hell und dunkel, Hauptaktion in Daumenreichweite, leere Zustände mit nächstem Schritt. Google- und Apple-Login kommen erst in M6; bis dahin reichen Passwort und feste Tokens je Nutzer.
-
+Jede Abnahme ist Handprüfung wie bei Dispatch (ADR-004), mit festen Punkten für die Bedienung: 360 px Breite ohne waagerechtes Scrollen, hell und dunkel, Hauptaktion in Daumenreichweite, leere Zustände mit nächstem Schritt.
 ## Offene Entscheidungen
 
 Zehn Fragen klärt der Inhaber vor Meilenstein 1; die Empfehlung steht jeweils daneben.
@@ -473,7 +448,6 @@ Zehn Fragen klärt der Inhaber vor Meilenstein 1; die Empfehlung steht jeweils d
 | Erinnerungen | Cron (bei Strato nur auf der Legacy-Plattform ab Hosting Plus, 15 Minuten Laufzeit – [Strato](https://www.strato.de/faq/article/1211/So-einfach-richten-Sie-Ihre-Cron-Jobs-ein.html)); iCal-Abo je Garage; geplante Agenten-Aufgabe | iCal-Abo mit geheimer URL – der Telefonkalender fragt selbst ab, kein Cron nötig. Optional zusätzlich eine geplante Aufgabe, die `get_due_items` liest. |
 | Belege und Datenschutz | Ablage im gesperrten Ordner; zusätzlich verschlüsselt | gesperrter Ordner, Auslieferung nur über signierte Links mit kurzer Laufzeit (Dispatch-Muster). Bei fremden Nutzern: Impressum, Datenschutzerklärung, Löschkonzept. |
 | Name | GARAGE; LOGBUCH; anderer | Geschmackssache – im Dispatch-Muster „GARAGE – Your agents. Your cars.“ |
-| Apple-Login | gleich mit Apple Developer Program (99 $ im Jahr); erst Google und Passwort | Google und Passwort in M6; Apple dort nur, wenn ein Mitglied ein iPhone nutzt, sonst später – die Tabelle user\_identities ist darauf vorbereitet |
 | PDFs für Agenten | Seitenbilder erzeugen; Original plus erkannter Text | Original plus der Text, den der Agent beim Erfassen schreibt – das Modell liest PDFs ohnehin im Chat; im Eingang zusätzlich Seitenbilder aus dem Browser |
 | Belegweg auf dem Handy | Das Widget läuft laut Anthropic auch auf Android (als WebView); offen ist, ob sich darin die Fotoauswahl öffnet | Weg A (Chat) und Weg B (Eingang) beide bauen und in M2 an fünf Clients verproben; ein Test-Widget in Dispatch, das schon mit der Android-App verbunden ist, kann vorab Klarheit bringen 🟡 |
 
@@ -505,12 +479,6 @@ Ergänzt am 14.11.2026 (Kosten, Belege, Anmeldung):
 - [jztan: Base64-Uploads in MCP](https://blog.jztan.com/mcp-file-upload-base64-corruption/)
 - [FutureSearch: Große Dateien über MCP](https://futuresearch.ai/blog/mcp-large-dataset-upload)
 - [Claude Docs: Bildgrößen und Koordinaten](https://platform.claude.com/docs/build-with-claude/vision-coordinates)
-- [Google: OpenID Connect Referenz](https://developers.google.com/identity/openid-connect/reference?hl=en)
-- [Google: Markenprüfung des Zustimmungsbildschirms](https://support.google.com/cloud/answer/13463073?hl=id)
-- [Unipile: Google OAuth Verification](https://www.unipile.com/integrating-google-oauth-2-0-user-authentication-into-your-app/)
-- [Google Cloud: Anmeldung mit Apple](https://docs.cloud.google.com/identity-platform/docs/web/apple?authuser=9)
-- [Coinbase Docs: Apple Sign In](https://docs.cdp.coinbase.com/embedded-wallets/social-login/apple)
-- [sarunw: Private Email Relay Service](https://sarunw.com/posts/sign-in-with-apple-2/)
 - Dispatch, `docs/knowledge/INDEX.md`: Strato-Messwerte (Upload 128 MB, Speicher 512 MB)
 - [Chrome for Developers: Web Share Target API](https://developer.chrome.com/docs/capabilities/web-apis/web-share-target)
 - [plyr.fm: Web Share Target auf iOS](https://tangled.org/zzstoatzz.io/plyr.fm/blob/main/docs/research/2025-12-19-web-share-target-ios-pwa.md)

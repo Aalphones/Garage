@@ -6,7 +6,7 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 
 | Begriff | Bedeutung |
 |---|---|
-| Nutzer (`users`) | Ein Mensch mit Konto; meldet sich mit Passwort, später auch mit Google oder Apple an. |
+| Nutzer (`users`) | Ein Mensch mit Konto; meldet sich mit E-Mail und Passwort an. |
 | Garage (`garages`) | Mandant: ein Haushalt oder Fuhrpark, dem Fahrzeuge und Verträge gehören. Jede Faktenzeile trägt `garage_id`. |
 | Mitglied (`garage_members`) | Zuordnung Nutzer ↔ Garage mit Rolle: Inhaber, Mitglied, lesend. |
 | Einladung (`invitations`) | Link mit Token, über den jemand Mitglied einer Garage wird; nie Abgleich über die E-Mail. |

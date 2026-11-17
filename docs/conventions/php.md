@@ -25,7 +25,6 @@
 
 **Allowed:**
 - `random_bytes`, `hash`, `hash_hmac`, `hash_equals`, `password_hash`/`password_verify` — Tokens, JWT (HS256 fest), signierte Links.
-- `openssl` — Prüfung von ID-Tokens gegen die Schlüssel von Google und Apple.
 - GD für Bildvarianten, `curl` nur über den HTTP-Client mit SSRF-Schutz.
 
 ## Regeln
