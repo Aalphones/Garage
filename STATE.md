@@ -1,4 +1,4 @@
 # STATE
 
-**Aktiver Plan:** (kein aktiver Plan) — Meilenstein 3 hat noch keinen Plan. Meilenstein 2 „Fahrzeugakte“ ist archiviert: [`docs/archive/2026-11/2026-11-17_fahrzeugakte/`](docs/archive/2026-11/2026-11-17_fahrzeugakte/README.md).
-**Nächster Schritt:** Meilenstein 3 „Belege und Fotos“ planen (`/plan`). Offen beim Inhaber aus Meilenstein 1: echte Verbindung aus claude.ai/ChatGPT mit `https://quantum-canvas.de/garage/mcp` und `claude mcp add` mit festem Token (Fallbacks bei Fehlschlag: `docs/knowledge/GAPS.md`).
+**Aktiver Plan:** Meilenstein 3 „Belege und Fotos“ — [`docs/planning/2026-11-17_belege-und-fotos/`](docs/planning/2026-11-17_belege-und-fotos/README.md), freigegeben 2026-11-17, Phase 1 „Ablage-Kern“ steht an.
+**Nächster Schritt:** Phase 1 umsetzen (`/implement`, Modell `opusplan`). Offen beim Inhaber aus Meilenstein 1: echte Verbindung aus claude.ai/ChatGPT mit `https://quantum-canvas.de/garage/mcp` und `claude mcp add` mit festem Token (Fallbacks bei Fehlschlag: `docs/knowledge/GAPS.md`).

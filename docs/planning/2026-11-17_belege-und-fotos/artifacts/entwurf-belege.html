@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GARAGE – Entwurf Eingang und Belege (Meilenstein 3)</title>
+<style>
+/* Stil = web/css/base.css (funktionaler Platzhalter bis Meilenstein 4) plus die wenigen Klassen, die Phase 4 neu anlegt (markiert mit NEU). */
+:root { color-scheme: light dark; --background: #ffffff; --foreground: #111111; --muted: #555555; }
+@media (prefers-color-scheme: dark) { :root { --background: #111111; --foreground: #eeeeee; --muted: #b0b0b0; } }
+:root[data-theme='light'] { color-scheme: light; --background: #ffffff; --foreground: #111111; --muted: #555555; }
+:root[data-theme='dark'] { color-scheme: dark; --background: #111111; --foreground: #eeeeee; --muted: #b0b0b0; }
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--background); color: var(--foreground); font-family: system-ui, sans-serif; line-height: 1.5; }
+main { max-width: 40rem; margin: 0 auto; padding: 1rem; }
+a { color: inherit; }
+h1, h2 { line-height: 1.2; }
+label { display: block; margin-top: 1rem; font-weight: 600; }
+input[type='text'], select, textarea { display: block; width: 100%; min-height: 2.75rem; margin-top: 0.25rem; padding: 0.5rem; border: 1px solid var(--foreground); background: var(--background); color: inherit; font: inherit; }
+small, .hint { display: block; font-size: 0.875rem; font-weight: 400; }
+button, .button { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; margin-top: 1rem; padding: 0.5rem 1rem; border: 2px solid var(--foreground); background: var(--background); color: inherit; font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; }
+button[disabled] { opacity: 0.6; cursor: default; }
+:focus-visible { outline: 3px solid var(--foreground); outline-offset: 2px; }
+.error { margin: 1rem 0 0; padding: 0.5rem 0.75rem; border: 2px solid var(--foreground); font-weight: 600; }
+.plain-list { margin: 0; padding: 0; list-style: none; }
+.plain-list li { padding: 0.75rem 0; border-top: 1px solid var(--foreground); }
+.button-row { display: flex; flex-wrap: wrap; gap: 0 0.75rem; }
+.link-button { min-height: 2.75rem; margin: 0; padding: 0 0.25rem; border: 0; text-decoration: underline; font-weight: 400; background: none; }
+.facts dt { margin-top: 0.5rem; font-size: 0.875rem; }
+.facts dd { margin: 0; overflow-wrap: anywhere; }
+/* NEU in Phase 4 */
+.primary { background: var(--foreground); color: var(--background); }
+.capture-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.capture-row .button { margin-top: 0; min-height: 3.5rem; }
+.pages { display: grid; gap: 0; }
+.page { display: grid; grid-template-columns: 4rem 1fr auto; gap: 0.75rem; align-items: center; padding: 0.5rem 0; border-top: 1px solid var(--foreground); }
+.thumb { width: 4rem; height: 5rem; border: 1px solid var(--foreground); display: grid; place-items: center; font-size: 0.75rem; overflow: hidden; background: repeating-linear-gradient(0deg, transparent 0 9px, color-mix(in srgb, var(--foreground) 18%, transparent) 9px 10px); }
+.page-actions { display: flex; gap: 0.25rem; }
+.page-actions button { margin: 0; min-width: 2.75rem; padding: 0.25rem; }
+.row { display: grid; grid-template-columns: 3rem 1fr; gap: 0.75rem; align-items: start; }
+.row .thumb { width: 3rem; height: 3.75rem; }
+.state { font-size: 0.875rem; }
+.state::before { content: ''; display: inline-block; width: 0.5rem; height: 0.5rem; margin-right: 0.375rem; border: 1px solid var(--foreground); border-radius: 50%; vertical-align: 0.05em; }
+.state.done::before { background: var(--foreground); }
+.state.warn { font-weight: 700; }
+.state.warn::before { border-radius: 0; transform: rotate(45deg); background: var(--foreground); }
+.progress { height: 0.5rem; border: 1px solid var(--foreground); margin-top: 0.5rem; }
+.progress span { display: block; height: 100%; background: var(--foreground); }
+.toast { position: sticky; bottom: 0.5rem; margin-top: 1rem; padding: 0.75rem; border: 2px solid var(--foreground); background: var(--background); display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.toast button { margin: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+.chips button { margin: 0; min-height: 2.25rem; font-weight: 400; }
+.chips button[aria-pressed='true'] { background: var(--foreground); color: var(--background); font-weight: 600; }
+.chips button[aria-pressed='true']::before { content: '✓ '; }
+.toolbar { display: flex; justify-content: space-between; align-items: end; gap: 0.75rem; flex-wrap: wrap; }
+.toolbar select { min-width: 9rem; }
+.view-toggle { display: inline-flex; border: 2px solid var(--foreground); }
+.view-toggle button { margin: 0; border: 0; min-height: 2.25rem; font-weight: 400; }
+.view-toggle button[aria-pressed='true'] { background: var(--foreground); color: var(--background); font-weight: 600; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr)); gap: 0.5rem; margin-top: 1rem; }
+.gallery a { display: block; text-decoration: none; }
+.gallery .thumb { width: 100%; height: 6.5rem; }
+.gallery small { overflow-wrap: anywhere; }
+.preview { border: 1px solid var(--foreground); aspect-ratio: 3 / 4; display: grid; place-items: center; margin-top: 1rem; background: repeating-linear-gradient(0deg, transparent 0 15px, color-mix(in srgb, var(--foreground) 15%, transparent) 15px 16px); }
+.preview-nav { display: flex; justify-content: space-between; align-items: center; }
+.back { display: inline-block; margin-top: 0.5rem; }
+details { margin-top: 1rem; border-top: 1px solid var(--foreground); padding-top: 0.5rem; }
+summary { cursor: pointer; font-weight: 600; min-height: 2.75rem; display: flex; align-items: center; }
+pre.text { white-space: pre-wrap; font: inherit; font-size: 0.875rem; margin: 0; }
+.info { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border: 1px solid var(--foreground); border-radius: 50%; font-size: 0.8rem; font-weight: 700; margin: 0 0 0 0.25rem; padding: 0; min-height: 0; vertical-align: middle; }
+.tip { margin-top: 0.5rem; padding: 0.5rem 0.75rem; border-left: 3px solid var(--foreground); font-size: 0.875rem; }
+.tool { display: none; font-family: ui-monospace, monospace; font-size: 0.75rem; border: 1px dashed var(--foreground); padding: 0 0.25rem; margin-left: 0.25rem; white-space: nowrap; }
+.show-tools .tool { display: inline-block; }
+.dropzone { margin-top: 0.75rem; padding: 1.25rem; border: 2px dashed var(--foreground); text-align: center; }
+.dropzone button { margin-top: 0.5rem; }
+.chat { max-width: 40rem; margin: 0 auto; padding: 1rem; }
+.bubble { padding: 0.5rem 0.75rem; border: 1px solid var(--foreground); margin: 0.5rem 0; }
+.bubble.user { margin-left: 3rem; }
+.widget { border: 2px solid var(--foreground); padding: 0.75rem; margin: 0.5rem 0; }
+.widget h3 { margin: 0; font-size: 1rem; }
+.sheet-backdrop { position: fixed; inset: 0; background: color-mix(in srgb, var(--foreground) 35%, transparent); display: flex; align-items: flex-end; justify-content: center; }
+.sheet { width: 100%; max-width: 40rem; background: var(--background); border: 2px solid var(--foreground); border-bottom: 0; padding: 1rem; }
+@media (min-width: 48rem) { .sheet-backdrop { align-items: center; } .sheet { border-bottom: 2px solid var(--foreground); } }
+/* Rahmen des Entwurfs (nicht Teil der App) */
+.dummy-bar { border-bottom: 2px solid var(--foreground); padding: 0.5rem 1rem; display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; align-items: center; font-size: 0.8rem; }
+.dummy-bar nav { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; }
+.dummy-bar a[aria-current='page'] { font-weight: 700; }
+.dummy-bar .stufe { margin-left: auto; }
+.dummy-bar label { display: inline-flex; gap: 0.25rem; margin: 0; font-weight: 400; align-items: center; }
+.wofuer { font-size: 0.8rem; border: 1px dashed var(--foreground); padding: 0.25rem 0.5rem; margin: 0 0 0.5rem; }
+.beispiel { font-size: 0.7rem; border: 1px solid var(--foreground); padding: 0 0.25rem; margin-left: 0.25rem; vertical-align: middle; font-weight: 400; }
+.appnav { display: flex; gap: 1rem; border-bottom: 1px solid var(--foreground); padding-bottom: 0.5rem; }
+.appnav a[aria-current='page'] { font-weight: 700; text-decoration: none; }
+@media (prefers-reduced-motion: no-preference) { .toast { animation: rise 200ms ease-out; } @keyframes rise { from { transform: translateY(0.5rem); opacity: 0; } } }
+</style>
+</head>
+<body>
+<div class="dummy-bar" role="region" aria-label="Entwurfs-Steuerung">
+  <strong>Entwurf M3</strong>
+  <nav aria-label="Bildschirme des Entwurfs">
+    <a href="#eingang">Eingang</a>
+    <a href="#eingang/neu">Neuer Eintrag</a>
+    <a href="#teilen">Geteilt (Android)</a>
+    <a href="#belege">Belege</a>
+    <a href="#beleg/41">Beleg-Detail</a>
+    <a href="#beleg/44">Original fehlt</a>
+    <a href="#widget">Claude-Widget</a>
+    <a href="#eingang/leer">Leer</a>
+  </nav>
+  <label><input type="checkbox" id="tools-toggle"> Werkzeug zeigen</label>
+  <label>Thema <select id="theme"><option value="">System</option><option value="light">hell</option><option value="dark">dunkel</option></select></label>
+  <span class="stufe" id="stufe"></span>
+</div>
+<div id="app"></div>
+<script>
+const V = { 1: 'Golf', 2: 'Clio' };
+const inbox = [
+  { id: 7, at: 'heute 09:12', pages: 3, vehicle: 1, note: 'Inspektion Mai', status: 'neu' },
+  { id: 6, at: 'gestern 18:40', pages: 1, vehicle: null, note: '', status: 'arbeit', by: 'Claude', until: '12:10' },
+  { id: 5, at: '14.11.', pages: 2, vehicle: 2, note: 'HU-Bericht', status: 'erfasst', result: 'HU 11/2026', link: '#beleg/42' },
+  { id: 4, at: '12.11.', pages: 1, vehicle: 1, note: 'Tacho', status: 'klaerfall', result: 'Kilometerstand unleserlich', link: '#beleg/43' },
+  { id: 3, at: '02.11.', pages: 1, vehicle: null, note: '', status: 'verworfen', result: 'Doppelt hochgeladen' },
+];
+const docs = [
+  { id: 41, title: 'Rechnung Inspektion', type: 'Rechnung', date: '12.05.2025', vehicle: 1, pages: 3, kind: 'pdf', status: 'zugeordnet', on: ['Inspektion 05/2025'], by: 'Claude (verbundene App)', via: 'Eingang', text: 'Autohaus Beispiel GmbH\nRechnung Nr. 2025-4711\nLeistungsdatum 12.05.2025 · km 45.210\n1 Inspektion nach Herstellervorgabe … 289,00\n2 Motoröl 0W-20, 4,3 l … 71,81\n…\nGesamt brutto 1.288,70 €' },
+  { id: 42, title: 'HU-Bericht', type: 'HU-Bericht', date: '14.11.2024', vehicle: 2, pages: 2, kind: 'pdf', status: 'zugeordnet', on: ['HU 11/2026'], by: 'ChatGPT (verbundene App)', via: 'Eingang', text: 'Prüfbericht HU … ohne Mängel …' },
+  { id: 43, title: 'Tacho', type: 'Foto', tag: 'Tacho', date: '12.11.2026', vehicle: 1, pages: 1, kind: 'foto', status: 'unzugeordnet', on: [], by: 'du', via: 'Eingang', text: '' },
+  { id: 44, title: 'Rechnung Reifenwechsel', type: 'Rechnung', date: '28.10.2026', vehicle: 1, pages: 0, kind: 'fehlt', status: 'wartet', on: ['Reifenwechsel 10/2026'], by: 'Claude (verbundene App)', via: 'Chat', text: '' },
+  { id: 45, title: 'Außen vorne links', type: 'Foto', tag: 'Außen', date: '03.06.2026', vehicle: 1, pages: 1, kind: 'foto', status: 'zugeordnet', on: ['Fahrzeug (Titelbild)'], by: 'Claude (verbundene App)', via: 'Chat', text: '' },
+  { id: 46, title: 'Kratzer Tür hinten rechts mit sehr langem Namen, der umbrechen muss', type: 'Foto', tag: 'Schaden', date: '20.09.2026', vehicle: 2, pages: 1, kind: 'foto', status: 'zugeordnet', on: ['Schaden 09/2026 (Lack)'], by: 'du', via: 'Eingang', text: '' },
+];
+const T = (name) => `<span class="tool">${name}</span>`;
+const B = '<span class="beispiel">Beispiel</span>';
+const app = document.getElementById('app');
+let undoTimer = null;
+let newPages = [
+  { name: 'Rechnung-Seite-1.jpg', info: 'Foto · 1,1 MB nach Verkleinern' },
+  { name: 'Rechnung-Seite-2.jpg', info: 'Foto · 0,9 MB nach Verkleinern' },
+  { name: 'Rechnung-Seite-3.jpg', info: 'Foto · 1,0 MB nach Verkleinern' },
+];
+let pdfMode = false;
+
+function appNav(active) {
+  return `<nav class="appnav" aria-label="GARAGE"><a href="#konto">Konto</a><a href="#eingang" ${active === 'eingang' ? 'aria-current="page"' : ''}>Eingang</a><a href="#belege" ${active === 'belege' ? 'aria-current="page"' : ''}>Belege</a></nav>`;
+}
+function statusWord(item) {
+  switch (item.status) {
+    case 'neu': return '<span class="state">Neu – wartet auf einen Agenten</span>';
+    case 'arbeit': return `<span class="state">In Arbeit (${item.by}, reserviert bis ${item.until})</span>`;
+    case 'erfasst': return `<span class="state done">Erfasst: <a href="${item.link}">${item.result}</a></span>`;
+    case 'klaerfall': return `<span class="state warn">Klärfall: ${item.result}</span> <a href="#konto">Ansehen</a>`;
+    case 'verworfen': return `<span class="state">Verworfen: ${item.result}</span>`;
+  }
+}
+function vehicleSelect(id, selected, withUnknown) {
+  return `<select id="${id}">${withUnknown ? `<option value="">Weiß ich nicht – Agent ordnet zu</option>` : ''}${Object.entries(V).map(([k, v]) => `<option value="${k}" ${String(selected) === k ? 'selected' : ''}>${v}</option>`).join('')}</select>`;
+}
+
+function renderEingang(sub) {
+  const empty = sub === 'leer';
+  const showNew = sub === 'neu' || sub === 'teilen';
+  const list = empty ? [] : inbox;
+  app.innerHTML = `<main id="inhalt">
+  <p class="wofuer">Wofür: Belege und Fotos schnell vom Handy in den Eingang legen; ein Agent erfasst sie später. Häufigste Aufgabe: Foto einer Rechnung aufnehmen.</p>
+  <h1>GARAGE</h1>${appNav('eingang')}
+  <h2>Eingang <button type="button" class="info" aria-expanded="false" aria-controls="tip-eingang" title="Wie geht es weiter?">?</button></h2>
+  <p id="tip-eingang" class="tip" hidden>Was hier liegt, erfasst ein Agent: sag in Claude oder ChatGPT „arbeite den Eingang ab“. Er legt Ereignis, Kilometerstand und Beleg an und meldet Unklares als Klärfall.</p>
+  ${sub === 'teilen' ? `<p class="tip" role="status"><strong>2 Dateien aus „Teilen“ übernommen.</strong> Prüfe die Seiten und lege sie in den Eingang.</p>` : ''}
+  ${showNew ? renderNew(sub === 'teilen') : `
+  <div class="capture-row">
+    <label class="button primary" for="cam">Foto aufnehmen${T('Kamera')}</label>
+    <label class="button" for="file">Datei wählen</label>
+  </div>
+  <input id="cam" type="file" accept="image/*" capture="environment" hidden>
+  <input id="file" type="file" accept="image/*,application/pdf" multiple hidden>
+  <small>Fotos und PDFs bis 30 MB. Mehrere Seiten nacheinander aufnehmen geht.</small>`}
+  <h3>Im Eingang</h3>
+  ${list.length === 0 ? `<p>Der Eingang ist leer. Fotografiere eine Rechnung oder wähle ein PDF – ein Agent erfasst es danach.</p>` : `
+  <ul class="plain-list">${list.map((item) => `<li>
+    <div class="row"><div class="thumb" aria-hidden="true">${item.pages} S.</div>
+    <div><strong>${item.note || 'Ohne Notiz'}</strong> · ${item.vehicle ? V[item.vehicle] : 'Fahrzeug offen'} ${B}<br><small>${item.at} · ${item.pages} ${item.pages === 1 ? 'Seite' : 'Seiten'}</small>
+    ${statusWord(item)}${item.status === 'neu' ? `<div><button type="button" class="link-button" data-discard="${item.id}">Eintrag verwerfen</button>${T('POST /api/inbox/{id}/discard')}</div>` : ''}${item.status === 'arbeit' ? T('claim_inbox_item') : ''}${item.status === 'erfasst' || item.status === 'klaerfall' ? T('release_inbox_item') : ''}</div></div>
+  </li>`).join('')}</ul>`}
+  <div id="toast-slot"></div>
+  </main>`;
+  wire();
+}
+function renderNew(fromShare) {
+  const pages = fromShare ? [{ name: 'Rechnung_Reifen_10-2026.pdf', info: 'PDF · 2 Seiten werden als Bilder gerendert' }, { name: 'IMG_2041.jpg', info: 'Foto · 1,3 MB nach Verkleinern' }] : newPages;
+  return `<section aria-labelledby="new-h">
+    <h3 id="new-h">Neuer Eintrag</h3>
+    <div class="pages">${pages.map((p, i) => `<div class="page">
+      <div class="thumb" aria-hidden="true">Seite ${i + 1}</div>
+      <div><strong style="overflow-wrap:anywhere">${p.name}</strong><small>${p.info}</small></div>
+      <div class="page-actions"><button type="button" aria-label="Seite ${i + 1} nach oben" ${i === 0 ? 'disabled' : ''}>↑</button><button type="button" aria-label="Seite ${i + 1} nach unten" ${i === pages.length - 1 ? 'disabled' : ''}>↓</button><button type="button" aria-label="Seite ${i + 1} entfernen" data-remove="${i}">✕</button></div>
+    </div>`).join('')}</div>
+    <div class="button-row"><label class="button" for="cam2">Weitere Seite fotografieren</label><input id="cam2" type="file" accept="image/*" capture="environment" hidden></div>
+    <label for="veh">Fahrzeug</label>${vehicleSelect('veh', '', true)}
+    <label for="note">Notiz <small style="display:inline">(optional)</small></label>
+    <input id="note" type="text" maxlength="200" placeholder="z. B. Inspektion Mai, Reifen eingelagert">
+    <button type="button" class="primary" id="submit-new">In den Eingang legen (${pages.length} ${pages.length === 1 ? 'Seite' : 'Seiten'})</button>${T('POST /api/documents + /api/inbox')}
+    <button type="button" class="link-button" onclick="location.hash='#eingang'">Abbrechen</button>
+    <div id="upload-state" role="status"></div>
+  </section>`;
+}
+
+function renderBelege(view) {
+  const filter = window.__filter ?? 0;
+  const list = docs.filter((d) => !filter || d.vehicle === filter);
+  const open = list.filter((d) => d.status !== 'zugeordnet');
+  const done = list.filter((d) => d.status === 'zugeordnet');
+  const row = (d) => `<li><a class="row" href="#beleg/${d.id}" style="text-decoration:none"><div class="thumb" aria-hidden="true">${d.kind === 'pdf' ? 'PDF' : d.kind === 'fehlt' ? '–' : 'Foto'}</div>
+    <div><strong style="text-decoration:underline;overflow-wrap:anywhere">${d.title}</strong> ${B}<br><small>${d.type}${d.tag ? ' · ' + d.tag : ''} · ${d.date} · ${V[d.vehicle]}</small>
+    ${d.status === 'wartet' ? '<span class="state warn">Original fehlt</span>' : d.status === 'unzugeordnet' ? '<span class="state">Nicht zugeordnet</span>' : `<span class="state done">Hängt an ${d.on.join(', ')}</span>`}</div></a></li>`;
+  app.innerHTML = `<main id="inhalt">
+  <p class="wofuer">Wofür: einen Beleg wiederfinden und ansehen; offene Fälle (Original fehlt, nicht zugeordnet) zuerst.</p>
+  <h1>GARAGE</h1>${appNav('belege')}
+  <div class="toolbar"><h2 style="margin-bottom:0">Belege</h2>
+    <div class="view-toggle" role="group" aria-label="Ansicht"><button type="button" aria-pressed="${view !== 'galerie'}" data-view="liste">Liste</button><button type="button" aria-pressed="${view === 'galerie'}" data-view="galerie">Galerie</button></div></div>
+  <div class="chips" role="group" aria-label="Fahrzeug">${[[0, 'Alle'], [1, 'Golf'], [2, 'Clio']].map(([k, v]) => `<button type="button" aria-pressed="${filter === k}" data-filter="${k}">${v}</button>`).join('')}</div>
+  ${T('list_documents')}
+  ${view === 'galerie' ? `<div class="gallery">${list.map((d) => `<a href="#beleg/${d.id}"><div class="thumb" aria-hidden="true">${d.kind === 'pdf' ? 'PDF' : d.kind === 'fehlt' ? '–' : (d.tag || 'Foto')}</div><small>${d.title}</small></a>`).join('')}</div>` : `
+  ${open.length ? `<h3>Offen</h3><ul class="plain-list">${open.map(row).join('')}</ul>` : ''}
+  <h3>Zugeordnet</h3>${done.length ? `<ul class="plain-list">${done.map(row).join('')}</ul>` : '<p>Noch keine zugeordneten Belege. Lege im <a href="#eingang">Eingang</a> einen ab.</p>'}`}
+  </main>`;
+  wire();
+}
+
+function renderBeleg(id) {
+  const d = docs.find((x) => x.id === Number(id)) ?? docs[0];
+  const missing = d.kind === 'fehlt';
+  app.innerHTML = `<main id="inhalt">
+  <p class="wofuer">Wofür: Beleg ansehen und prüfen, woran er hängt; Typ oder Fahrzeug korrigieren, Fehlablage verwerfen.</p>
+  <a class="back" href="#belege">← Belege</a>
+  <h1 style="font-size:1.5rem;overflow-wrap:anywhere">${d.title} ${B}</h1>
+  ${missing ? `<p class="error" role="status">Original fehlt. Die Daten sind erfasst, die Datei kam im Chat nicht an.</p>
+     <div class="dropzone"><strong>Original nachreichen</strong><br><small>Foto oder PDF dieser Rechnung</small><br><label class="button primary" for="late">Datei wählen</label><input id="late" type="file" accept="image/*,application/pdf" hidden>${T('POST /api/documents/{id}/file')}</div>`
+    : `<div class="preview" role="img" aria-label="Vorschau ${d.title}, Seite 1">${d.kind === 'pdf' ? 'Seitenbild 1' : 'Foto'}</div>
+     ${d.pages > 1 ? `<div class="preview-nav"><button type="button" disabled>← Seite</button><span>Seite 1 von ${d.pages}</span><button type="button">Seite →</button></div>` : ''}
+     <div class="button-row"><a class="button" href="#beleg/${d.id}" title="Öffnet über einen Link, der 10 Minuten gilt">${d.kind === 'pdf' ? 'Original öffnen (PDF)' : 'Foto in voller Größe'}</a>${T('GET /garage/files/{signiert}')}</div>`}
+  <dl class="facts">
+    <dt><label for="dtype" style="margin:0;font-weight:400">Typ</label></dt><dd><select id="dtype">${['Foto', 'Rechnung', 'HU-Bericht', 'Police', 'Bescheid', 'Fahrzeugschein', 'Kaufvertrag', 'Sonstiges'].map((t) => `<option ${t === d.type ? 'selected' : ''}>${t}</option>`).join('')}</select></dd>
+    <dt><label for="dveh" style="margin:0;font-weight:400">Fahrzeug</label></dt><dd>${vehicleSelect('dveh', d.vehicle, false)}</dd>
+    <dt>Datum</dt><dd>${d.date}</dd>
+    <dt>Hängt an</dt><dd>${d.on.length ? d.on.map((o) => `<a href="#belege">${o}</a>`).join(', ') : 'Noch an nichts – ein Agent ordnet zu.'}${T('attach_document')}</dd>
+    <dt>Abgelegt</dt><dd>von ${d.by} über ${d.via}</dd>
+  </dl>
+  ${d.text ? `<details><summary>Erkannter Text</summary><pre class="text">${d.text}</pre></details>` : ''}
+  <button type="button" class="link-button" id="discard">Beleg verwerfen</button>${T('POST /api/documents/{id}/discard')}
+  <small>Verworfene Belege bleiben gespeichert und lassen sich wiederherstellen.</small>
+  <div id="toast-slot"></div>
+  </main>`;
+  wire();
+  document.getElementById('discard').addEventListener('click', () => showUndo('Beleg verworfen.', () => {}));
+  ['dtype', 'dveh'].forEach((s) => document.getElementById(s).addEventListener('change', () => showUndo('Gespeichert.', () => {})));
+}
+
+function renderWidget(state) {
+  const s = state || 'wartet';
+  app.innerHTML = `<div class="chat">
+  <p class="wofuer">Wofür: im Claude-Chat das Original zu den gerade erfassten Daten ablegen, ohne die App zu öffnen. Der Rahmen gehört zu Claude; nur der Kasten ist das Widget.</p>
+  <div class="bubble user">[Foto einer Rechnung] leg das beim Golf ab</div>
+  <div class="bubble">Ich habe die Rechnung erfasst: Reifenwechsel am 28.10.2026, 52.480 km, 89,00 €. Zieh das Foto noch in den Kasten, damit das Original dabei ist.${T('store_document')}</div>
+  <section class="widget" aria-labelledby="w-h">
+    <h3 id="w-h">Beleg ablegen · Golf</h3>
+    <dl class="facts" style="margin:0.5rem 0"><dt>Rechnung</dt><dd>Reifenwechsel · 28.10.2026 · 52.480 km · 89,00 € ${B}</dd><dt>Hängt an</dt><dd>Reifenwechsel 10/2026</dd></dl>
+    ${s === 'wartet' ? `<div class="dropzone" id="dz"><strong>Original hierher ziehen</strong><br><small>Foto oder PDF, bis 30 MB</small><br><button type="button" class="primary" id="pick">Datei wählen</button></div>
+      <small>Klappt es hier nicht? <a href="#eingang">Leg die Datei in den Eingang</a> – der Beleg bleibt als „Original fehlt“ markiert.</small>` : ''}
+    ${s === 'laedt' ? `<p role="status">Lade hoch … 62 %</p><div class="progress"><span style="width:62%"></span></div>` : ''}
+    ${s === 'fertig' ? `<p role="status"><span class="state done">Abgelegt</span> · Original gespeichert, hängt an Reifenwechsel 10/2026.</p>${T('confirm_document')}` : ''}
+    ${s === 'fehler' ? `<p class="error" role="alert">Upload abgelaufen (nach 15 Minuten). Neue Adresse holen und erneut ziehen.</p><button type="button" id="retry">Neue Adresse holen</button>${T('request_upload')}` : ''}
+  </section>
+  <p class="hint">Zustände: <a href="#widget/wartet">wartet</a> · <a href="#widget/laedt">lädt</a> · <a href="#widget/fertig">fertig</a> · <a href="#widget/fehler">abgelaufen</a></p>
+  </div>`;
+  const pick = document.getElementById('pick');
+  if (pick) pick.addEventListener('click', () => { location.hash = '#widget/laedt'; setTimeout(() => { if (location.hash === '#widget/laedt') location.hash = '#widget/fertig'; }, 1200); });
+  const retry = document.getElementById('retry');
+  if (retry) retry.addEventListener('click', () => { location.hash = '#widget/wartet'; });
+}
+
+function showUndo(text, undo) {
+  const slot = document.getElementById('toast-slot');
+  if (!slot) return;
+  clearTimeout(undoTimer);
+  slot.innerHTML = `<div class="toast" role="status"><span>${text}</span><button type="button" id="undo">Rückgängig</button></div>`;
+  document.getElementById('undo').addEventListener('click', () => { undo(); slot.innerHTML = ''; });
+  undoTimer = setTimeout(() => { slot.innerHTML = ''; }, 6000);
+}
+
+function wire() {
+  document.querySelectorAll('.info').forEach((b) => b.addEventListener('click', () => {
+    const tip = document.getElementById(b.getAttribute('aria-controls'));
+    tip.hidden = !tip.hidden; b.setAttribute('aria-expanded', String(!tip.hidden));
+  }));
+  document.querySelectorAll('[data-discard]').forEach((b) => b.addEventListener('click', () => {
+    const li = b.closest('li'); li.hidden = true;
+    showUndo('Eintrag verworfen.', () => { li.hidden = false; });
+  }));
+  document.querySelectorAll('[data-remove]').forEach((b) => b.addEventListener('click', () => {
+    const row = b.closest('.page'); row.hidden = true;
+    showUndo('Seite entfernt.', () => { row.hidden = false; });
+  }));
+  document.querySelectorAll('[data-filter]').forEach((b) => b.addEventListener('click', () => { window.__filter = Number(b.dataset.filter); route(); }));
+  document.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => { location.hash = b.dataset.view === 'galerie' ? '#belege/galerie' : '#belege'; }));
+  ['cam', 'file'].forEach((id) => { const el = document.getElementById(id); if (el) el.closest('main').querySelector(`label[for="${id}"]`).addEventListener('click', (e) => { e.preventDefault(); location.hash = '#eingang/neu'; }); });
+  const submit = document.getElementById('submit-new');
+  if (submit) submit.addEventListener('click', () => {
+    const st = document.getElementById('upload-state');
+    submit.disabled = true;
+    const steps = ['Verkleinere Foto 1 von 3 …', 'Lade hoch … 40 %', 'Lade hoch … 85 %'];
+    let i = 0;
+    const tick = () => {
+      if (i < steps.length) { st.innerHTML = `<p>${steps[i]}</p><div class="progress"><span style="width:${(i + 1) * 30}%"></span></div>`; i++; setTimeout(tick, 500); return; }
+      inbox.unshift({ id: 8, at: 'gerade eben', pages: 3, vehicle: null, note: document.getElementById('note').value, status: 'neu' });
+      location.hash = '#eingang';
+      setTimeout(() => showUndo('Liegt im Eingang. Ein Agent erfasst ihn.', () => { inbox.shift(); route(); }), 0);
+    };
+    tick();
+  });
+}
+
+function route() {
+  const [screen, arg] = location.hash.replace(/^#/, '').split('/');
+  document.querySelectorAll('.dummy-bar nav a').forEach((a) => a.setAttribute('aria-current', a.getAttribute('href') === location.hash ? 'page' : 'false'));
+  if (screen === 'belege') return renderBelege(arg);
+  if (screen === 'beleg') return renderBeleg(arg);
+  if (screen === 'widget') return renderWidget(arg);
+  if (screen === 'teilen') return renderEingang('teilen');
+  if (screen === 'konto') { app.innerHTML = `<main><h1>GARAGE</h1>${appNav('')}<p>Kontoseite wie heute (Klärfälle, Garagen, Zugänge, Apps) – nur die Navigation oben ist neu.</p></main>`; return; }
+  return renderEingang(arg);
+}
+function stufe() { const w = innerWidth; document.getElementById('stufe').textContent = `Stufe: ${w < 576 ? 'Handy' : w < 992 ? 'Tablet' : 'Laptop/Desktop'} (${w} px)`; }
+document.getElementById('theme').addEventListener('change', (e) => { if (e.target.value) document.documentElement.dataset.theme = e.target.value; else delete document.documentElement.dataset.theme; });
+document.getElementById('tools-toggle').addEventListener('change', (e) => document.body.classList.toggle('show-tools', e.target.checked));
+addEventListener('hashchange', route); addEventListener('resize', stufe);
+if (!location.hash) location.hash = '#eingang';
+route(); stufe();
+</script>
+</body>
+</html>
