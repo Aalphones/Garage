@@ -11,7 +11,7 @@ Quelle des Umfangs: [`../../PROJECT.md`](../../PROJECT.md) → Meilenstein 3, Fa
 | 1 | [Ablage-Kern](phase-1-ablage-kern.md) — Tabellen, Bildverarbeitung, signierte Links, Upload-Ticket, `request_upload`, `store_document` per Ticket, `get_document`, `list_documents` | heikel | complete |
 | 2 | [Anhänge, Datei-Parameter, Akte](phase-2-anhaenge-akte.md) — `attach_document`, ChatGPT-Datei-Parameter, `import_document_from_url`, Belege in `get_event`/`get_vehicle`/Akte/Suche | standard | complete |
 | 3 | [Eingang auf dem Server](phase-3-eingang-server.md) — Eingangs-Tabellen, `list_inbox`/`claim_inbox_item`/`release_inbox_item`, Web-API für Belege und Eingang, Prompt `eingang_abarbeiten` | heikel | complete |
-| 4 | [Oberfläche Eingang und Belege](phase-4-oberflaeche.md) — Seiten nach Entwurf, Fotos im Browser verkleinern, PDF-Seiten per pdf.js | standard | pending |
+| 4 | [Oberfläche Eingang und Belege](phase-4-oberflaeche.md) — Seiten nach Entwurf, Fotos im Browser verkleinern, PDF-Seiten per pdf.js | standard | complete |
 | 5 | [Teilen-Ziel Android](phase-5-teilen-ziel.md) — Manifest, Service Worker, Übernahme geteilter Dateien | standard | pending |
 | 6 | [Claude-Widget](phase-6-widget.md) — MCP App `ui://garage/beleg-ablegen`, wartende Belege, `confirm_document`, CORS am Upload | heikel | pending |
 | 7 | [Abschluss auf Strato](phase-7-abschluss.md) — Mandanten-Liste, Testkonten sperren, Doku, Archiv, Verprobungs-Matrix für den Inhaber | mechanisch | pending |
@@ -108,7 +108,7 @@ Herkunft wie M2. Fehler wie M2: `not_found` (auch fremde IDs), `forbidden` (Roll
 - [ ] Ein Agent hängt einen Beleg an ein Ereignis; `get_event`, `get_dossier` (Abschnitt „Belege“) und `search` (Text aus dem Beleg) zeigen ihn. (Phase 2)
 - [ ] `store_document` mit ChatGPT-Dateiobjekt (`download_url`) holt die Datei ab; private Adressen werden abgewiesen. (Phase 2)
 - [ ] Ein Mensch legt im Browser drei Fotos und ein PDF in den Eingang; ein Agent reserviert den Eintrag per `claim_inbox_item`, bekommt die Seiten als Bilder und schließt ihn per `release_inbox_item`; eine abgelaufene Reservierung erscheint wieder als `neu`. (Phase 3, 4)
-- [ ] Die Seiten Eingang und Belege entsprechen dem Entwurf (Prüfpunkte in Phase 4), 360 px ohne waagerechtes Scrollen, hell und dunkel. (Phase 4)
+- [x] Die Seiten Eingang und Belege entsprechen dem Entwurf (Prüfpunkte in Phase 4), 360 px ohne waagerechtes Scrollen, hell und dunkel. (Phase 4)
 - [ ] Auf einem Android-Handy mit installierter Web-App landet „Teilen → GARAGE“ aus einer anderen App im Formular „Neuer Eintrag“. (Phase 5, Inhaber)
 - [ ] In Claude Web erscheint nach `store_document` ohne Datei das Widget; eine hineingezogene Datei wird abgelegt und das Dokument wechselt von `wartet` auf `zugeordnet`/`unzugeordnet`. (Phase 6, Inhaber)
 - [ ] Nutzer B sieht über keinen Weg (MCP, API, signierter Link mit fremder ID, Ticket) Belege oder Eingang von Nutzer A; Rolle `lesend` und Token ohne `garage:files` legen nichts ab. (Phase 7)

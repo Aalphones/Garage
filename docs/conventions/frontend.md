@@ -20,6 +20,12 @@
 - JS- und CSS-Bibliotheken, Webfonts, alles von fremden Servern — die CSP in `web/.htaccess` erlaubt nur `'self'`.
 - Inline-Skripte und Event-Attribute (`onclick=…`).
 
+**Einzige Ausnahme:** pdf.js 4.10.38 liegt lokal unter `web/vendor/pdfjs/` (ADR-014) und wird nur von `web/js/pdfpages.js` geladen, per `import()` erst bei einem PDF. Ein Update ist eine bewusste Entscheidung mit neuer Prüfsumme in `web/vendor/pdfjs/VERSION.md`; die CSP bleibt `'self'`.
+
+## Seiten
+
+`index.html` (Anmeldung, Konto, Klärfälle), `eingang.html` (Fotos und PDFs in den Eingang legen, Eingang ansehen), `belege.html` (Belege als Liste oder Galerie, Detail unter `#beleg/<id>`), `einladung.html`, `zustimmung.html`. Die Navigation „Konto · Eingang · Belege“ steht unter der `h1` der drei Hauptseiten. Der Entwurf liegt in `docs/planning/2026-11-17_belege-und-fotos/artifacts/entwurf-belege.html`.
+
 ## Regeln
 
 - Gestaltung: noch offen. Sie wird im Oberflächen-Meilenstein gemeinsam erarbeitet; bis dahin keine Farben, Schriften oder Layouts festlegen, die über einen funktionalen Platzhalter hinausgehen.

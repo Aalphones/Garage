@@ -14,6 +14,7 @@ Quelle: `app/index.php`. Alle Pfade absolut; die Brücke liegt unter `/garage/` 
 | POST | `/garage/api/auth/logout` | `Api\AuthController::logout` | Cookie, `X-Garage: 1` | 204 |
 | POST | `/garage/api/auth/logout-all` | `Api\AuthController::logoutAll` | JWT | 204; widerruft nur die Sitzungen des angemeldeten Nutzers |
 | GET | `/garage/api/me` | `Api\MeController::show` | JWT | `{user:{id,name,email}, garages:[{id,name,role}]}`; 401 ohne gültiges JWT |
+| GET | `/garage/api/vehicles` | `Api\VehicleController::list` | JWT | `{garages:[{id,name,role,vehicles:[{id,label,…}]}]}` für die Auswahlen in Eingang und Belegen |
 | GET | `/garage/api/tokens` | `Api\TokenController::list` | JWT | `{tokens:[{id,name,scopes,expires_at,last_used_at,created_at}]}` — nur feste Tokens des Nutzers, ohne widerrufene, nie Klartext oder Hash |
 | POST | `/garage/api/tokens` | `Api\TokenController::create` | JWT | 201 `{token,id,name,scopes,expires_at}` — `token` (`gmcp_` + 64 Hex) nur in dieser Antwort; Body `name` (`^[a-z0-9][a-z0-9-]{0,39}$`), `scopes` (Standard `garage:read garage:write`), `expires_days` (1–3650 oder `null`); 409 `name_taken` (je Nutzer unter den aktiven), 422 `invalid_value` |
 | DELETE | `/garage/api/tokens/{id}` | `Api\TokenController::revoke` | JWT | 204; fremdes, unbekanntes oder schon widerrufenes Token → 404 `not_found` (nie 403) |
@@ -31,7 +32,7 @@ Quelle: `app/index.php`. Alle Pfade absolut; die Brücke liegt unter `/garage/` 
 | POST | `/garage/api/open-items/{id}/resolve` | `Api\OpenItemController::resolve` | JWT (nur Mensch) | Body `decision`, `note?` (0–500); 200 `{open_item_id,status,decision}`; 404 `not_found` (fremd/unbekannt), 403 `forbidden` (Rolle `lesend`), 409 `already_resolved`, 422 `invalid_value` (Entscheidung passt nicht zur Art, Notiz zu lang); ein Audit-Eintrag `open_item.resolve` (ADR-010) |
 | GET | `/garage/api/documents` | `ApiDocumentController::list` | JWT | `{documents:[…]}` der eigenen Garagen, Filter `vehicle_id`, `status`, `doc_type`; mit `preview_url` und `can_edit` |
 | POST | `/garage/api/documents` | `ApiDocumentController::create` | JWT (nicht `lesend`) | multipart: `file`, bei PDFs `pages[]` (im Browser gerenderte JPEG-Seiten, höchstens 20 zu je 4 MB; für ein Foto 422), `garage_id?`, `vehicle_id?`, `doc_type?`; 201 wie `store_document` (`channel` `web`); 413/`too_large` über `max_bytes` |
-| GET | `/garage/api/documents/{id}` | `ApiDocumentController::show` | JWT | Dokument mit `pages`, `original_url`, `preview_url`, `attachments`, `text_content`, `can_edit`; fremd → 404 |
+| GET | `/garage/api/documents/{id}` | `ApiDocumentController::show` | JWT | Dokument mit `created_by` (Akteur), `pages`, `original_url`, `preview_url`, `attachments`, `text_content`, `can_edit`; fremd → 404 |
 | PATCH | `/garage/api/documents/{id}` | `ApiDocumentController::update` | JWT (nicht `lesend`) | Body `doc_type`, `vehicle_id`, `title`, `photo_tag`; das Fahrzeug lässt sich mit Anhängen nicht mehr ändern |
 | POST | `/garage/api/documents/{id}/file` | `ApiDocumentController::uploadFile` | JWT (nicht `lesend`) | füllt ein Dokument im Status `wartet` (multipart wie oben); sonst 409 `already_has_file` |
 | POST | `/garage/api/documents/{id}/discard` | `ApiDocumentController::discard` | JWT (nur Mensch) | Body `reason?`; Status `verworfen` |
