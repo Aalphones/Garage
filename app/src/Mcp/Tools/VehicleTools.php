@@ -26,7 +26,7 @@ final class VehicleTools
         $registry->add(new Tool(
             'list_vehicles',
             'Fahrzeuge auflisten',
-            'Listet alle Garagen des Nutzers (auch leere) mit Rolle und Fahrzeugen: id, label, status, marke, modell, fin und die Zahl offener Klärfälle. Starte hiermit, um die vehicle_id und garage_id für die anderen Tools zu finden und um zu prüfen, ob es ein Fahrzeug schon gibt. Keine Eingabe nötig: {}.',
+            'Listet alle Garagen des Nutzers (auch leere) mit Rolle und Fahrzeugen: id, label, status, marke, modell, fin, die Zahl offener Klärfälle, km_estimate (geschätzter Kilometerstand heute, null ohne Kilometerstand) und next_due (dringendste Wartung: task_key, title, effective_date, status; null ohne berechenbare Aufgabe; Details in get_due_items). Starte hiermit, um die vehicle_id und garage_id für die anderen Tools zu finden und um zu prüfen, ob es ein Fahrzeug schon gibt. Keine Eingabe nötig: {}.',
             Schema::object(),
             Tool::annotations('Fahrzeuge auflisten', 'R'),
             Scopes::READ,
@@ -36,7 +36,7 @@ final class VehicleTools
         $registry->add(new Tool(
             'get_vehicle',
             'Fahrzeug lesen',
-            'Liefert ein Fahrzeug mit allen aktuellen Stammdaten, je Feld mit Wert, Herkunft (source, source_url), Konfidenz, Akteur und Zeitpunkt. „specs“ sind die Spezifikationen nach Bereich gruppiert (specs.motoroel.viskositaet), „registrations“ die Zulassungen (neueste zuerst), „holder_count“ die Zahl verschiedener Halter, „equipment“ die Ausstattung. „disputed“ nennt Werte, die einem bestätigten Wert widersprechen und auf die Entscheidung eines Menschen warten (open_item_id). Beispiel: {"vehicle_id": 12}.',
+            'Liefert ein Fahrzeug mit allen aktuellen Stammdaten, je Feld mit Wert, Herkunft (source, source_url), Konfidenz, Akteur und Zeitpunkt. „specs“ sind die Spezifikationen nach Bereich gruppiert (specs.motoroel.viskositaet), „registrations“ die Zulassungen (neueste zuerst), „holder_count“ die Zahl verschiedener Halter, „equipment“ die Ausstattung, „km_estimate“ den geschätzten Kilometerstand von heute mit Grundlage (km_estimate, per_day = Kilometer pro Tag, estimated = false ohne Hochrechnung, basis.from/to = die Stände dahinter; null ohne Kilometerstand). „disputed“ nennt Werte, die einem bestätigten Wert widersprechen und auf die Entscheidung eines Menschen warten (open_item_id). Beispiel: {"vehicle_id": 12}.',
             Schema::object(['vehicle_id' => Schema::integer('ID des Fahrzeugs aus list_vehicles')], ['vehicle_id']),
             Tool::annotations('Fahrzeug lesen', 'R'),
             Scopes::READ,

@@ -18,7 +18,6 @@ final class EventService
 
     private const TABLE = 'events';
     private const MAX_ITEMS = 200;
-    private const TASK_KEY_PATTERN = '/^[a-z][a-z0-9_]{1,40}$/';
     private const EXAMPLE = '{"vehicle_id": 12, "kind": "inspektion", "title": "Inspektion 30.000 km", "performed_on": "2026-03-02", "odometer_km": 26910, "invoice_number": "R-2026-0815", "gross_eur": "1288.70"}';
     private const ITEM_EXAMPLE = '{"items": [{"type": "arbeit", "description": "Ölwechsel", "task_key": "oelwechsel", "net_eur": "49.90"}]}';
     private const COST_KINDS = ['inspektion', 'reparatur'];
@@ -31,9 +30,11 @@ final class EventService
     private OdometerRepository $readings;
     private OpenItemRepository $openItems;
     private AuditRepository $audit;
+    private TaskRepository $tasks;
 
     public function __construct(private readonly PDO $pdo)
     {
+        $this->tasks = new TaskRepository($pdo);
         $this->access = new VehicleAccess($pdo);
         $this->merger = new RecordMerger($pdo);
         $this->workshops = new WorkshopRepository($pdo);
@@ -200,9 +201,30 @@ final class EventService
         }
         $result['odometer'] = $odometer;
         $result['open_item_ids'] = array_values(array_unique($openItemIds));
-        $result['warnings'] = self::warnings((string) $values['kind'], $parsed['has_gross']);
+        $result['warnings'] = [...self::warnings((string) $values['kind'], $parsed['has_gross']), ...$this->missingRuleWarnings($vehicle['id'], $parsed['items'], $actor)];
 
         return $result;
+    }
+
+    /**
+     * Ein `task_key`, zu dem es noch keine Aufgabe gibt, taucht in keiner Fälligkeit auf: das Ereignis ist gespeichert,
+     * der Agent bekommt den Hinweis, die Intervallregel nachzutragen.
+     *
+     * @param list<array<string, string|null>> $items
+     * @return list<string>
+     */
+    private function missingRuleWarnings(int $vehicleId, array $items, Actor $actor): array
+    {
+        $taskKeys = array_unique(array_filter(array_column($items, 'task_key'), static fn (?string $taskKey): bool => $taskKey !== null));
+
+        $warnings = [];
+        foreach ($taskKeys as $taskKey) {
+            if ($this->tasks->findTask($vehicleId, $taskKey, $actor) === null) {
+                $warnings[] = sprintf('task_key ‚%s‘ hat noch keine Intervallregel (upsert_task_rule).', $taskKey);
+            }
+        }
+
+        return $warnings;
     }
 
     /**
@@ -444,7 +466,7 @@ final class EventService
         if ($raw === null || $raw === '') {
             return null;
         }
-        if (!is_string($raw) || preg_match(self::TASK_KEY_PATTERN, $raw) !== 1) {
+        if (!is_string($raw) || preg_match(TaskService::KEY_PATTERN, $raw) !== 1) {
             throw Validate::invalid($field, 'Der Aufgabenschlüssel besteht aus Kleinbuchstaben, Ziffern und Unterstrichen und beginnt mit einem Buchstaben (2 bis 41 Zeichen).', '{"task_key": "oelwechsel"}');
         }
 

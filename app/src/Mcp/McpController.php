@@ -8,10 +8,12 @@ use Garage\Auth\McpAuth;
 use Garage\Auth\Scopes;
 use Garage\Db\Connection;
 use Garage\Domain\Actor;
+use Garage\Domain\DueService;
 use Garage\Domain\EquipmentService;
 use Garage\Domain\EventService;
 use Garage\Domain\OdometerService;
 use Garage\Domain\RegistrationService;
+use Garage\Domain\TaskService;
 use Garage\Domain\TokenService;
 use Garage\Domain\UserRepository;
 use Garage\Domain\VehicleService;
@@ -21,6 +23,7 @@ use Garage\Mcp\Tools\EquipmentTools;
 use Garage\Mcp\Tools\EventTools;
 use Garage\Mcp\Tools\OdometerTools;
 use Garage\Mcp\Tools\RegistrationTools;
+use Garage\Mcp\Tools\TaskTools;
 use Garage\Mcp\Tools\VehicleTools;
 use Garage\OAuth\Discovery;
 use Garage\OAuth\TokenIssuer;
@@ -58,6 +61,8 @@ final class McpController
             'equipment' => new EquipmentService($pdo),
             'events' => new EventService($pdo),
             'odometer' => new OdometerService($pdo),
+            'tasks' => new TaskService($pdo),
+            'due' => new DueService($pdo),
             'pdo' => $pdo,
             'config' => $config,
         ];
@@ -360,6 +365,8 @@ final class McpController
         $registry->group('Scheckheft');
         EventTools::register($registry, $services);
         OdometerTools::register($registry, $services);
+        $registry->group('Wartungsplan');
+        TaskTools::register($registry, $services);
 
         return $registry;
     }

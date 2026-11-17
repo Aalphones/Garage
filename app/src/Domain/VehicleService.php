@@ -66,11 +66,13 @@ final class VehicleService
     private VehicleAccess $access;
     private RegistrationService $registrations;
     private EquipmentService $equipment;
+    private DueService $due;
 
     public function __construct(private readonly PDO $pdo)
     {
         $this->registrations = new RegistrationService($pdo);
         $this->equipment = new EquipmentService($pdo);
+        $this->due = new DueService($pdo);
         $this->vehicles = new VehicleRepository($pdo);
         $this->openItems = new OpenItemRepository($pdo);
         $this->garages = new GarageRepository($pdo);
@@ -93,6 +95,7 @@ final class VehicleService
         $vehicleIds = array_map(static fn (array $vehicle): int => $vehicle['id'], $vehicles);
         $values = $this->vehicles->currentValues($vehicleIds, ['marke', 'modell', 'fin'], $actor);
         $openCounts = $this->vehicles->countOpenItems($vehicleIds, $actor);
+        $dueSummary = $this->due->summary($vehicles, $actor);
 
         $byGarage = [];
         foreach ($vehicles as $vehicle) {
@@ -104,6 +107,8 @@ final class VehicleService
                 'modell' => $values[$vehicle['id']]['modell'] ?? null,
                 'fin' => $values[$vehicle['id']]['fin'] ?? null,
                 'open_items' => $openCounts[$vehicle['id']] ?? 0,
+                'km_estimate' => $dueSummary[$vehicle['id']]['km_estimate'],
+                'next_due' => $dueSummary[$vehicle['id']]['next_due'],
             ];
         }
 
@@ -116,7 +121,7 @@ final class VehicleService
     }
 
     /**
-     * @return array{vehicle: array{id: int, garage_id: int, label: string, status: string}, facts: array<string, array<string, mixed>>, specs: array<string, array<string, array<string, mixed>>>, disputed: list<array<string, mixed>>, registrations: list<array<string, mixed>>, holder_count: int, equipment: list<array<string, mixed>>}
+     * @return array{vehicle: array{id: int, garage_id: int, label: string, status: string}, facts: array<string, array<string, mixed>>, specs: array<string, array<string, array<string, mixed>>>, disputed: list<array<string, mixed>>, registrations: list<array<string, mixed>>, holder_count: int, equipment: list<array<string, mixed>>, km_estimate: array<string, mixed>|null}
      */
     public function get(int $vehicleId, Actor $actor): array
     {
@@ -162,6 +167,7 @@ final class VehicleService
             'registrations' => $registrations,
             'holder_count' => self::countHolders($registrations),
             'equipment' => $this->equipment->list($vehicleId, $actor),
+            'km_estimate' => $this->due->forecastFor($vehicleId, $actor),
         ];
     }
 
