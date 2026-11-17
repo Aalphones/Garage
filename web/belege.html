@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>Belege – GARAGE</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/garage/css/base.css">
+</head>
+<body>
+    <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+    <main id="inhalt">
+        <a id="back-link" class="back" href="#" hidden>← Belege</a>
+        <h1 id="page-title">GARAGE</h1>
+        <nav id="app-nav" class="appnav" aria-label="GARAGE">
+            <a href="/garage/index.html">Konto</a>
+            <a href="/garage/eingang.html">Eingang</a>
+            <a href="/garage/belege.html" aria-current="page">Belege</a>
+        </nav>
+        <p id="status" role="status">Lädt …</p>
+
+        <section id="list-view" hidden>
+            <div class="toolbar">
+                <h2>Belege</h2>
+                <div class="view-toggle" role="group" aria-label="Ansicht">
+                    <button type="button" id="view-list" aria-pressed="true">Liste</button>
+                    <button type="button" id="view-gallery" aria-pressed="false">Galerie</button>
+                </div>
+            </div>
+            <div id="vehicle-chips" class="chips" role="group" aria-label="Fahrzeug"></div>
+            <p id="list-error" class="error" role="alert" tabindex="-1" hidden></p>
+            <div id="list-body"></div>
+        </section>
+
+        <section id="detail-view" hidden>
+            <p id="detail-error" class="error" role="alert" tabindex="-1" hidden></p>
+            <div id="detail-body"></div>
+        </section>
+        <div id="undo-slot" role="status"></div>
+    </main>
+    <script type="module" src="/garage/js/document.js"></script>
+</body>
+</html>

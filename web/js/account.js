@@ -44,6 +44,10 @@ async function showAccount() {
     accountSection.hidden = false;
     statusLine.textContent = '';
     await Promise.all([tokens.load(), grants.load(), openItems.load()]);
+    // Der Abschnitt entsteht erst nach der Anmeldung; der Sprung aus dem Eingang („Ansehen“) muss deshalb hier nachgeholt werden.
+    if (location.hash === '#klaerfaelle') {
+        document.getElementById('klaerfaelle').scrollIntoView();
+    }
 }
 
 setupLogin(loginForm, loginError, showAccount);

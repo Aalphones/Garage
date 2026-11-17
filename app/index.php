@@ -13,6 +13,7 @@ use Garage\Api\InvitationController;
 use Garage\Api\MeController;
 use Garage\Api\OpenItemController;
 use Garage\Api\TokenController;
+use Garage\Api\VehicleController;
 use Garage\Api\OAuthController;
 use Garage\Http\Request;
 use Garage\Http\Router;
@@ -39,7 +40,8 @@ $router->add('POST', '/garage/api/auth/logout', static fn () => (new AuthControl
 $router->add('POST', '/garage/api/auth/logout-all', static fn () => (new AuthController())->logoutAll($request));
 $router->add('GET', '/garage/api/me', static fn () => (new MeController())->show($request));
 
-$router->add('GET', '/garage/api/tokens', static fn () => (new TokenController())->list($request));
+$router->add('GET', '/garage/api/vehicles', static fn () => (new VehicleController())->list($request));
+$router->add('GET', '/garage/api/tokens',static fn () => (new TokenController())->list($request));
 $router->add('POST', '/garage/api/tokens', static fn () => (new TokenController())->create($request));
 $router->add('DELETE', '/garage/api/tokens/{id}', static fn (array $parameters) => (new TokenController())->revoke($request, (int) $parameters['id']));
 

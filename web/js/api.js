@@ -104,6 +104,47 @@ export async function request(method, path, body) {
     return send(method, path, body, { Authorization: 'Bearer ' + (await accessToken(true)) });
 }
 
+// XMLHttpRequest statt fetch, weil nur er den Fortschritt des Hochladens meldet.
+function sendForm(path, formData, token, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', API_BASE + path);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+        xhr.responseType = 'json';
+        xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+                onProgress(event.loaded / event.total);
+            }
+        });
+        xhr.addEventListener('error', () => reject(new ApiError(0, 'network_error', 'Keine Verbindung zum Server.')));
+        xhr.addEventListener('load', () => {
+            const data = xhr.response;
+            if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(data);
+                return;
+            }
+            const code = data && data.error ? data.error : 'http_error';
+            const message = data && data.message ? data.message : 'Der Aufruf ist fehlgeschlagen.';
+            reject(new ApiError(xhr.status, code, message));
+        });
+        xhr.send(formData);
+    });
+}
+
+/** Multipart-Upload mit Anmeldung und Fortschritt (`onProgress` bekommt 0 bis 1); bei 401 einmal mit erneuertem Token wiederholt. */
+export async function upload(path, formData, onProgress) {
+    const token = await accessToken(false);
+    try {
+        return await sendForm(path, formData, token, onProgress);
+    } catch (error) {
+        if (!(error instanceof ApiError) || error.status !== 401) {
+            throw error;
+        }
+    }
+
+    return sendForm(path, formData, await accessToken(true), onProgress);
+}
+
 export async function login(email, password) {
     adopt(await post('auth/login', { email, password }));
 

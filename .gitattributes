@@ -8,3 +8,6 @@
 *.jpg binary
 *.webp binary
 *.pdf binary
+
+# Gebuendelte Fremdbibliothek: byte-genau, sonst stimmt die Pruefsumme in VERSION.md nicht.
+web/vendor/** -text

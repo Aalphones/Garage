@@ -593,6 +593,7 @@ final class DocumentService
 
         return $this->present($document) + [
             'garage_id' => $document['garage_id'],
+            'created_by' => $document['actor'],
             'attachments' => $found['attachments'],
             'text_content' => $document['text_content'],
             'pages' => $pages,

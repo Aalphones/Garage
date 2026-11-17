@@ -12,6 +12,11 @@
     <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
     <main id="inhalt">
         <h1>GARAGE</h1>
+        <nav class="appnav" aria-label="GARAGE">
+            <a href="/garage/index.html" aria-current="page">Konto</a>
+            <a href="/garage/eingang.html">Eingang</a>
+            <a href="/garage/belege.html">Belege</a>
+        </nav>
         <p id="status" role="status">Lädt …</p>
 
         <section id="login" aria-labelledby="login-heading" hidden>
@@ -30,7 +35,7 @@
         <section id="account" aria-labelledby="account-heading" hidden>
             <h2 id="account-heading">Konto: <span id="user-name"></span></h2>
 
-            <h3>Klärfälle</h3>
+            <h3 id="klaerfaelle" tabindex="-1">Klärfälle</h3>
             <p class="hint">Hier entscheidest du, wenn zwei Angaben sich widersprechen. „Bisheriger Wert gilt“ behält den gespeicherten Wert, „Neuer Wert gilt“ übernimmt den gemeldeten, „Verwerfen“ schließt den Klärfall ohne Änderung.</p>
             <p id="open-item-error" class="error" role="alert" tabindex="-1" hidden></p>
             <ul id="open-item-list" class="plain-list"></ul>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>Eingang – GARAGE</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/garage/css/base.css">
+</head>
+<body>
+    <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+    <main id="inhalt">
+        <h1>GARAGE</h1>
+        <nav class="appnav" aria-label="GARAGE">
+            <a href="/garage/index.html">Konto</a>
+            <a href="/garage/eingang.html" aria-current="page">Eingang</a>
+            <a href="/garage/belege.html">Belege</a>
+        </nav>
+        <p id="status" role="status">Lädt …</p>
+
+        <div id="content" hidden>
+            <h2>Eingang <button type="button" class="info" id="tip-button" aria-expanded="false" aria-controls="tip-eingang" aria-label="Wie geht es weiter?">?</button></h2>
+            <p id="tip-eingang" class="tip" hidden>Was hier liegt, erfasst ein Agent: sag in Claude oder ChatGPT „arbeite den Eingang ab“. Er legt Ereignis, Kilometerstand und Beleg an und meldet Unklares als Klärfall.</p>
+
+            <section id="capture-start">
+                <div class="capture-row">
+                    <button type="button" id="button-camera" class="button primary">Foto aufnehmen</button>
+                    <button type="button" id="button-files" class="button">Datei wählen</button>
+                </div>
+                <small>Fotos und PDFs bis 30 MB. Mehrere Seiten nacheinander aufnehmen geht.</small>
+            </section>
+            <p id="readonly-note" class="hint" hidden>Dein Konto darf in diesen Garagen nur lesen. Neue Einträge legen Inhaber und Mitglieder an.</p>
+            <input id="input-camera" type="file" accept="image/*" capture="environment" hidden>
+            <input id="input-files" type="file" accept="image/*,application/pdf" multiple hidden>
+
+            <section id="capture-new" aria-labelledby="new-heading" hidden>
+                <h3 id="new-heading">Neuer Eintrag</h3>
+                <div id="page-list" class="pages"></div>
+                <div class="button-row">
+                    <button type="button" id="button-more" class="button">Weitere Seite fotografieren</button>
+                </div>
+                <div id="capture-garage-field" hidden>
+                    <label for="capture-garage">Garage</label>
+                    <select id="capture-garage"></select>
+                </div>
+                <label for="capture-vehicle">Fahrzeug</label>
+                <select id="capture-vehicle"></select>
+                <label for="capture-note">Notiz <small class="inline-hint">(optional)</small></label>
+                <input id="capture-note" type="text" maxlength="200" placeholder="z. B. Inspektion Mai, Reifen eingelagert">
+                <button type="button" id="capture-submit" class="button primary">In den Eingang legen</button>
+                <button type="button" id="capture-cancel" class="link-button">Abbrechen</button>
+            </section>
+
+            <div id="capture-status" role="status">
+                <span id="capture-progress-text"></span>
+                <div id="capture-progress" class="progress" aria-hidden="true" hidden><span></span></div>
+            </div>
+            <p id="capture-error" class="error" role="alert" tabindex="-1" hidden></p>
+
+            <h3>Im Eingang</h3>
+            <p id="inbox-error" class="error" role="alert" tabindex="-1" hidden></p>
+            <ul id="inbox-list" class="plain-list"></ul>
+            <p id="inbox-empty" hidden>Der Eingang ist leer. Fotografiere eine Rechnung oder wähle ein PDF – ein Agent erfasst es danach.</p>
+        </div>
+        <div id="undo-slot" role="status"></div>
+    </main>
+    <script type="module" src="/garage/js/inbox.js"></script>
+</body>
+</html>
