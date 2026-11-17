@@ -8,6 +8,7 @@ use Garage\Auth\McpAuth;
 use Garage\Auth\Scopes;
 use Garage\Db\Connection;
 use Garage\Domain\Actor;
+use Garage\Domain\ChangeService;
 use Garage\Domain\DamageService;
 use Garage\Domain\DueService;
 use Garage\Domain\EquipmentService;
@@ -15,8 +16,10 @@ use Garage\Domain\EventService;
 use Garage\Domain\MeasurementService;
 use Garage\Domain\NoteService;
 use Garage\Domain\OdometerService;
+use Garage\Domain\OpenItemService;
 use Garage\Domain\PartService;
 use Garage\Domain\RegistrationService;
+use Garage\Domain\SearchService;
 use Garage\Domain\TaskService;
 use Garage\Domain\TireService;
 use Garage\Domain\TokenService;
@@ -24,14 +27,17 @@ use Garage\Domain\UserRepository;
 use Garage\Domain\VehicleService;
 use Garage\Http\Request;
 use Garage\Http\Response;
+use Garage\Mcp\Tools\ChangeTools;
 use Garage\Mcp\Tools\DamageTools;
 use Garage\Mcp\Tools\EquipmentTools;
 use Garage\Mcp\Tools\EventTools;
 use Garage\Mcp\Tools\MeasurementTools;
 use Garage\Mcp\Tools\NoteTools;
 use Garage\Mcp\Tools\OdometerTools;
+use Garage\Mcp\Tools\OpenItemTools;
 use Garage\Mcp\Tools\PartTools;
 use Garage\Mcp\Tools\RegistrationTools;
+use Garage\Mcp\Tools\SearchTools;
 use Garage\Mcp\Tools\TaskTools;
 use Garage\Mcp\Tools\TireTools;
 use Garage\Mcp\Tools\VehicleTools;
@@ -78,6 +84,9 @@ final class McpController
             'parts' => new PartService($pdo),
             'damages' => new DamageService($pdo),
             'notes' => new NoteService($pdo),
+            'openItems' => new OpenItemService($pdo),
+            'changes' => new ChangeService($pdo),
+            'search' => new SearchService($pdo),
             'pdo' => $pdo,
             'config' => $config,
         ];
@@ -391,6 +400,10 @@ final class McpController
         DamageTools::register($registry, $services);
         $registry->group('Notizen');
         NoteTools::register($registry, $services);
+        $registry->group('Klärfälle und Verlauf');
+        OpenItemTools::register($registry, $services);
+        ChangeTools::register($registry, $services);
+        SearchTools::register($registry, $services);
 
         return $registry;
     }
