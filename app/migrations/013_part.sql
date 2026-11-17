@@ -1,0 +1,25 @@
+-- Meilenstein 2, Phase 4: Teile (verbaute und passende Alternativen) als Listen-Tabelle mit Herkunftsblock.
+CREATE TABLE parts (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    garage_id INT UNSIGNED NOT NULL,
+    vehicle_id INT UNSIGNED NOT NULL,
+    component VARCHAR(80) NOT NULL,
+    brand VARCHAR(60) NOT NULL DEFAULT '',
+    article_number VARCHAR(60) NOT NULL DEFAULT '',
+    oem_number VARCHAR(60) NULL,
+    role ENUM('verbaut', 'alternative') NOT NULL,
+    verified TINYINT(1) NULL,
+    note VARCHAR(200) NULL,
+    source ENUM('beleg', 'nutzer', 'recherche', 'agent', 'werkstatt') NOT NULL,
+    source_url VARCHAR(500) NULL,
+    source_document_id INT UNSIGNED NULL,
+    confidence ENUM('bestaetigt', 'wahrscheinlich', 'unsicher') NOT NULL,
+    status ENUM('aktiv', 'geloescht') NOT NULL DEFAULT 'aktiv',
+    status_reason VARCHAR(300) NULL,
+    actor VARCHAR(160) NOT NULL,
+    user_id INT UNSIGNED NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    INDEX idx_parts_vehicle_status (vehicle_id, status),
+    CONSTRAINT fk_parts_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

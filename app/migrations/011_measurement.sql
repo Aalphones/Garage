@@ -1,0 +1,28 @@
+-- Meilenstein 2, Phase 4: Messwerte (Profiltiefe, Reifendruck, Bremsbelag, Batterie ...) als Listen-Tabelle mit Herkunftsblock.
+CREATE TABLE measurements (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    garage_id INT UNSIGNED NOT NULL,
+    vehicle_id INT UNSIGNED NOT NULL,
+    measured_on DATE NOT NULL,
+    quantity ENUM('profiltiefe', 'reifendruck', 'bremsbelag', 'bremsscheibe', 'batterie_spannung', 'batterie_kaltstart', 'frostschutz', 'hu_bremswert', 'sonstiges') NOT NULL,
+    position ENUM('vl', 'vr', 'hl', 'hr', 'vorne', 'hinten', 'gesamt') NOT NULL DEFAULT 'gesamt',
+    label VARCHAR(80) NOT NULL DEFAULT '',
+    value DECIMAL(10, 2) NOT NULL,
+    unit VARCHAR(10) NOT NULL,
+    odometer_km INT UNSIGNED NULL,
+    note VARCHAR(200) NULL,
+    event_id INT UNSIGNED NULL,
+    source ENUM('beleg', 'nutzer', 'recherche', 'agent', 'werkstatt') NOT NULL,
+    source_url VARCHAR(500) NULL,
+    source_document_id INT UNSIGNED NULL,
+    confidence ENUM('bestaetigt', 'wahrscheinlich', 'unsicher') NOT NULL,
+    status ENUM('aktiv', 'geloescht') NOT NULL DEFAULT 'aktiv',
+    status_reason VARCHAR(300) NULL,
+    actor VARCHAR(160) NOT NULL,
+    user_id INT UNSIGNED NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    INDEX idx_measurements_vehicle_status (vehicle_id, status),
+    INDEX idx_measurements_series (vehicle_id, quantity, position, measured_on),
+    CONSTRAINT fk_measurements_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
