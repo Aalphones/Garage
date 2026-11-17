@@ -6,6 +6,7 @@
     <meta name="robots" content="noindex">
     <title>Eingang – GARAGE</title>
     <link rel="icon" href="data:,">
+    <link rel="manifest" href="/garage/manifest.webmanifest">
     <link rel="stylesheet" href="/garage/css/base.css">
 </head>
 <body>
@@ -30,6 +31,7 @@
                 </div>
                 <small>Fotos und PDFs bis 30 MB. Mehrere Seiten nacheinander aufnehmen geht.</small>
             </section>
+            <p id="shared-note" class="hint" role="status" hidden></p>
             <p id="readonly-note" class="hint" hidden>Dein Konto darf in diesen Garagen nur lesen. Neue Einträge legen Inhaber und Mitglieder an.</p>
             <input id="input-camera" type="file" accept="image/*" capture="environment" hidden>
             <input id="input-files" type="file" accept="image/*,application/pdf" multiple hidden>

@@ -3,7 +3,10 @@ import { request, upload } from './api.js';
 import { buildUploadForm, prepareFile } from './capture.js';
 import { actionButton, clearChildren, element, formatDay, hideError, link, showError } from './dom.js';
 import { loadContext, requireSession } from './session.js';
+import { registerShareWorker } from './share.js';
 import { createUndoBar } from './undo.js';
+
+registerShareWorker();
 
 const VIEW_STORAGE_KEY = 'garage.belege.ansicht';
 const DETAIL_HASH = /^#beleg\/(\d+)$/;

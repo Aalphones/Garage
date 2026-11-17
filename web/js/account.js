@@ -4,7 +4,10 @@ import { clearChildren, element } from './dom.js';
 import { setupGrants } from './grant.js';
 import { setupLogin } from './login.js';
 import { setupOpenItems } from './openitem.js';
+import { registerShareWorker } from './share.js';
 import { setupTokens } from './token.js';
+
+registerShareWorker();
 
 const statusLine = document.getElementById('status');
 const loginSection = document.getElementById('login');

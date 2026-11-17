@@ -3,14 +3,18 @@ import { request } from './api.js';
 import { setupCapture } from './capture.js';
 import { actionButton, clearChildren, element, formatClock, formatMoment, hideError, link, showError } from './dom.js';
 import { loadContext, requireSession } from './session.js';
+import { registerShareWorker, takeSharedFiles } from './share.js';
 import { createUndoBar } from './undo.js';
+
+registerShareWorker();
 
 const statusLine = document.getElementById('status');
 const content = document.getElementById('content');
 const tipButton = document.getElementById('tip-button');
 const tipText = document.getElementById('tip-eingang');
 const captureStart = document.getElementById('capture-start');
-const readonlyNote = document.getElementById('readonly-note');
+const sharedNote = document.getElementById('shared-note');
+const readonlyNote =document.getElementById('readonly-note');
 const inboxList = document.getElementById('inbox-list');
 const inboxEmpty = document.getElementById('inbox-empty');
 const inboxError = document.getElementById('inbox-error');
@@ -137,6 +141,26 @@ tipButton.addEventListener('click', () => {
     tipButton.setAttribute('aria-expanded', String(!tipText.hidden));
 });
 
+// Auch ohne `?geteilt=` prüfen: wer erst nach der Anmeldung hierher zurückkehrt, hat den Parameter verloren, die Dateien liegen aber noch im Cache.
+async function adoptSharedFiles(capture) {
+    window.history.replaceState(null, '', window.location.pathname);
+    const files = await takeSharedFiles();
+    if (files.length === 0) {
+        return;
+    }
+    sharedNote.textContent = files.length + ' ' + fileWord(files.length) + ' aus „Teilen“ übernommen.';
+    sharedNote.hidden = false;
+    await capture.addFiles(files);
+}
+
+function fileWord(count) {
+    if (count === 1) {
+        return 'Datei';
+    }
+
+    return 'Dateien';
+}
+
 async function start() {
     const user = await requireSession(statusLine);
     if (user === null) {
@@ -150,7 +174,8 @@ async function start() {
     }
     content.hidden = false;
     if (context.writableGarages.length > 0) {
-        setupCapture(context, undoBar, loadInbox);
+        const capture = setupCapture(context, undoBar, loadInbox);
+        await adoptSharedFiles(capture);
     } else {
         captureStart.hidden = true;
         readonlyNote.hidden = false;

@@ -4,6 +4,7 @@ DirectoryIndex index.html
 # ES-Module von pdf.js: ohne JavaScript-Typ verweigert der Browser Modul und Worker.
 <IfModule mod_mime.c>
     AddType text/javascript .mjs
+    AddType application/manifest+json .webmanifest
 </IfModule>
 
 <IfModule mod_rewrite.c>
@@ -27,6 +28,14 @@ DirectoryIndex index.html
     Header always set X-Content-Type-Options "nosniff"
     Header always set Referrer-Policy "same-origin"
     Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+</IfModule>
+
+# Der Service Worker (Teilen-Ziel) liegt unter /garage/sw.js und darf den ganzen Bereich /garage/ steuern; er wird nie zwischengespeichert.
+<IfModule mod_headers.c>
+    <Files "sw.js">
+        Header set Service-Worker-Allowed "/garage/"
+        Header set Cache-Control "no-cache"
+    </Files>
 </IfModule>
 
 <Files ".user.ini">

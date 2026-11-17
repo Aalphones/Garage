@@ -1,0 +1,25 @@
+{
+    "name": "GARAGE",
+    "short_name": "GARAGE",
+    "start_url": "/garage/eingang.html",
+    "scope": "/garage/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#111111",
+    "icons": [
+        { "src": "/garage/icons/garage-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+        { "src": "/garage/icons/garage-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    ],
+    "share_target": {
+        "action": "/garage/teilen",
+        "method": "POST",
+        "enctype": "multipart/form-data",
+        "params": {
+            "title": "title",
+            "text": "text",
+            "files": [
+                { "name": "dateien", "accept": ["image/*", "application/pdf"] }
+            ]
+        }
+    }
+}
