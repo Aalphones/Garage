@@ -49,6 +49,11 @@ final class VehicleService
         'ablageort_papiere' => ['type' => self::TYPE_TEXT, 'example' => 'Ordner Auto, Regal Büro'],
     ];
 
+    /** Spezifikationen sind Fakten mit Feldnamen `spec.<bereich>.<schluessel>` (ADR-009). */
+    private const SPEC_PREFIX = 'spec.';
+    private const SPEC_PART = '/^[a-z][a-z0-9_]{1,30}$/';
+    private const SPEC_EXAMPLE = '{"area": "motoroel", "key": "viskositaet", "value": "0W-20"}';
+
     private const TEXT_MAX = 200;
     private const LABEL_MAX = 80;
     private const FIN_PATTERN = '/^[A-HJ-NPR-Z0-9]{17}$/';
@@ -59,9 +64,13 @@ final class VehicleService
     private GarageRepository $garages;
     private AuditRepository $audit;
     private VehicleAccess $access;
+    private RegistrationService $registrations;
+    private EquipmentService $equipment;
 
     public function __construct(private readonly PDO $pdo)
     {
+        $this->registrations = new RegistrationService($pdo);
+        $this->equipment = new EquipmentService($pdo);
         $this->vehicles = new VehicleRepository($pdo);
         $this->openItems = new OpenItemRepository($pdo);
         $this->garages = new GarageRepository($pdo);
@@ -107,15 +116,16 @@ final class VehicleService
     }
 
     /**
-     * @return array{vehicle: array{id: int, garage_id: int, label: string, status: string}, facts: array<string, array<string, mixed>>, disputed: list<array<string, mixed>>}
+     * @return array{vehicle: array{id: int, garage_id: int, label: string, status: string}, facts: array<string, array<string, mixed>>, specs: array<string, array<string, array<string, mixed>>>, disputed: list<array<string, mixed>>, registrations: list<array<string, mixed>>, holder_count: int, equipment: list<array<string, mixed>>}
      */
     public function get(int $vehicleId, Actor $actor): array
     {
         $vehicle = $this->access->readable($vehicleId, $actor);
 
         $facts = [];
+        $specs = [];
         foreach ($this->vehicles->currentFacts($vehicleId, $actor) as $fact) {
-            $facts[$fact['field']] = [
+            $entry = [
                 'value' => self::typed($fact['field'], $fact['value']),
                 'source' => $fact['source'],
                 'source_url' => $fact['source_url'],
@@ -123,6 +133,12 @@ final class VehicleService
                 'actor' => $fact['actor'],
                 'recorded_at' => self::isoTime($fact['created_at']),
             ];
+            if (str_starts_with($fact['field'], self::SPEC_PREFIX)) {
+                [, $area, $key] = explode('.', $fact['field'], 3);
+                $specs[$area][$key] = $entry;
+                continue;
+            }
+            $facts[$fact['field']] = $entry;
         }
 
         $disputed = [];
@@ -136,7 +152,34 @@ final class VehicleService
             ];
         }
 
-        return ['vehicle' => $vehicle, 'facts' => $facts, 'disputed' => $disputed];
+        $registrations = $this->registrations->list($vehicleId, $actor);
+
+        return [
+            'vehicle' => $vehicle,
+            'facts' => $facts,
+            'specs' => $specs,
+            'disputed' => $disputed,
+            'registrations' => $registrations,
+            'holder_count' => self::countHolders($registrations),
+            'equipment' => $this->equipment->list($vehicleId, $actor),
+        ];
+    }
+
+    /**
+     * Zahl verschiedener, nicht leerer Halter über alle Zulassungen.
+     *
+     * @param list<array<string, mixed>> $registrations
+     */
+    private static function countHolders(array $registrations): int
+    {
+        $holders = [];
+        foreach ($registrations as $registration) {
+            if ($registration['holder'] !== null) {
+                $holders[mb_strtolower((string) $registration['holder'])] = true;
+            }
+        }
+
+        return count($holders);
     }
 
     /**
@@ -151,7 +194,7 @@ final class VehicleService
 
         return Transaction::run($this->pdo, function () use ($label, $targetGarageId, $validated, $actor): array {
             $vehicleId = $this->vehicles->insert($targetGarageId, $label, $actor);
-            $this->audit->record($actor, 'vehicle.create', 'vehicle:' . $vehicleId, $targetGarageId, null, ['label' => $label]);
+            $this->audit->record($actor, 'vehicle.create', 'vehicle:' . $vehicleId, $targetGarageId, null, ['label' => $label], $vehicleId);
             $vehicle = ['id' => $vehicleId, 'garage_id' => $targetGarageId, 'label' => $label, 'status' => VehicleRepository::STATUS_ACTIVE];
 
             return [
@@ -176,6 +219,71 @@ final class VehicleService
 
             return ['vehicle_id' => $vehicleId, 'facts' => $this->applyFacts($vehicle, $this->validateFacts($facts, false), $actor)];
         });
+    }
+
+    /**
+     * Spezifikationen (Öl, Kühlmittel, Batterie …) als Fakten: dieselbe Konfliktregel wie bei setFacts,
+     * die Einheit steht im Wert („4,3 l“).
+     *
+     * @param list<mixed> $specs je Eintrag area, key, value
+     * @param array<string, mixed> $provenance source, source_url?, confidence
+     * @return array{vehicle_id: int, specs: list<array<string, mixed>>}
+     */
+    public function setSpecs(int $vehicleId, array $specs, array $provenance, Actor $actor): array
+    {
+        return Transaction::run($this->pdo, function () use ($vehicleId, $specs, $provenance, $actor): array {
+            $vehicle = $this->access->writable($vehicleId, $actor);
+            $entries = self::validSpecs($specs);
+            $validProvenance = Provenance::validate($provenance, 'specs');
+
+            $results = [];
+            foreach ($entries as $entry) {
+                $fact = ['field' => $entry['field'], 'value' => $entry['value']] + $validProvenance;
+                $outcome = $this->applyFact($vehicle, $fact, $actor);
+                $results[] = ['area' => $entry['area'], 'key' => $entry['key'], 'value' => $entry['value'], 'result' => $outcome['result']]
+                    + (isset($outcome['open_item_id']) ? ['open_item_id' => $outcome['open_item_id']] : []);
+            }
+
+            return ['vehicle_id' => $vehicleId, 'specs' => $results];
+        });
+    }
+
+    /**
+     * @param list<mixed> $specs
+     * @return list<array{area: string, key: string, value: string, field: string}>
+     */
+    private static function validSpecs(array $specs): array
+    {
+        if ($specs === []) {
+            throw new DomainError('invalid_value', 'specs darf nicht leer sein. Beispiel: [' . self::SPEC_EXAMPLE . ']', ['field' => 'specs']);
+        }
+
+        $entries = [];
+        $seen = [];
+        foreach ($specs as $spec) {
+            if (!is_array($spec) || array_is_list($spec)) {
+                throw new DomainError('invalid_value', 'Jeder Eintrag in specs ist ein Objekt. Beispiel: ' . self::SPEC_EXAMPLE, ['field' => 'specs']);
+            }
+            $area = self::validSpecPart('area', $spec['area'] ?? null);
+            $key = self::validSpecPart('key', $spec['key'] ?? null);
+            $field = self::SPEC_PREFIX . $area . '.' . $key;
+            if (isset($seen[$field])) {
+                throw new DomainError('invalid_value', sprintf('Die Spezifikation „%s“ kommt mehrfach in einer Anfrage vor. Pro Bereich und Schlüssel genau ein Eintrag.', $field), ['field' => $field]);
+            }
+            $seen[$field] = true;
+            $entries[] = ['area' => $area, 'key' => $key, 'value' => Validate::text('value', $spec['value'] ?? null, 1, self::TEXT_MAX, self::SPEC_EXAMPLE), 'field' => $field];
+        }
+
+        return $entries;
+    }
+
+    private static function validSpecPart(string $name, mixed $raw): string
+    {
+        if (!is_string($raw) || preg_match(self::SPEC_PART, $raw) !== 1) {
+            throw Validate::invalid($name, 'Erwartet werden 2 bis 31 Zeichen: Kleinbuchstaben a–z, Ziffern und Unterstrich, am Anfang ein Buchstabe, ohne Umlaute und Leerzeichen.', self::SPEC_EXAMPLE);
+        }
+
+        return $raw;
     }
 
     /** Ohne Angabe die einzige beschreibbare Garage; eine fremde Garage ist `not_found`, eine nur lesbare `forbidden`. */
@@ -294,7 +402,8 @@ final class VehicleService
             sprintf('vehicle:%d.%s', $vehicle['id'], $fact['field']),
             $vehicle['garage_id'],
             $previous === null ? null : ['value' => $previous['value'], 'source' => $previous['source'], 'confidence' => $previous['confidence']],
-            ['fact_id' => $factId, 'value' => $fact['value'], 'source' => $fact['source'], 'confidence' => $fact['confidence'], 'status' => VehicleRepository::FACT_CURRENT]
+            ['fact_id' => $factId, 'value' => $fact['value'], 'source' => $fact['source'], 'confidence' => $fact['confidence'], 'status' => VehicleRepository::FACT_CURRENT],
+            $vehicle['id']
         );
     }
 
@@ -331,7 +440,8 @@ final class VehicleService
             sprintf('vehicle:%d.%s', $vehicle['id'], $fact['field']),
             $vehicle['garage_id'],
             ['value' => $current['value'], 'source' => $current['source'], 'confidence' => $current['confidence']],
-            ['fact_id' => $factId, 'value' => $fact['value'], 'source' => $fact['source'], 'confidence' => $fact['confidence'], 'status' => VehicleRepository::FACT_DISPUTED, 'open_item_id' => $openItemId]
+            ['fact_id' => $factId, 'value' => $fact['value'], 'source' => $fact['source'], 'confidence' => $fact['confidence'], 'status' => VehicleRepository::FACT_DISPUTED, 'open_item_id' => $openItemId],
+            $vehicle['id']
         );
 
         return ['result' => self::RESULT_DISPUTE, 'open_item_id' => $openItemId];
@@ -415,6 +525,9 @@ final class VehicleService
         }
 
         $field = $entry['field'] ?? null;
+        if (is_string($field) && str_starts_with($field, self::SPEC_PREFIX)) {
+            throw new DomainError('invalid_value', 'Spezifikationen über set_spec eintragen. Beispiel: ' . self::SPEC_EXAMPLE, ['field' => $field]);
+        }
         if (!is_string($field) || !isset(self::FIELDS[$field])) {
             throw new DomainError(
                 'invalid_value',
@@ -465,7 +578,7 @@ final class VehicleService
     /** Ganzzahlfelder kommen als Zahl zurück, alles andere als Text. */
     private static function typed(string $field, string $value): int|string
     {
-        return self::FIELDS[$field]['type'] === self::TYPE_INT ? (int) $value : $value;
+        return (self::FIELDS[$field]['type'] ?? self::TYPE_TEXT) === self::TYPE_INT ? (int) $value : $value;
     }
 
     private static function isoTime(string $databaseTime): string

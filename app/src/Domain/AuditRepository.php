@@ -17,14 +17,15 @@ final class AuditRepository
      * @param array<string, mixed>|null $before
      * @param array<string, mixed>|null $after
      */
-    public function record(Actor $actor, string $action, string $target, ?int $garageId = null, ?array $before = null, ?array $after = null): void
+    public function record(Actor $actor, string $action, string $target, ?int $garageId = null, ?array $before = null, ?array $after = null, ?int $vehicleId = null): void
     {
         $statement = $this->pdo->prepare(
-            'INSERT INTO audit_log (garage_id, user_id, actor, action, target, before_json, after_json, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())'
+            'INSERT INTO audit_log (garage_id, vehicle_id, user_id, actor, action, target, before_json, after_json, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())'
         );
         $statement->execute([
             $garageId,
+            $vehicleId,
             $actor->userId,
             $actor->name,
             $action,

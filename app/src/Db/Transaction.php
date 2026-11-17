@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Garage\Db;
 
+use LogicException;
 use PDO;
 use Throwable;
 
@@ -23,6 +24,29 @@ final class Transaction
         }
 
         return self::run($pdo, $work);
+    }
+
+    /**
+     * Wie `run`, aber am Ende immer zurückgerollt: die Arbeit läuft vollständig (Sperren, Abgleich, Ergebnisse),
+     * hinterlässt aber nichts. Eine laufende Transaktion würde das Zurückrollen auf mehr als die eigene Arbeit ausdehnen.
+     *
+     * @param callable(): mixed $work
+     */
+    public static function dryRun(PDO $pdo, callable $work): mixed
+    {
+        if ($pdo->inTransaction()) {
+            throw new LogicException('Ein Trockenlauf kann nicht in einer laufenden Transaktion starten.');
+        }
+
+        $pdo->beginTransaction();
+
+        try {
+            return $work();
+        } finally {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+        }
     }
 
     /**
