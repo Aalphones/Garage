@@ -1,6 +1,6 @@
 # Code-Map — GARAGE
 
-Feature → Ordner. Bewusst grob, keine Zeilennummern. Steht: Gerüst (Bootstrap, Http, Env, Log, Migrator, Brücke, Dev-Router, Deploy), Konten (Einladung, Anmeldung, Akteur), OAuth-Server, MCP-Endpunkt mit Fahrzeugen. Übrige Ordner entstehen mit ihren Meilensteinen.
+Feature → Ordner. Bewusst grob, keine Zeilennummern. Steht: Gerüst (Bootstrap, Http, Env, Log, Migrator, Brücke, Dev-Router, Deploy), Konten (Einladung, Anmeldung, Akteur), OAuth-Server, MCP-Endpunkt mit Fahrzeugen, Datensatz-Abgleich (Zulassung, Ausstattung, Spezifikationen). Übrige Ordner entstehen mit ihren Meilensteinen.
 
 ## Namensschema (erst raten, dann suchen)
 
@@ -37,10 +37,10 @@ Eine Domäne `<x>` (vehicle, event, task, measurement, tire, part, document, inb
 | `src/Db/` | `Connection` (PDO, UTC), `Migrator` (ohne Transaktion, Anweisungen einzeln), `Transaction` |
 | `src/Auth/` | `DeployToken`, `Jwt` (Access-JWT), `LoginThrottle`, `UserSession` (Login/Refresh/Logout), `ApiAuth` (JWT → `Actor`, nur Deploy-Token), `Scopes` |
 | `src/Api/` | `HealthController`, `DeployController`, `AuthController`, `InvitationController`, `MeController`, `TokenController`, `OAuthController` (Zustimmung, verbundene Apps), `ApiErrors` (Fehlercode → Status) |
-| `src/Domain/` | `DomainError`, `Actor`; Konten und Garagen: `UserRepository`, `GarageRepository`, `InvitationService`/`InvitationRepository`, `TokenService` (feste `gmcp_`-Tokens), `TokenRepository` (Sitzungen und feste Tokens), `AuditRepository`; Fahrzeuge: `VehicleService` (Validierung, Konfliktregel), `VehicleRepository` (Fahrzeuge und Fakten, immer mit Akteur), `OpenItemRepository` (Klärfälle anlegen) |
+| `src/Domain/` | `DomainError`, `Actor`; Konten und Garagen: `UserRepository`, `GarageRepository`, `InvitationService`/`InvitationRepository`, `TokenService` (feste `gmcp_`-Tokens), `TokenRepository` (Sitzungen und feste Tokens), `AuditRepository`; Fahrzeuge: `VehicleService` (Validierung, Konfliktregel), `VehicleRepository` (Fahrzeuge und Fakten, immer mit Akteur), `OpenItemRepository` (Klärfälle anlegen, mit Vorschlag); gemeinsame Bausteine: `Provenance` (Herkunft prüfen, Konfidenz vergleichen), `Validate` (Eingabeprüfer mit Beispieltext), `VehicleAccess` (Fahrzeug lesen/schreiben, sperrt die Zeile); Datensatz-Abgleich: `RecordMerger` (Schlüssel je Tabelle in `TABLES`, ADR-009), `RecordRepository` (Listen je Fahrzeug), `RegistrationService`, `EquipmentService`; Spezifikationen laufen über `VehicleService` |
 | `src/OAuth/` | OAuth-Server aus DISPATCH (ADR-005), nur CIMD-Clients: `Discovery`/`DiscoveryController` (Aussteller mit Pfad `/garage`), `AuthorizeController`, `Consent` (nur Mensch im Browser), `TokenIssuer` (Code-Tausch, Rotation, `authenticate` für den MCP-Endpunkt), `TokenController`, `ClientRegistry` (CIMD-Abruf), `OAuthRepository` |
 | `src/Util/` | `Env`, `Log`, `HttpClient`/`HttpResponse` (einziger Weg nach außen, SSRF-Schutz) |
-| `src/Mcp/`, `mcp/` | MCP-Schicht aus DISPATCH (ADR-005): `McpController` (Endpunkt `/garage/mcp`, Anmeldung, Methoden), `Protocol` (beide Generationen), `Registry`/`Tool`/`Schema`/`ToolResult`, `Resources`/`Prompts` (leer), `Tools/VehicleTools` (vier Tools); `Auth/McpAuth` (Token → Nutzer); `mcp/instructions.md` (Server-Anweisungen) |
+| `src/Mcp/`, `mcp/` | MCP-Schicht aus DISPATCH (ADR-005): `McpController` (Endpunkt `/garage/mcp`, Anmeldung, Methoden), `Protocol` (beide Generationen), `Registry`/`Tool`/`Schema`/`ToolResult`, `Resources`/`Prompts` (leer), `Tools/VehicleTools` (fünf Tools), `Tools/RegistrationTools`, `Tools/EquipmentTools`, `Tools/ProvenanceSchema` (gemeinsame Herkunftsfelder im Eingabeschema); `Auth/McpAuth` (Token → Nutzer); `mcp/instructions.md` (Server-Anweisungen) |
 | `migrations/` | nummerierte SQL-Dateien (Spalten: [`models.md`](models.md)) |
 | `storage/` | `logs/`, `documents/` — nur auf dem Server und lokal, nicht im Git |
 

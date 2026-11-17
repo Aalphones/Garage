@@ -8,7 +8,7 @@ Quelle des Umfangs: [`../../PROJECT.md`](../../PROJECT.md) → Meilenstein 2, Fa
 
 | # | Phase | Rating | Status |
 |---|---|---|---|
-| 1 | [Fundament und Stammdaten](phase-1-fundament-stammdaten.md) — Datensatz-Abgleich, Klärfall-Vorschlag, Zulassung, Ausstattung, Spezifikationen | heikel | pending |
+| 1 | [Fundament und Stammdaten](phase-1-fundament-stammdaten.md) — Datensatz-Abgleich, Klärfall-Vorschlag, Zulassung, Ausstattung, Spezifikationen | heikel | complete |
 | 2 | [Scheckheft und Kilometer](phase-2-scheckheft-kilometer.md) — Werkstätten, Ereignisse mit Positionen, Kilometerstände, Trockenlauf | heikel | pending |
 | 3 | [Wartungsplan und Fälligkeiten](phase-3-wartungsplan.md) — Aufgaben, Intervallregeln, Kilometerprognose, Fälligkeitsrechnung | heikel | pending |
 | 4 | [Messwerte, Reifen, Teile, Schäden, Rückrufe, Notizen](phase-4-messwerte-reifen-teile.md) | standard | pending |

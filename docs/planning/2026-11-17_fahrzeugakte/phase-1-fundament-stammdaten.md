@@ -1,6 +1,6 @@
 # Phase 1 — Fundament und Stammdaten
 
-Rating: **heikel** (gemeinsamer Abgleich für alle späteren Tabellen, dynamisches SQL nur aus Konstanten). Status: **pending**.
+Rating: **heikel** (gemeinsamer Abgleich für alle späteren Tabellen, dynamisches SQL nur aus Konstanten). Status: **complete**.
 
 ## Kontext — vorher lesen
 
@@ -12,14 +12,14 @@ Rating: **heikel** (gemeinsamer Abgleich für alle späteren Tabellen, dynamisch
 
 ## Abnahmekriterien
 
-- [ ] Die Refaktorierung ändert kein Verhalten von M1: die fünf Zweige der Konfliktregel von `set_vehicle_facts` liefern dieselben Ergebnisse wie im M1-Report (Phase 4 im Archiv), Fehlertexte für ungültige Werte unverändert.
-- [ ] `set_spec` mit `{"area":"motoroel","key":"viskositaet","value":"5W-30"}` (bestätigt) und danach `0W-20` (Beleg, bestätigt) → zweites Ergebnis `klaerfall` mit `open_item_id`; `get_vehicle` zeigt `specs.motoroel.viskositaet` = `5W-30` und unter `disputed` den Eintrag `spec.motoroel.viskositaet` = `0W-20`.
-- [ ] `area`/`key` außerhalb `^[a-z][a-z0-9_]{1,30}$` → `invalid_value` mit Beispiel. `set_vehicle_facts` mit einem Feld `spec.…` → `invalid_value` („Spezifikationen über set_spec“).
-- [ ] `record_registration` zweimal identisch → `angelegt`, dann `unveraendert`. Dieselbe Zulassung (`plate` + `valid_from`) mit zusätzlichem `holder` → `ergaenzt`. Mit anderem `holder` gegen bestätigte Zeile → `klaerfall`; `open_items.proposal_json` enthält `field`, `value`, Herkunft.
-- [ ] `upsert_equipment` mit drei Positionen, davon eine mit `list_price_eur: "450.00"` — zweiter identischer Aufruf → alle `unveraendert` (Cent-Vergleich korrekt).
-- [ ] `get_vehicle` liefert `specs` (nach Bereich gruppiert, je Wert mit Herkunft), `registrations` (neueste zuerst), `holder_count` (Zahl verschiedener nicht leerer `holder`), `equipment`.
-- [ ] Jede Schreibung erzeugt einen `audit_log`-Eintrag mit `vehicle_id`.
-- [ ] Mandanten: Nutzer B → `set_spec`/`record_registration`/`upsert_equipment` an Fahrzeug von A → `not_found`; Rolle `lesend` → `forbidden`; Token nur `garage:read` → 403 `insufficient_scope`.
+- [x] Die Refaktorierung ändert kein Verhalten von M1: die fünf Zweige der Konfliktregel von `set_vehicle_facts` liefern dieselben Ergebnisse wie im M1-Report (Phase 4 im Archiv), Fehlertexte für ungültige Werte unverändert.
+- [x] `set_spec` mit `{"area":"motoroel","key":"viskositaet","value":"5W-30"}` (bestätigt) und danach `0W-20` (Beleg, bestätigt) → zweites Ergebnis `klaerfall` mit `open_item_id`; `get_vehicle` zeigt `specs.motoroel.viskositaet` = `5W-30` und unter `disputed` den Eintrag `spec.motoroel.viskositaet` = `0W-20`.
+- [x] `area`/`key` außerhalb `^[a-z][a-z0-9_]{1,30}$` → `invalid_value` mit Beispiel. `set_vehicle_facts` mit einem Feld `spec.…` → `invalid_value` („Spezifikationen über set_spec“).
+- [x] `record_registration` zweimal identisch → `angelegt`, dann `unveraendert`. Dieselbe Zulassung (`plate` + `valid_from`) mit zusätzlichem `holder` → `ergaenzt`. Mit anderem `holder` gegen bestätigte Zeile → `klaerfall` (von außen belegt); `open_items.proposal_json` enthält `field`, `value`, Herkunft (🟡 nur im Code belegt, kein Lese-Zugang zur Datenbank).
+- [x] `upsert_equipment` mit drei Positionen, davon eine mit `list_price_eur: "450.00"` — zweiter identischer Aufruf → alle `unveraendert` (Cent-Vergleich korrekt).
+- [x] `get_vehicle` liefert `specs` (nach Bereich gruppiert, je Wert mit Herkunft), `registrations` (neueste zuerst), `holder_count` (Zahl verschiedener nicht leerer `holder`), `equipment`.
+- [x] Jede Schreibung erzeugt einen `audit_log`-Eintrag mit `vehicle_id` (🟡 nur im Code belegt: alle `AuditRepository::record`-Aufrufe übergeben die Fahrzeug-ID; von außen nicht lesbar, Prüfung des Verlaufs kommt mit Phase 5).
+- [x] Mandanten: Nutzer B → `set_spec`/`record_registration`/`upsert_equipment` an Fahrzeug von A → `not_found`; Rolle `lesend` → `forbidden`; Token nur `garage:read` → 403 `insufficient_scope`.
 
 ## Datenmodell — `app/migrations/008_record.sql`
 
@@ -39,8 +39,8 @@ Je Anweisung eine Zeile ohne Transaktion (Migrator führt einzeln aus).
 
 Zweck des bestehenden Codes verstanden: `VehicleService` validiert Felder, prüft Rechte (`requireVehicle` = fremd heißt `not_found`; `assertCanWrite` = Rolle vor Scope, Texte aus ADR-008) und wendet die Konfliktregel an. Nur verschieben, Texte und Reihenfolge der Prüfungen unverändert.
 
-- [ ] `app/src/Domain/Provenance.php`: `final class Provenance` mit `SOURCES`, `CONFIDENCE_RANK`, `CONFIRMED = 'bestaetigt'` (aus `VehicleService` verschoben); `public static function validate(array $input, string $context): array{source: string, source_url: string|null, confidence: string}` — Texte wie `VehicleService::validFact` (Feld „…“ → `$context`). `VehicleService` und `VehicleTools` auf `Provenance::` umstellen.
-- [ ] `app/src/Domain/Validate.php`: `final class Validate`, alle Methoden `public static`, werfen `DomainError('invalid_value', '<Feld> „…“: <Grund> Beispiel: …', ['field' => …])`:
+- [x] `app/src/Domain/Provenance.php`: `final class Provenance` mit `SOURCES`, `CONFIDENCE_RANK`, `CONFIRMED = 'bestaetigt'` (aus `VehicleService` verschoben); `public static function validate(array $input, string $context): array{source: string, source_url: string|null, confidence: string}` — Texte wie `VehicleService::validFact` (Feld „…“ → `$context`). `VehicleService` und `VehicleTools` auf `Provenance::` umstellen.
+- [x] `app/src/Domain/Validate.php`: `final class Validate`, alle Methoden `public static`, werfen `DomainError('invalid_value', '<Feld> „…“: <Grund> Beispiel: …', ['field' => …])`:
   - `date(string $field, mixed $raw, string $example): string` (aus `validDate`),
   - `int(string $field, mixed $raw, string $example, int $min = 0, ?int $max = null): string` (aus `validInt`, plus Grenzen),
   - `text(string $field, mixed $raw, int $min, int $max, string $example): string` (aus `validText`),
@@ -51,20 +51,20 @@ Zweck des bestehenden Codes verstanden: `VehicleService` validiert Felder, prüf
   - `bool(string $field, mixed $raw): ?string` — `true`/`false` → `"1"`/`"0"`, `null` → `null`,
   - `url(string $field, mixed $raw): ?string` (aus `validUrl`).
   `VehicleService` nutzt diese statt der eigenen privaten Prüfer (die privaten löschen).
-- [ ] `app/src/Domain/VehicleAccess.php`: `final class VehicleAccess` (Konstruktor `PDO`), `readable(int $vehicleId, Actor $actor): array{id,garage_id,label,status}` und `writable(int $vehicleId, Actor $actor): array` (mit Zeilensperre `find(..., true)`, dann Schreibrecht). Texte aus `requireVehicle`/`assertCanWrite`. Außerdem `public function assertCanWriteGarage(int $garageId, Actor $actor): void`. `VehicleService` nutzt sie.
-- [ ] `Db\Transaction::dryRun(PDO $pdo, callable $work): mixed` — `beginTransaction`, `$work()`, immer `rollBack`, Ergebnis zurück; wirft `LogicException`, wenn schon eine Transaktion läuft.
-- [ ] `AuditRepository::record(...)` bekommt als letzten Parameter `?int $vehicleId = null` und schreibt ihn; alle Aufrufe in `VehicleService` übergeben die Fahrzeug-ID (bei `vehicle.create` die neue).
-- [ ] `OpenItemRepository`: Konstanten `KIND_QUESTION = 'nachfragen'`, `KIND_WATCH = 'beobachten'`; `insert(...)` bekommt `?array $proposal = null` (als JSON gespeichert); neu `findOpenByRef(string $refTable, int $refId, Actor $actor): list<array{id:int, proposal: array|null}>` (nur `status = 'offen'`, `garage_id IN (…)`).
+- [x] `app/src/Domain/VehicleAccess.php`: `final class VehicleAccess` (Konstruktor `PDO`), `readable(int $vehicleId, Actor $actor): array{id,garage_id,label,status}` und `writable(int $vehicleId, Actor $actor): array` (mit Zeilensperre `find(..., true)`, dann Schreibrecht). Texte aus `requireVehicle`/`assertCanWrite`. Außerdem `public function assertCanWriteGarage(int $garageId, Actor $actor): void`. `VehicleService` nutzt sie.
+- [x] `Db\Transaction::dryRun(PDO $pdo, callable $work): mixed` — `beginTransaction`, `$work()`, immer `rollBack`, Ergebnis zurück; wirft `LogicException`, wenn schon eine Transaktion läuft.
+- [x] `AuditRepository::record(...)` bekommt als letzten Parameter `?int $vehicleId = null` und schreibt ihn; alle Aufrufe in `VehicleService` übergeben die Fahrzeug-ID (bei `vehicle.create` die neue).
+- [x] `OpenItemRepository`: Konstanten `KIND_QUESTION = 'nachfragen'`, `KIND_WATCH = 'beobachten'`; `insert(...)` bekommt `?array $proposal = null` (als JSON gespeichert); neu `findOpenByRef(string $refTable, int $refId, Actor $actor): list<array{id:int, proposal: array|null}>` (nur `status = 'offen'`, `garage_id IN (…)`).
 
 ### Datensatz-Abgleich
 
-- [ ] `app/src/Domain/RecordMerger.php`: `final class RecordMerger`, Konstruktor `PDO`. Konstante `TABLES` — **einzige Quelle für Tabellen- und Spaltennamen im dynamischen SQL; nie Namen aus der Eingabe übernehmen**:
+- [x] `app/src/Domain/RecordMerger.php`: `final class RecordMerger`, Konstruktor `PDO`. Konstante `TABLES` — **einzige Quelle für Tabellen- und Spaltennamen im dynamischen SQL; nie Namen aus der Eingabe übernehmen**:
   ```php
   'registrations' => ['label' => 'Zulassung', 'key' => ['plate', 'valid_from'], 'columns' => ['valid_to', 'holder', 'holder_address']],
   'equipment'     => ['label' => 'Ausstattung', 'key' => ['name'], 'columns' => ['code', 'category', 'list_price_cents']],
   ```
   (Phasen 2 und 4 ergänzen hier ihre Tabellen.)
-- [ ] `merge(string $table, array $values, array $provenance, array $vehicle, Actor $actor, ?array $key = null): array{id: int, result: string, open_item_ids: list<int>, changed: list<string>}`:
+- [x] `merge(string $table, array $values, array $provenance, array $vehicle, Actor $actor, ?array $key = null): array{id: int, result: string, open_item_ids: list<int>, changed: list<string>}`:
   - `$values`: Spalte → normalisierter Text oder `null` (Aufrufer normalisiert: Zahl als Ganzzahl-Text, Dezimal per `Validate::decimal`, Boolean `"1"`/`"0"`). `$key` überschreibt `TABLES[$table]['key']` (für Ereignisse, Phase 2).
   - Suche: `SELECT id, <key>, <columns>, confidence FROM <table> WHERE vehicle_id = ? AND garage_id IN (…) AND status = 'aktiv' AND <k1> <=> ? AND … ORDER BY id LIMIT 1 FOR UPDATE` (`<=>` vergleicht `NULL` richtig).
   - Keine Zeile → `INSERT` mit Schlüssel, Spalten, Herkunftsblock (`UTC_TIMESTAMP()` für `created_at`/`updated_at`), Audit `<table>.create` (after = alle Werte) → `angelegt`.
@@ -77,34 +77,54 @@ Zweck des bestehenden Codes verstanden: `VehicleService` validiert Felder, prüf
   - Eine `UPDATE`-Anweisung für alle Änderungen plus `updated_at = UTC_TIMESTAMP()`, Audit `<table>.update` (before/after nur der geänderten Spalten); Klärfälle Audit `<table>.dispute`.
   - Ergebnis: `klaerfall` vor `aktualisiert` vor `ergaenzt` vor `unveraendert`.
   - Läuft innerhalb der Transaktion des Aufrufers (`Transaction::join`); der Aufrufer hat das Fahrzeug über `VehicleAccess::writable` gesperrt.
-- [ ] `app/src/Domain/RecordRepository.php`: `listForVehicle(string $table, int $vehicleId, Actor $actor, string $orderBy): list<array>` — `$orderBy` nur aus einer Konstanten-Liste je Tabelle (`registrations` → `valid_from DESC, id DESC`, `equipment` → `category, name`), liefert alle Spalten `aktiv` samt `source`, `source_url`, `confidence`, `actor`, `updated_at`.
+- [x] `app/src/Domain/RecordRepository.php`: `listForVehicle(string $table, int $vehicleId, Actor $actor, string $orderBy): list<array>` — `$orderBy` nur aus einer Konstanten-Liste je Tabelle (`registrations` → `valid_from DESC, id DESC`, `equipment` → `category, name`), liefert alle Spalten `aktiv` samt `source`, `source_url`, `confidence`, `actor`, `updated_at`.
 
 ### Spezifikationen (Fakten)
 
-- [ ] `VehicleService`: Konstante `SPEC_PREFIX = 'spec.'`, `SPEC_PART = '/^[a-z][a-z0-9_]{1,30}$/'`. `validFact` weist Felder mit `spec.` ab: „Spezifikationen über set_spec, z. B. {"area": "motoroel", "key": "viskositaet", "value": "0W-20"}“.
-- [ ] `VehicleService::setSpecs(int $vehicleId, array $specs, array $provenance, Actor $actor): array` — `specs` nicht leer, je Eintrag `area`/`key` per Muster, `value` per `Validate::text(…, 1, 200, '0W-20')`, kein Paar doppelt; baut `field = 'spec.' . area . '.' . key` und läuft durch denselben Weg wie `setFacts` (Transaktion, Sperre, `applyFact`). Ergebnis je Eintrag `{area, key, value, result, open_item_id?}`.
-- [ ] `VehicleService::get` trennt: `facts` ohne `spec.`-Felder; `specs` = `{<area>: {<key>: {value, source, source_url, confidence, actor, recorded_at}}}`; `disputed` unverändert (enthält auch `spec.…`).
+- [x] `VehicleService`: Konstante `SPEC_PREFIX = 'spec.'`, `SPEC_PART = '/^[a-z][a-z0-9_]{1,30}$/'`. `validFact` weist Felder mit `spec.` ab: „Spezifikationen über set_spec, z. B. {"area": "motoroel", "key": "viskositaet", "value": "0W-20"}“.
+- [x] `VehicleService::setSpecs(int $vehicleId, array $specs, array $provenance, Actor $actor): array` — `specs` nicht leer, je Eintrag `area`/`key` per Muster, `value` per `Validate::text(…, 1, 200, '0W-20')`, kein Paar doppelt; baut `field = 'spec.' . area . '.' . key` und läuft durch denselben Weg wie `setFacts` (Transaktion, Sperre, `applyFact`). Ergebnis je Eintrag `{area, key, value, result, open_item_id?}`.
+- [x] `VehicleService::get` trennt: `facts` ohne `spec.`-Felder; `specs` = `{<area>: {<key>: {value, source, source_url, confidence, actor, recorded_at}}}`; `disputed` unverändert (enthält auch `spec.…`).
 
 ### Zulassung und Ausstattung
 
-- [ ] `app/src/Domain/RegistrationService.php`: `record(int $vehicleId, array $input, Actor $actor): array` — `plate` = `Validate::text(1–15)`, in Großbuchstaben, Mehrfach-Leerzeichen zu einem; `valid_from`/`valid_to` per `Validate::date`, `valid_to` ≥ `valid_from` sonst `invalid_value`; `holder` optional 1–120, `holder_address` optional 1–200; Herkunft per `Provenance::validate`; in `Transaction::run`: `VehicleAccess::writable`, `RecordMerger::merge('registrations', …)`. Rückgabe `{registration_id, result, open_item_ids}`. `list(int $vehicleId, Actor)` über `RecordRepository`.
-- [ ] `app/src/Domain/EquipmentService.php`: `upsert(int $vehicleId, array $items, array $provenance, Actor $actor)` — `items` 1–200 Einträge; `name` 1–160, `code` optional 1–20 (Großbuchstaben), `category` `serie`|`sonder`, `list_price_eur` per `Validate::euroToCents`; Namen innerhalb eines Aufrufs eindeutig; alles in einer Transaktion. Rückgabe `{vehicle_id, items:[{name, equipment_id, result, open_item_ids}]}`. `list(...)`.
-- [ ] `VehicleService::get` ergänzt `registrations` (je `{id, plate, valid_from, valid_to, holder, holder_address, source, source_url, confidence}`), `holder_count`, `equipment` (je `{id, name, code, category, list_price_eur, source, confidence}`; Cent → Euro-Text mit zwei Stellen).
+- [x] `app/src/Domain/RegistrationService.php`: `record(int $vehicleId, array $input, Actor $actor): array` — `plate` = `Validate::text(1–15)`, in Großbuchstaben, Mehrfach-Leerzeichen zu einem; `valid_from`/`valid_to` per `Validate::date`, `valid_to` ≥ `valid_from` sonst `invalid_value`; `holder` optional 1–120, `holder_address` optional 1–200; Herkunft per `Provenance::validate`; in `Transaction::run`: `VehicleAccess::writable`, `RecordMerger::merge('registrations', …)`. Rückgabe `{registration_id, result, open_item_ids}`. `list(int $vehicleId, Actor)` über `RecordRepository`.
+- [x] `app/src/Domain/EquipmentService.php`: `upsert(int $vehicleId, array $items, array $provenance, Actor $actor)` — `items` 1–200 Einträge; `name` 1–160, `code` optional 1–20 (Großbuchstaben), `category` `serie`|`sonder`, `list_price_eur` per `Validate::euroToCents`; Namen innerhalb eines Aufrufs eindeutig; alles in einer Transaktion. Rückgabe `{vehicle_id, items:[{name, equipment_id, result, open_item_ids}]}`. `list(...)`.
+- [x] `VehicleService::get` ergänzt `registrations` (je `{id, plate, valid_from, valid_to, holder, holder_address, source, source_url, confidence}`), `holder_count`, `equipment` (je `{id, name, code, category, list_price_eur, source, confidence}`; Cent → Euro-Text mit zwei Stellen).
 
 ### Tools
 
-- [ ] `app/src/Mcp/Tools/VehicleTools.php`: neues Tool `set_spec` (Scope write, `W`), Eingabe `vehicle_id`, `specs` (Liste von `{area, key, value}`), `source`, `source_url`, `confidence`; Beschreibung mit Beispiel `{"vehicle_id": 12, "specs": [{"area": "motoroel", "key": "viskositaet", "value": "0W-20"}, {"area": "motoroel", "key": "fuellmenge", "value": "4,3 l"}], "source": "beleg", "confidence": "bestaetigt"}` und Liste üblicher Bereiche: `motoroel`, `kuehlmittel`, `bremsfluessigkeit`, `getriebeoel`, `batterie`, `reifen`, `steuertrieb`.
-- [ ] `app/src/Mcp/Tools/RegistrationTools.php` (`record_registration`) und `app/src/Mcp/Tools/EquipmentTools.php` (`upsert_equipment`) nach Muster `VehicleTools`; Beispiele in der Beschreibung; Herkunfts-Schema als gemeinsame Hilfe `Tools\ProvenanceSchema::properties(): array` (neu, liefert `source`, `source_url`, `confidence` für `Schema::object`).
-- [ ] `McpController::services()` ergänzt `registrations`, `equipment`; `registry()` ergänzt Gruppe „Stammdaten“ mit beiden Tool-Klassen.
+- [x] `app/src/Mcp/Tools/VehicleTools.php`: neues Tool `set_spec` (Scope write, `W`), Eingabe `vehicle_id`, `specs` (Liste von `{area, key, value}`), `source`, `source_url`, `confidence`; Beschreibung mit Beispiel `{"vehicle_id": 12, "specs": [{"area": "motoroel", "key": "viskositaet", "value": "0W-20"}, {"area": "motoroel", "key": "fuellmenge", "value": "4,3 l"}], "source": "beleg", "confidence": "bestaetigt"}` und Liste üblicher Bereiche: `motoroel`, `kuehlmittel`, `bremsfluessigkeit`, `getriebeoel`, `batterie`, `reifen`, `steuertrieb`.
+- [x] `app/src/Mcp/Tools/RegistrationTools.php` (`record_registration`) und `app/src/Mcp/Tools/EquipmentTools.php` (`upsert_equipment`) nach Muster `VehicleTools`; Beispiele in der Beschreibung; Herkunfts-Schema als gemeinsame Hilfe `Tools\ProvenanceSchema::properties(): array` (neu, liefert `source`, `source_url`, `confidence` für `Schema::object`).
+- [x] `McpController::services()` ergänzt `registrations`, `equipment`; `registry()` ergänzt Gruppe „Stammdaten“ mit beiden Tool-Klassen.
 
 ### Prüfen (auf Strato, nach `deploy.cmd`)
 
-- [ ] Testkonten anlegen: Einladungen per Deploy-Endpunkt für `test-m2-a@example.com` (Garage „Test A M2“, `inhaber`), `test-m2-b@example.com` (Garage „Test B M2“), `test-m2-c@example.com` (Garage A, Rolle `lesend`); je ein festes Token, A zusätzlich eins nur `garage:read`. Token-Klartexte nur in der Session, nie in Dateien.
-- [ ] Alle AK oben per `curl` gegen `https://quantum-canvas.de/garage/mcp`; M1-Konfliktregel erneut mit den fünf Zweigen.
+- [x] Testkonten anlegen: Einladungen per Deploy-Endpunkt für `test-m2-a@example.com` (Garage „Test A M2“, `inhaber`), `test-m2-b@example.com` (Garage „Test B M2“), `test-m2-c@example.com` (Garage A, Rolle `lesend`); je ein festes Token, A zusätzlich eins nur `garage:read`. Token-Klartexte nur in der Session, nie in Dateien.
+- [x] Alle AK oben per `curl` gegen `https://quantum-canvas.de/garage/mcp`; M1-Konfliktregel erneut mit den fünf Zweigen.
 
 ### Doku
 
-- [ ] ADR-009 „Datensatz-Abgleich und Spezifikationen als Fakten“ (E1, E2; verworfen: eigene Tabelle `vehicle_specs` — bräuchte eine zweite Konfliktregel; Überschreiben ohne Schlüssel — doppelt jeden Import).
-- [ ] `docs/models.md` (neue Tabellen, Herkunftsblock, geänderte Spalten), `docs/routes.md` (Tools), `docs/code-map.md` (`Domain/` Bausteine, `Registration*`, `Equipment*`), `docs/glossary.md` (Datensatz-Abgleich, Spezifikation, Zulassung).
+- [x] ADR-009 „Datensatz-Abgleich und Spezifikationen als Fakten“ (E1, E2; verworfen: eigene Tabelle `vehicle_specs` — bräuchte eine zweite Konfliktregel; Überschreiben ohne Schlüssel — doppelt jeden Import).
+- [x] `docs/models.md` (neue Tabellen, Herkunftsblock, geänderte Spalten), `docs/routes.md` (Tools), `docs/code-map.md` (`Domain/` Bausteine, `Registration*`, `Equipment*`), `docs/glossary.md` (Datensatz-Abgleich, Spezifikation, Zulassung).
 
 ## Report-Back
+
+**Ergebnis:** Phase 1 vollständig umgesetzt, auf Strato deployt (Migration 008 angewandt), alle Abnahmekriterien per `curl` geprüft bis auf zwei, die nur im Code belegbar sind (siehe 🟡).
+
+**Commits (main):** `3180e82` Refactor (Provenance, Validate, VehicleAccess aus VehicleService, ohne Verhaltensänderung) · `60411c9` Migration 008 · `b69461d` Datensatz-Abgleich, Spezifikationen, Zulassung, Ausstattung · `2aec2d8` Tools `set_spec`, `record_registration`, `upsert_equipment` · Doku in einem eigenen `docs`-Commit danach.
+
+**Geprüft:**
+
+- Refactor: alte `VehicleService` (aus `HEAD` vor dem Refactor) gegen die neue in einem Differenztest, 17 Fälle (fünf Zweige der Konfliktregel, Fehlertexte) identisch.
+- Auf Strato mit `test-m2-a/b/c`, rund 62 Einzelprüfungen ok: Spezifikation `5W-30` dann `0W-20` → `klaerfall`, `get_vehicle` zeigt `specs` mit `5W-30` und `disputed` mit `0W-20`; ungültiges `area` → `invalid_value` mit Beispiel; `spec.…` über `set_vehicle_facts` abgewiesen; Zulassung `angelegt` → `unveraendert` → `ergaenzt` (Halter) → `klaerfall` (anderer Halter gegen bestätigt); Ausstattung mit Preis `450.00` zweimal → `unveraendert`; `registrations` neueste zuerst, `holder_count`, `equipment` in `get_vehicle`; Mandanten: B → `not_found`, C (`lesend`) → `forbidden`, Token nur `garage:read` → 403 `insufficient_scope`.
+
+**Abweichungen vom Plan:**
+
+- `RecordRepository::listForVehicle` hat keinen Parameter `$orderBy`; die Sortierung steht als Konstante `ORDER` je Tabelle im Repository (gleiche Sicherheit, weniger Fläche). Phasen 2 und 4 tragen ihre Tabellen in `RecordMerger::TABLES` **und** `RecordRepository::ORDER` ein.
+- `ProvenanceSchema` im Tools-Ordner wie geplant; `Schema::money` ist als kleine Ergänzung dazugekommen (Eingabe `list_price_eur`).
+
+**🟡 Nicht von außen belegt:** Der Inhalt von `open_items.proposal_json` und die `vehicle_id` in `audit_log` lassen sich ohne Datenbank-Zugang oder Lese-Endpunkt nicht prüfen (kein lokales MySQL, DB von außen nicht erreichbar). Belegt nur im Code; die Lesesicht kommt mit Phase 5 (Klärfälle, Verlauf) — dort prüfen.
+
+**🟡 Herkunft einer Zeile:** Wird eine Spalte ergänzt oder aktualisiert, übernimmt die Zeile die Quelle der letzten Änderung, die Konfidenz wird nur angehoben (ADR-009). Eine Zeile mischt dadurch Herkünfte, wenn mehrere Quellen Spalten beisteuern.
+
+**Aufräumen:** Die Testkonten `test-m2-a/b/c` samt Tokens bleiben bis Phase 7 bestehen (dort gesperrt). Tokens liegen nicht in Dateien.

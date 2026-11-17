@@ -30,7 +30,11 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 | Konfidenz | Sicherheit einer Angabe: bestätigt, wahrscheinlich, unsicher. |
 | Fakt (`vehicle_facts`) | Eine Angabe zu einem Fahrzeug: Feld, Wert, Herkunft, Konfidenz, Akteur, Zeitpunkt. Ein Fahrzeug hat je Feld höchstens einen aktuellen Fakt. |
 | aktuell / abgelöst / strittig | Status eines Fakts: gilt jetzt · wurde durch einen neueren ersetzt (bleibt als Verlauf) · widerspricht einem bestätigten Wert und wartet auf einen Menschen. |
-| Klärfall (`open_items`) | Offener Punkt: Konflikt zweier Werte, Nachfrage oder Beobachtung. Lösen dürfen nur Menschen. |
+| Klärfall (`open_items`) | Offener Punkt: Konflikt zweier Werte, Nachfrage oder Beobachtung. Lösen dürfen nur Menschen. Bei einem Konflikt trägt er den Vorschlag (`proposal_json`), damit der neue Wert nicht neu erfasst werden muss. |
+| Datensatz-Abgleich (`RecordMerger`) | Regel für Listen wie Zulassung und Ausstattung: derselbe natürliche Schlüssel ergibt keinen zweiten Datensatz, sondern ergänzt leere Spalten, aktualisiert nicht bestätigte Werte oder wird Klärfall. Ergebnisse: angelegt · ergaenzt · aktualisiert · unveraendert · klaerfall. |
+| Spezifikation (`spec.<bereich>.<schluessel>`) | Technischer Wert eines Fahrzeugs (Ölsorte, Füllmenge, Reifendruck) als Fakt mit Herkunft; Einheit steht im Wert. Eintrag über `set_spec`. |
+| Zulassung (`registrations`) | Kennzeichen eines Fahrzeugs ab einem Datum, optional mit Halter; mehrere über die Zeit. Schlüssel: Kennzeichen + gültig ab. |
+| Ausstattung (`equipment`) | Serien- oder Sonderausstattung mit optionalem Code und Listenpreis. Schlüssel: Name. |
 
 ## Belege
 
