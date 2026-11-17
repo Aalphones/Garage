@@ -29,6 +29,12 @@ final class RecordMerger
     public const TABLES = [
         'registrations' => ['label' => 'Zulassung', 'key' => ['plate', 'valid_from'], 'columns' => ['valid_to', 'holder', 'holder_address']],
         'equipment' => ['label' => 'Ausstattung', 'key' => ['name'], 'columns' => ['code', 'category', 'list_price_cents']],
+        // Mit Rechnungsnummer erkennt Werkstatt + Nummer das Ereignis; ohne sie übergibt EventService den Schlüssel Art + Datum + Werkstatt.
+        'events' => [
+            'label' => 'Ereignis',
+            'key' => ['workshop_id', 'invoice_number'],
+            'columns' => ['kind', 'performed_on', 'title', 'invoiced_on', 'odometer_km', 'order_number', 'net_cents', 'vat_cents', 'gross_cents', 'digital_service_record'],
+        ],
     ];
 
     private OpenItemRepository $openItems;
@@ -77,7 +83,8 @@ final class RecordMerger
     private function assertKnownColumns(string $table, array $values, array $keyColumns, array $compareColumns): void
     {
         foreach ($keyColumns as $column) {
-            if (!array_key_exists($column, $values) || $values[$column] === null) {
+            // `null` ist als Schlüsselwert erlaubt (Ereignis ohne Werkstatt); die Suche vergleicht mit `<=>`.
+            if (!array_key_exists($column, $values)) {
                 throw new LogicException(sprintf('Schlüsselspalte „%s“ von %s fehlt.', $column, $table));
             }
         }

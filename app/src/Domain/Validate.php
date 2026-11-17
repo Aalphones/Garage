@@ -15,6 +15,7 @@ final class Validate
     private const INT_PATTERN = '/^(0|[1-9][0-9]{0,9})$/';
     private const DECIMAL_PATTERN = '/^\d{1,9}([.,]\d{1,%d})?$/';
     private const EURO_PATTERN = '/^\d{1,7}([.,]\d{1,2})?$/';
+    private const SIGNED_EURO_PATTERN = '/^-?\d{1,7}([.,]\d{1,2})?$/';
     private const CONTROL_CHARACTERS = '/[\x00-\x1F\x7F]/u';
     private const URL_MAX = 500;
 
@@ -100,8 +101,8 @@ final class Validate
         return $scale === 0 ? $whole : $whole . '.' . str_pad($fraction, $scale, '0');
     }
 
-    /** Euro als Zahl oder Text mit höchstens zwei Nachkommastellen → Cent als Ganzzahl-Text. */
-    public static function euroToCents(string $field, mixed $raw): ?string
+    /** Euro als Zahl oder Text mit höchstens zwei Nachkommastellen → Cent als Ganzzahl-Text; negativ nur auf Wunsch (Rabatt). */
+    public static function euroToCents(string $field, mixed $raw, bool $allowNegative = false): ?string
     {
         if ($raw === null || $raw === '') {
             return null;
@@ -115,12 +116,19 @@ final class Validate
             is_string($raw) => trim($raw),
             default => '',
         };
-        if (preg_match(self::EURO_PATTERN, $text) !== 1) {
-            throw self::invalid($field, 'Erwartet wird ein Betrag ab 0 in Euro mit höchstens zwei Nachkommastellen.', $example);
-        }
-        [$euros, $cents] = array_pad(explode('.', str_replace(',', '.', $text), 2), 2, '');
+        $pattern = $allowNegative ? self::SIGNED_EURO_PATTERN : self::EURO_PATTERN;
+        if (preg_match($pattern, $text) !== 1) {
+            $reason = $allowNegative
+                ? 'Erwartet wird ein Betrag in Euro mit höchstens zwei Nachkommastellen, negativ für einen Rabatt.'
+                : 'Erwartet wird ein Betrag ab 0 in Euro mit höchstens zwei Nachkommastellen.';
 
-        return (string) ((int) $euros * 100 + (int) str_pad($cents, 2, '0'));
+            throw self::invalid($field, $reason, $example);
+        }
+        $isNegative = str_starts_with($text, '-');
+        [$euros, $cents] = array_pad(explode('.', str_replace(',', '.', ltrim($text, '-')), 2), 2, '');
+        $total = (int) $euros * 100 + (int) str_pad($cents, 2, '0');
+
+        return (string) ($isNegative ? -$total : $total);
     }
 
     /** `true`/`false` → `"1"`/`"0"`, `null` bleibt `null`. */
