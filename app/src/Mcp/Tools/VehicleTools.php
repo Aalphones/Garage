@@ -15,6 +15,8 @@ use Garage\Mcp\ToolResult;
 
 final class VehicleTools
 {
+    private const SPEC_AREAS = ['motoroel', 'kuehlmittel', 'bremsfluessigkeit', 'getriebeoel', 'batterie', 'reifen', 'steuertrieb'];
+
     /** @param array<string, mixed> $services */
     public static function register(Registry $registry, array $services): void
     {
@@ -34,7 +36,7 @@ final class VehicleTools
         $registry->add(new Tool(
             'get_vehicle',
             'Fahrzeug lesen',
-            'Liefert ein Fahrzeug mit allen aktuellen Stammdaten, je Feld mit Wert, Herkunft (source, source_url), Konfidenz, Akteur und Zeitpunkt. „disputed“ nennt Werte, die einem bestätigten Wert widersprechen und auf die Entscheidung eines Menschen warten (open_item_id). Beispiel: {"vehicle_id": 12}.',
+            'Liefert ein Fahrzeug mit allen aktuellen Stammdaten, je Feld mit Wert, Herkunft (source, source_url), Konfidenz, Akteur und Zeitpunkt. „specs“ sind die Spezifikationen nach Bereich gruppiert (specs.motoroel.viskositaet), „registrations“ die Zulassungen (neueste zuerst), „holder_count“ die Zahl verschiedener Halter, „equipment“ die Ausstattung. „disputed“ nennt Werte, die einem bestätigten Wert widersprechen und auf die Entscheidung eines Menschen warten (open_item_id). Beispiel: {"vehicle_id": 12}.',
             Schema::object(['vehicle_id' => Schema::integer('ID des Fahrzeugs aus list_vehicles')], ['vehicle_id']),
             Tool::annotations('Fahrzeug lesen', 'R'),
             Scopes::READ,
@@ -42,6 +44,7 @@ final class VehicleTools
                 $result = $vehicles->get((int) $args['vehicle_id'], $actor);
                 // Ein leeres PHP-Array würde als JSON-Liste statt als Objekt ausgegeben.
                 $result['facts'] = (object) $result['facts'];
+                $result['specs'] = (object) $result['specs'];
 
                 return ToolResult::json($result);
             }
@@ -76,6 +79,26 @@ final class VehicleTools
             Tool::annotations('Stammdaten ergänzen', 'W'),
             Scopes::WRITE,
             static fn (array $args, Actor $actor): ToolResult => ToolResult::json($vehicles->setFacts((int) $args['vehicle_id'], $args['facts'], $actor))
+        ));
+
+        $registry->add(new Tool(
+            'set_spec',
+            'Spezifikationen eintragen',
+            'Trägt technische Spezifikationen (Öl, Kühlmittel, Bremsflüssigkeit, Batterie …) eines Fahrzeugs ein, mit einer Herkunft für den ganzen Aufruf. Es gilt dieselbe Konfliktregel wie bei set_vehicle_facts: je Eintrag angelegt, aktualisiert, unveraendert oder klaerfall (ein bestätigter Wert bleibt stehen, der neue wird daneben gelegt, open_item_id nennt den Klärfall). Die Einheit steht im Wert, z. B. "4,3 l". Übliche Bereiche (area): ' . implode(', ', self::SPEC_AREAS) . '; area und key bestehen aus Kleinbuchstaben, Ziffern und Unterstrich (2 bis 31 Zeichen). Alles oder nichts: ein ungültiger Eintrag schreibt gar nichts. Beispiel: {"vehicle_id": 12, "specs": [{"area": "motoroel", "key": "viskositaet", "value": "0W-20"}, {"area": "motoroel", "key": "fuellmenge", "value": "4,3 l"}], "source": "beleg", "confidence": "bestaetigt"}.',
+            Schema::object([
+                'vehicle_id' => Schema::integer('ID des Fahrzeugs aus list_vehicles'),
+                'specs' => Schema::list(
+                    Schema::object([
+                        'area' => Schema::text('Bereich, z. B. "motoroel"'),
+                        'key' => Schema::text('Schlüssel im Bereich, z. B. "viskositaet"'),
+                        'value' => Schema::text('Wert als Text mit Einheit, 1 bis 200 Zeichen, z. B. "0W-20" oder "4,3 l"'),
+                    ], ['area', 'key', 'value']),
+                    'Liste von Spezifikationen, ein Eintrag je Bereich und Schlüssel'
+                ),
+            ] + ProvenanceSchema::properties(), ['vehicle_id', 'specs', 'source', 'confidence']),
+            Tool::annotations('Spezifikationen eintragen', 'W'),
+            Scopes::WRITE,
+            static fn (array $args, Actor $actor): ToolResult => ToolResult::json($vehicles->setSpecs((int) $args['vehicle_id'], $args['specs'], $args, $actor))
         ));
     }
 

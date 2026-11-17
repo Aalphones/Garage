@@ -37,6 +37,12 @@ final class Schema
         return ['type' => 'integer', 'description' => $description];
     }
 
+    /** Geldbetrag: Zahl oder Text, die Genauigkeit prüft der Service. @return array<string, mixed> */
+    public static function money(string $description): array
+    {
+        return ['type' => ['number', 'string'], 'description' => $description];
+    }
+
     /** @return array<string, string> */
     public static function boolean(string $description): array
     {

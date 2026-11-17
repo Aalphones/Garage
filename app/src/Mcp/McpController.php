@@ -8,11 +8,15 @@ use Garage\Auth\McpAuth;
 use Garage\Auth\Scopes;
 use Garage\Db\Connection;
 use Garage\Domain\Actor;
+use Garage\Domain\EquipmentService;
+use Garage\Domain\RegistrationService;
 use Garage\Domain\TokenService;
 use Garage\Domain\UserRepository;
 use Garage\Domain\VehicleService;
 use Garage\Http\Request;
 use Garage\Http\Response;
+use Garage\Mcp\Tools\EquipmentTools;
+use Garage\Mcp\Tools\RegistrationTools;
 use Garage\Mcp\Tools\VehicleTools;
 use Garage\OAuth\Discovery;
 use Garage\OAuth\TokenIssuer;
@@ -46,6 +50,8 @@ final class McpController
         return [
             'tokens' => new TokenService($pdo),
             'vehicles' => new VehicleService($pdo),
+            'registrations' => new RegistrationService($pdo),
+            'equipment' => new EquipmentService($pdo),
             'pdo' => $pdo,
             'config' => $config,
         ];
@@ -342,6 +348,9 @@ final class McpController
         $registry = new Registry();
         $registry->group('Fahrzeuge');
         VehicleTools::register($registry, $services);
+        $registry->group('Stammdaten');
+        RegistrationTools::register($registry, $services);
+        EquipmentTools::register($registry, $services);
 
         return $registry;
     }
