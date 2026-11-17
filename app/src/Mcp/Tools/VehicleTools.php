@@ -6,6 +6,7 @@ namespace Garage\Mcp\Tools;
 
 use Garage\Auth\Scopes;
 use Garage\Domain\Actor;
+use Garage\Domain\Provenance;
 use Garage\Domain\VehicleService;
 use Garage\Mcp\Registry;
 use Garage\Mcp\Schema;
@@ -85,9 +86,9 @@ final class VehicleTools
             Schema::object([
                 'field' => Schema::choice(array_keys(VehicleService::FIELDS), 'Stammdatenfeld'),
                 'value' => Schema::text('Wert, immer als Text, auch Zahlen ("110"); Datum als YYYY-MM-DD; FIN 17 Zeichen'),
-                'source' => Schema::choice(VehicleService::SOURCES, 'Woher der Wert stammt: beleg (Rechnung, Fahrzeugschein), nutzer (Aussage des Nutzers), recherche (Webseite), agent (eigene Ableitung), werkstatt'),
+                'source' => Schema::choice(Provenance::SOURCES, 'Woher der Wert stammt: beleg (Rechnung, Fahrzeugschein), nutzer (Aussage des Nutzers), recherche (Webseite), agent (eigene Ableitung), werkstatt'),
                 'source_url' => Schema::text('Adresse der Quelle, z. B. "https://example.com/seite"; bei recherche Pflicht in der Praxis'),
-                'confidence' => Schema::choice(array_keys(VehicleService::CONFIDENCE_RANK), 'bestaetigt (Beleg liegt vor), wahrscheinlich, unsicher'),
+                'confidence' => Schema::choice(array_keys(Provenance::CONFIDENCE_RANK), 'bestaetigt (Beleg liegt vor), wahrscheinlich, unsicher'),
             ], ['field', 'value', 'source', 'confidence']),
             'Liste von Stammdaten, ein Eintrag je Feld'
         );

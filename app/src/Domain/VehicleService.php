@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Garage\Domain;
 
-use DateTimeImmutable;
 use Garage\Auth\Scopes;
 use Garage\Db\Transaction;
 use PDO;
@@ -19,10 +18,6 @@ final class VehicleService
     public const RESULT_UPDATED = 'aktualisiert';
     public const RESULT_UNCHANGED = 'unveraendert';
     public const RESULT_DISPUTE = 'klaerfall';
-
-    public const SOURCES = ['beleg', 'nutzer', 'recherche', 'agent', 'werkstatt'];
-    public const CONFIDENCE_RANK = ['unsicher' => 1, 'wahrscheinlich' => 2, 'bestaetigt' => 3];
-    private const CONFIRMED = 'bestaetigt';
 
     private const TYPE_FIN = 'fin';
     private const TYPE_TEXT = 'text';
@@ -56,15 +51,14 @@ final class VehicleService
 
     private const TEXT_MAX = 200;
     private const LABEL_MAX = 80;
-    private const URL_MAX = 500;
     private const FIN_PATTERN = '/^[A-HJ-NPR-Z0-9]{17}$/';
-    private const INT_PATTERN = '/^(0|[1-9][0-9]{0,9})$/';
     private const CONTROL_CHARACTERS = '/[\x00-\x1F\x7F]/u';
 
     private VehicleRepository $vehicles;
     private OpenItemRepository $openItems;
     private GarageRepository $garages;
     private AuditRepository $audit;
+    private VehicleAccess $access;
 
     public function __construct(private readonly PDO $pdo)
     {
@@ -72,6 +66,7 @@ final class VehicleService
         $this->openItems = new OpenItemRepository($pdo);
         $this->garages = new GarageRepository($pdo);
         $this->audit = new AuditRepository($pdo);
+        $this->access = new VehicleAccess($pdo);
     }
 
     /**
@@ -116,7 +111,7 @@ final class VehicleService
      */
     public function get(int $vehicleId, Actor $actor): array
     {
-        $vehicle = $this->requireVehicle($vehicleId, $actor);
+        $vehicle = $this->access->readable($vehicleId, $actor);
 
         $facts = [];
         foreach ($this->vehicles->currentFacts($vehicleId, $actor) as $fact) {
@@ -177,38 +172,10 @@ final class VehicleService
     public function setFacts(int $vehicleId, array $facts, Actor $actor): array
     {
         return Transaction::run($this->pdo, function () use ($vehicleId, $facts, $actor): array {
-            $vehicle = $this->requireVehicle($vehicleId, $actor, true);
-            $this->assertCanWrite($vehicle['garage_id'], $actor);
+            $vehicle = $this->access->writable($vehicleId, $actor);
 
             return ['vehicle_id' => $vehicleId, 'facts' => $this->applyFacts($vehicle, $this->validateFacts($facts, false), $actor)];
         });
-    }
-
-    /**
-     * Fremde und unbekannte Fahrzeuge sind beide `not_found`, damit sich fremde IDs nicht erraten lassen.
-     *
-     * @return array{id: int, garage_id: int, label: string, status: string}
-     */
-    private function requireVehicle(int $vehicleId, Actor $actor, bool $lock = false): array
-    {
-        $vehicle = $this->vehicles->find($vehicleId, $actor, $lock);
-        if ($vehicle === null) {
-            throw new DomainError('not_found', 'Ein Fahrzeug mit dieser ID gibt es in deinen Garagen nicht. list_vehicles zeigt die vorhandenen.', ['vehicle_id' => $vehicleId]);
-        }
-
-        return $vehicle;
-    }
-
-    private function assertCanWrite(int $garageId, Actor $actor): void
-    {
-        if ($actor->canWrite($garageId)) {
-            return;
-        }
-        if (($actor->roles[$garageId] ?? null) === Actor::ROLE_READONLY) {
-            throw new DomainError('forbidden', 'Dieses Konto darf in der Garage nur lesen.', ['garage_id' => $garageId]);
-        }
-
-        throw new DomainError('forbidden', 'Dem Zugang fehlt ' . Scopes::WRITE . '.', ['required_scope' => Scopes::WRITE]);
     }
 
     /** Ohne Angabe die einzige beschreibbare Garage; eine fremde Garage ist `not_found`, eine nur lesbare `forbidden`. */
@@ -218,7 +185,7 @@ final class VehicleService
             if (!$actor->canRead($garageId)) {
                 throw new DomainError('not_found', 'Eine Garage mit dieser ID gibt es bei dir nicht. list_vehicles nennt deine Garagen.', ['garage_id' => $garageId]);
             }
-            $this->assertCanWrite($garageId, $actor);
+            $this->access->assertCanWriteGarage($garageId, $actor);
 
             return $garageId;
         }
@@ -290,8 +257,7 @@ final class VehicleService
         }
 
         if ($current['value'] === $fact['value']) {
-            $isHigher = self::CONFIDENCE_RANK[$fact['confidence']] > self::CONFIDENCE_RANK[$current['confidence']];
-            if (!$isHigher) {
+            if (!Provenance::isHigher($fact['confidence'], $current['confidence'])) {
                 return $outcome + ['result' => self::RESULT_UNCHANGED];
             }
             $this->writeCurrent($vehicle, $fact, $current, $actor);
@@ -299,7 +265,7 @@ final class VehicleService
             return $outcome + ['result' => self::RESULT_UPDATED];
         }
 
-        if ($current['confidence'] !== self::CONFIRMED) {
+        if ($current['confidence'] !== Provenance::CONFIRMED) {
             $this->writeCurrent($vehicle, $fact, $current, $actor);
 
             return $outcome + ['result' => self::RESULT_UPDATED];
@@ -457,101 +423,32 @@ final class VehicleService
             );
         }
 
-        $source = $entry['source'] ?? null;
-        if (!is_string($source) || !in_array($source, self::SOURCES, true)) {
-            throw new DomainError('invalid_value', sprintf('Feld „%s“: source muss eine von %s sein. Beispiel: "source": "beleg"', $field, implode(', ', self::SOURCES)), ['field' => $field]);
-        }
-        $confidence = $entry['confidence'] ?? null;
-        if (!is_string($confidence) || !isset(self::CONFIDENCE_RANK[$confidence])) {
-            throw new DomainError('invalid_value', sprintf('Feld „%s“: confidence muss eine von %s sein. Beispiel: "confidence": "wahrscheinlich"', $field, implode(', ', array_keys(self::CONFIDENCE_RANK))), ['field' => $field]);
-        }
+        $provenance = Provenance::validate($entry, $field);
 
-        return [
-            'field' => $field,
-            'value' => self::validValue($field, $entry['value'] ?? null),
-            'source' => $source,
-            'source_url' => self::validUrl($field, $entry['source_url'] ?? null),
-            'confidence' => $confidence,
-        ];
+        return ['field' => $field, 'value' => self::validValue($field, $entry['value'] ?? null)] + $provenance;
     }
 
     private static function validValue(string $field, mixed $raw): string
     {
         $definition = self::FIELDS[$field];
-        $example = $definition['example'];
+        $example = sprintf('{"field": "%s", "value": "%s"}', $field, $definition['example']);
 
         return match ($definition['type']) {
             self::TYPE_FIN => self::validFin($field, $raw, $example),
-            self::TYPE_DATE => self::validDate($field, $raw, $example),
-            self::TYPE_INT => self::validInt($field, $raw, $example),
-            default => self::validText($field, $raw, $definition['min'] ?? 1, $definition['max'] ?? self::TEXT_MAX, $example),
+            self::TYPE_DATE => Validate::date($field, $raw, $example),
+            self::TYPE_INT => Validate::int($field, $raw, $example),
+            default => Validate::text($field, $raw, $definition['min'] ?? 1, $definition['max'] ?? self::TEXT_MAX, $example),
         };
-    }
-
-    private static function invalid(string $field, string $reason, string $example): DomainError
-    {
-        return new DomainError('invalid_value', sprintf('Feld „%s“: %s Beispiel: {"field": "%s", "value": "%s"}', $field, $reason, $field, $example), ['field' => $field]);
     }
 
     private static function validFin(string $field, mixed $raw, string $example): string
     {
         $fin = is_string($raw) ? strtoupper(trim($raw)) : '';
         if (preg_match(self::FIN_PATTERN, $fin) !== 1) {
-            throw self::invalid($field, 'Die FIN hat genau 17 Zeichen aus A–H, J–N, P, R–Z und 0–9 (ohne I, O, Q).', $example);
+            throw Validate::invalid($field, 'Die FIN hat genau 17 Zeichen aus A–H, J–N, P, R–Z und 0–9 (ohne I, O, Q).', $example);
         }
 
         return $fin;
-    }
-
-    private static function validDate(string $field, mixed $raw, string $example): string
-    {
-        $value = is_string($raw) ? trim($raw) : '';
-        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
-        if ($date === false || $date->format('Y-m-d') !== $value) {
-            throw self::invalid($field, 'Das Datum hat die Form YYYY-MM-DD.', $example);
-        }
-
-        return $value;
-    }
-
-    private static function validInt(string $field, mixed $raw, string $example): string
-    {
-        $text = is_int($raw) ? (string) $raw : (is_string($raw) ? trim($raw) : '');
-        if (preg_match(self::INT_PATTERN, $text) !== 1) {
-            throw self::invalid($field, 'Erwartet wird eine ganze Zahl ab 0, ohne Einheit und Tausenderpunkt.', $example);
-        }
-
-        return $text;
-    }
-
-    private static function validText(string $field, mixed $raw, int $min, int $max, string $example): string
-    {
-        $text = is_string($raw) ? trim($raw) : '';
-        $length = mb_check_encoding($text, 'UTF-8') ? mb_strlen($text) : 0;
-        $hasControlCharacters = preg_match(self::CONTROL_CHARACTERS, $text) === 1;
-        if ($length < $min || $length > $max || $hasControlCharacters) {
-            $range = $min === $max ? sprintf('genau %d Zeichen', $min) : sprintf('%d bis %d Zeichen', $min, $max);
-
-            throw self::invalid($field, sprintf('Erwartet wird ein einzeiliger Text mit %s.', $range), $example);
-        }
-
-        return $text;
-    }
-
-    private static function validUrl(string $field, mixed $raw): ?string
-    {
-        if ($raw === null || $raw === '') {
-            return null;
-        }
-        $isUrl = is_string($raw)
-            && strlen($raw) <= self::URL_MAX
-            && filter_var($raw, FILTER_VALIDATE_URL) !== false
-            && in_array(parse_url($raw, PHP_URL_SCHEME), ['http', 'https'], true);
-        if (!$isUrl) {
-            throw new DomainError('invalid_value', sprintf('Feld „%s“: source_url ist eine http(s)-Adresse bis %d Zeichen. Beispiel: "source_url": "https://example.com/seite"', $field, self::URL_MAX), ['field' => $field]);
-        }
-
-        return $raw;
     }
 
     private static function validLabel(string $label): string
