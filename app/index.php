@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use Garage\Api\AuthController;
 use Garage\Api\DeployController;
+use Garage\Api\DocumentController;
+use Garage\Api\InboxController;
 use Garage\Api\FileController;
 use Garage\Api\UploadController;
 use Garage\Api\HealthController;
@@ -43,6 +45,18 @@ $router->add('DELETE', '/garage/api/tokens/{id}', static fn (array $parameters) 
 
 $router->add('GET', '/garage/api/open-items', static fn () => (new OpenItemController())->list($request));
 $router->add('POST', '/garage/api/open-items/{id}/resolve', static fn (array $parameters) => (new OpenItemController())->resolve($request, (int) $parameters['id']));
+
+$router->add('GET', '/garage/api/documents', static fn () => (new DocumentController($config))->list($request));
+$router->add('POST', '/garage/api/documents', static fn () => (new DocumentController($config))->create($request));
+$router->add('GET', '/garage/api/documents/{id}', static fn (array $parameters) => (new DocumentController($config))->show($request, (int) $parameters['id']));
+$router->add('PATCH', '/garage/api/documents/{id}', static fn (array $parameters) => (new DocumentController($config))->update($request, (int) $parameters['id']));
+$router->add('POST', '/garage/api/documents/{id}/file', static fn (array $parameters) => (new DocumentController($config))->uploadFile($request, (int) $parameters['id']));
+$router->add('POST', '/garage/api/documents/{id}/discard', static fn (array $parameters) => (new DocumentController($config))->discard($request, (int) $parameters['id']));
+$router->add('POST', '/garage/api/documents/{id}/restore', static fn (array $parameters) => (new DocumentController($config))->restore($request, (int) $parameters['id']));
+$router->add('GET', '/garage/api/inbox', static fn () => (new InboxController($config))->list($request));
+$router->add('POST', '/garage/api/inbox', static fn () => (new InboxController($config))->create($request));
+$router->add('POST', '/garage/api/inbox/{id}/discard', static fn (array $parameters) => (new InboxController($config))->discard($request, (int) $parameters['id']));
+$router->add('POST', '/garage/api/inbox/{id}/restore', static fn (array $parameters) => (new InboxController($config))->restore($request, (int) $parameters['id']));
 
 // Discovery liegt mit Pfad-Suffix an der Domain-Wurzel; DISPATCHs Wurzel-.htaccess leitet sie hierher (ADR-001).
 $router->add('GET', '/.well-known/oauth-protected-resource/garage/mcp', static fn () => (new DiscoveryController($config))->protectedResource());

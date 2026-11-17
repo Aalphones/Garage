@@ -15,6 +15,7 @@ use Garage\Domain\DossierService;
 use Garage\Domain\DueService;
 use Garage\Domain\EquipmentService;
 use Garage\Domain\EventService;
+use Garage\Domain\InboxService;
 use Garage\Domain\MeasurementService;
 use Garage\Domain\NoteService;
 use Garage\Domain\OdometerService;
@@ -35,6 +36,7 @@ use Garage\Mcp\Tools\DocumentTools;
 use Garage\Mcp\Tools\DossierTools;
 use Garage\Mcp\Tools\EquipmentTools;
 use Garage\Mcp\Tools\EventTools;
+use Garage\Mcp\Tools\InboxTools;
 use Garage\Mcp\Tools\MeasurementTools;
 use Garage\Mcp\Tools\NoteTools;
 use Garage\Mcp\Tools\OdometerTools;
@@ -93,6 +95,7 @@ final class McpController
             'search' => new SearchService($pdo),
             'dossier' => new DossierService($pdo),
             'documents' => new DocumentService($pdo, $config),
+            'inbox' => new InboxService($pdo, $config),
             'pdo' => $pdo,
             'config' => $config,
         ];
@@ -415,6 +418,8 @@ final class McpController
         DossierTools::register($registry, $services);
         $registry->group('Belege');
         DocumentTools::register($registry, $services);
+        $registry->group('Eingang');
+        InboxTools::register($registry, $services);
 
         return $registry;
     }

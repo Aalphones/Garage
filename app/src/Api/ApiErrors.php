@@ -30,6 +30,7 @@ final class ApiErrors
         'store_failed' => 500,
         'not_configured' => 503,
         'already_resolved' => 409,
+        'already_has_file' => 409,
         'email_taken' => 409,
         'name_taken' => 409,
         'request_expired' => 410,

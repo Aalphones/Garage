@@ -28,6 +28,12 @@ final class Prompts
                 'description' => 'Fasst zusammen, was überfällig oder bald fällig ist und welche Wartungsregeln unbelegt sind.',
                 'arguments' => [self::vehicleArgument('Fahrzeug (Name oder Kennzeichen); ohne Angabe gelten alle Fahrzeuge')],
             ],
+            [
+                'name' => 'eingang_abarbeiten',
+                'title' => 'Eingang abarbeiten',
+                'description' => 'Arbeitet den Eingang ab: reserviert den ältesten freien Eintrag, erfasst seine Belege und Fotos in der Akte, hängt sie an und schließt den Eintrag ab.',
+                'arguments' => [],
+            ],
         ];
     }
 
@@ -42,9 +48,10 @@ final class Prompts
         return match ($name) {
             'beleg_erfassen' => self::message('Beleg erfassen', self::recordText($vehicle)),
             'was_steht_an' => self::message('Was steht an?', self::dueText($vehicle)),
+            'eingang_abarbeiten' => self::message('Eingang abarbeiten', self::inboxText()),
             default => throw new ProtocolError(
                 ProtocolError::INVALID_PARAMS,
-                sprintf('Prompt „%s“ ist unbekannt. prompts/list nennt die gültigen: beleg_erfassen, was_steht_an.', $name),
+                sprintf('Prompt „%s“ ist unbekannt. prompts/list nennt die gültigen: beleg_erfassen, was_steht_an, eingang_abarbeiten.', $name),
                 400,
                 ['name' => $name]
             ),
@@ -85,6 +92,14 @@ final class Prompts
             'Erfasse den Beleg aus dem Chat für %s. Lies garage://leitfaden/erfassung, rufe validate_service_event, zeige mir das Ergebnis samt Klärfällen und rufe nach meinem Okay record_service_event.',
             $target
         );
+    }
+
+    private static function inboxText(): string
+    {
+        return 'Arbeite den Eingang ab. Rufe list_inbox und dann claim_inbox_item (ohne id: der älteste freie Eintrag; die Reservierung gilt standardmäßig 180 Minuten). '
+            . 'Lies garage://leitfaden/erfassung, lies die Seiten (weitere per get_document mit page) und erfasse den Inhalt wie bei beleg_erfassen: validate_service_event, zeige mir das Ergebnis samt Klärfällen und schreibe nach meinem Okay mit record_service_event bzw. dem passenden Schreib-Tool. '
+            . 'Hänge jedes Dokument mit attach_document an den Datensatz (Rolle beleg, den erkannten Text als text) und schließe den Eintrag mit release_inbox_item ab: outcome erfasst mit einem Satz, was erfasst wurde. '
+            . 'Ein unleserlicher Kilometerstand oder Betrag wird ein Klärfall (outcome klaerfall mit der Frage in result), kein geratener Wert. Ist die Frist fast um, verlängere sie mit claim_inbox_item und derselben id. Danach der nächste Eintrag, bis list_inbox keinen neuen mehr zeigt.';
     }
 
     private static function dueText(?string $vehicle): string

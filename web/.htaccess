@@ -23,3 +23,7 @@ DirectoryIndex index.html
     Header always set Referrer-Policy "same-origin"
     Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 </IfModule>
+
+<Files ".user.ini">
+    Require all denied
+</Files>

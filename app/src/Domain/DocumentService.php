@@ -44,6 +44,11 @@ final class DocumentService
     public const CHANNEL_WIDGET = 'widget';
     public const CHANNEL_CHATGPT = 'chatgpt';
     public const CHANNEL_URL = 'url';
+    public const CHANNEL_WEB = 'web';
+    public const MAX_PAGES = 20;
+
+    private const PAGE_EDGE = 1568;
+    private const MAX_PAGE_BYTES = 4194304;
 
     private const MAX_TEXT = 200000;
     private const MAX_TITLE = 200;
@@ -311,11 +316,13 @@ final class DocumentService
 
     /**
      * Legt die Bytes ab: Größe und Typ prüfen, Dubletten je Garage erkennen, Bilder neu kodieren, PDFs byte-genau speichern.
-     * Mit `$intoDocumentId` füllt sie ein Dokument im Status `wartet`.
+     * Mit `$intoDocumentId` füllt sie ein Dokument im Status `wartet`. `$pageImages` sind die im Browser gerenderten
+     * PDF-Seiten (JPEG-Bytes in Seitenreihenfolge); sie landen als `pages/<n>.jpg`.
      *
+     * @param list<string> $pageImages
      * @return array<string, mixed> Dokument plus `duplicate`
      */
-    public function storeBytes(string $bytes, string $channel, Actor $actor, int $garageId, ?int $vehicleId, ?int $intoDocumentId = null, ?int $maxBytes = null): array
+    public function storeBytes(string $bytes, string $channel, Actor $actor, int $garageId, ?int $vehicleId, ?int $intoDocumentId = null, ?int $maxBytes = null, array $pageImages = []): array
     {
         $limit = $maxBytes ?? (int) $this->documentsConfig['max_bytes'];
         if (strlen($bytes) > $limit) {
@@ -340,6 +347,9 @@ final class DocumentService
 
         try {
             $processed = $this->writeFiles($bytes, $mime, $tempDir);
+            if ($pageImages !== []) {
+                $processed['page_count'] = $this->writePages($pageImages, $tempDir);
+            }
             if (!rename($tempDir, $finalDir)) {
                 throw new DomainError('store_failed', 'Die Datei lässt sich nicht ablegen.');
             }
@@ -424,6 +434,205 @@ final class DocumentService
         $attachments = $this->documents->attachmentsForMany(array_map(static fn (array $document): int => $document['id'], $documents), $actor);
 
         return array_map(fn (array $document): array => $this->present($document) + ['attached_to' => $attachments[$document['id']] ?? []], $documents);
+    }
+
+    /**
+     * Web-Upload eines Menschen (E12): die Datei, bei PDFs dazu die im Browser gerenderten Seitenbilder. Mit `$intoDocumentId`
+     * wird ein Dokument im Status `wartet` gefüllt (sonst `already_has_file`). Garage aus Dokument, Fahrzeug, Angabe oder der
+     * einzigen Garage mit Schreibrecht.
+     *
+     * @param list<string> $pageBytes JPEG-Bytes je PDF-Seite
+     * @return array<string, mixed> `details` des Dokuments plus `duplicate`
+     */
+    public function storeWebUpload(string $bytes, array $pageBytes, ?int $garageId, ?int $vehicleId, ?string $docType, Actor $actor, ?int $intoDocumentId = null): array
+    {
+        $type = $docType === null ? null : Validate::enum('doc_type', $docType, self::TYPES);
+        if ($bytes === '') {
+            throw new DomainError('invalid_value', 'Das Formularfeld „file“ fehlt oder ist leer.', ['field' => 'file']);
+        }
+        if ($pageBytes !== []) {
+            if (strlen($bytes) > 0 && $this->detectMime($bytes) !== 'application/pdf') {
+                throw Validate::invalid('pages', 'Seitenbilder (pages[]) gibt es nur zu einem PDF.', 'curl -F file=@rechnung.pdf -F pages[]=@s1.jpg -F pages[]=@s2.jpg');
+            }
+            if (count($pageBytes) > self::MAX_PAGES) {
+                throw Validate::invalid('pages', sprintf('Höchstens %d Seiten.', self::MAX_PAGES), 'curl -F file=@rechnung.pdf -F pages[]=@s1.jpg');
+            }
+            foreach ($pageBytes as $page) {
+                if (strlen($page) > self::MAX_PAGE_BYTES) {
+                    throw new DomainError('too_large', sprintf('Ein Seitenbild ist größer als %d MB.', intdiv(self::MAX_PAGE_BYTES, 1048576)), ['field' => 'pages']);
+                }
+            }
+        }
+
+        if ($intoDocumentId !== null) {
+            $waiting = $this->writableDocument($intoDocumentId, $actor);
+            if ($waiting['status'] !== DocumentRepository::STATUS_WAITING) {
+                throw new DomainError('already_has_file', 'Dieses Dokument hat schon eine Datei; nachgereicht wird nur zu einem Dokument im Status „wartet“.', ['document_id' => $intoDocumentId]);
+            }
+            $target = ['garage_id' => $waiting['garage_id'], 'vehicle_id' => $waiting['vehicle_id']];
+        } else {
+            $target = $this->resolveTarget($actor, $garageId, $vehicleId, null);
+        }
+
+        $stored = $this->storeBytes($bytes, self::CHANNEL_WEB, $actor, $target['garage_id'], $target['vehicle_id'], $intoDocumentId, null, $pageBytes);
+        if (!$stored['duplicate'] && $type !== null) {
+            Transaction::join($this->pdo, function () use ($stored, $type): void {
+                $this->documents->update($stored['id'], $stored['garage_id'], ['doc_type' => $type, 'photo_tag' => $type === 'foto' ? $stored['photo_tag'] : null]);
+            });
+        }
+
+        return $this->details($stored['id'], $actor) + ['duplicate' => $stored['duplicate']];
+    }
+
+    /**
+     * Ein Mensch ändert Typ, Fahrzeug, Titel oder Foto-Tag. Ein Dokument mit Anhängen behält sein Fahrzeug.
+     *
+     * @param array<string, mixed> $input
+     * @return array<string, mixed> `details`
+     */
+    public function updateByHuman(int $documentId, array $input, Actor $actor): array
+    {
+        $this->assertHuman($actor);
+        $known = ['doc_type', 'vehicle_id', 'title', 'photo_tag'];
+        if (array_intersect(array_keys($input), $known) === []) {
+            throw Validate::invalid('body', 'Mindestens eines von doc_type, vehicle_id, title, photo_tag.', '{"doc_type": "rechnung", "title": "Rechnung Werkstatt Müller"}');
+        }
+
+        return Transaction::run($this->pdo, function () use ($documentId, $input, $actor): array {
+            $document = $this->writableDocument($documentId, $actor);
+            $fields = [];
+            if (array_key_exists('doc_type', $input)) {
+                $fields['doc_type'] = Validate::enum('doc_type', $input['doc_type'], self::TYPES);
+            }
+            $type = $fields['doc_type'] ?? $document['doc_type'];
+            if (array_key_exists('photo_tag', $input) && $input['photo_tag'] !== null) {
+                if ($type !== 'foto') {
+                    throw Validate::invalid('photo_tag', 'Ein Foto-Tag gibt es nur bei doc_type „foto“.', '{"doc_type": "foto", "photo_tag": "tacho"}');
+                }
+                $fields['photo_tag'] = Validate::enum('photo_tag', $input['photo_tag'], self::TAGS);
+            } elseif (array_key_exists('photo_tag', $input) || $type !== 'foto') {
+                $fields['photo_tag'] = null;
+            }
+            if (array_key_exists('title', $input)) {
+                $fields['title'] = $input['title'] === null || $input['title'] === '' ? '' : Validate::text('title', $input['title'], 1, self::MAX_TITLE, self::EXAMPLE);
+            }
+            if (array_key_exists('vehicle_id', $input)) {
+                $vehicleId = $input['vehicle_id'] === null ? null : $this->vehicleInGarage((int) $input['vehicle_id'], $document['garage_id'], $actor);
+                if ($vehicleId !== $document['vehicle_id'] && $this->documents->attachmentsFor($documentId, $actor) !== []) {
+                    throw Validate::invalid('vehicle_id', 'Das Dokument hängt schon an Datensätzen dieses Fahrzeugs; erst die Anhänge lösen.', '{"vehicle_id": 12}');
+                }
+                $fields['vehicle_id'] = $vehicleId;
+            }
+
+            $this->documents->update($documentId, $document['garage_id'], $fields);
+            $this->audit->record($actor, 'document.update', sprintf('documents:%d', $documentId), $document['garage_id'], array_intersect_key($document, $fields), $fields, $fields['vehicle_id'] ?? $document['vehicle_id']);
+
+            return $this->details($documentId, $actor);
+        });
+    }
+
+    /** Ein Mensch verwirft ein Dokument mit Grund; die Datei bleibt. */
+    public function discard(int $documentId, mixed $reason, Actor $actor): array
+    {
+        $this->assertHuman($actor);
+        $text = Validate::text('reason', $reason, 1, 200, '{"reason": "Doppelt fotografiert"}');
+
+        return Transaction::run($this->pdo, function () use ($documentId, $text, $actor): array {
+            $document = $this->writableDocument($documentId, $actor);
+            if ($document['status'] === DocumentRepository::STATUS_DISCARDED) {
+                throw Validate::invalid('document_id', 'Das Dokument ist schon verworfen.', '{"reason": "Doppelt fotografiert"}');
+            }
+            $this->documents->update($documentId, $document['garage_id'], ['status' => DocumentRepository::STATUS_DISCARDED, 'status_reason' => $text]);
+            $this->audit->record($actor, 'document.discard', sprintf('documents:%d', $documentId), $document['garage_id'], ['status' => $document['status']], ['reason' => $text], $document['vehicle_id']);
+
+            return $this->details($documentId, $actor);
+        });
+    }
+
+    /** Ein Mensch holt ein verworfenes Dokument zurück; der Status folgt aus Datei und Anhängen. */
+    public function restore(int $documentId, Actor $actor): array
+    {
+        $this->assertHuman($actor);
+
+        return Transaction::run($this->pdo, function () use ($documentId, $actor): array {
+            $document = $this->writableDocument($documentId, $actor);
+            if ($document['status'] !== DocumentRepository::STATUS_DISCARDED) {
+                throw Validate::invalid('document_id', 'Nur ein verworfenes Dokument lässt sich zurückholen.', '{}');
+            }
+            if ($document['mime'] === null) {
+                $status = DocumentRepository::STATUS_WAITING;
+            } else {
+                $status = $this->documents->attachmentsFor($documentId, $actor) === [] ? DocumentRepository::STATUS_UNASSIGNED : DocumentRepository::STATUS_ASSIGNED;
+            }
+            $this->documents->update($documentId, $document['garage_id'], ['status' => $status, 'status_reason' => null]);
+            $this->audit->record($actor, 'document.restore', sprintf('documents:%d', $documentId), $document['garage_id'], ['status' => DocumentRepository::STATUS_DISCARDED], ['status' => $status], $document['vehicle_id']);
+
+            return $this->details($documentId, $actor);
+        });
+    }
+
+    /**
+     * Ein Dokument für die Oberfläche: Angaben, Anhänge, Text und signierte Links (Seiten, Original, Vorschau).
+     *
+     * @return array<string, mixed>
+     */
+    public function details(int $documentId, Actor $actor): array
+    {
+        $found = $this->get($documentId, $actor);
+        $document = $found['document'];
+        $original = $this->originalFile($document);
+        $preview = $this->previewFile($document);
+        $pages = [];
+        if ($document['mime'] === 'image/jpeg') {
+            $pages[] = $this->linkFor($document, '1568.jpg');
+        } else {
+            for ($page = 1; $page <= $document['page_count'] && $document['mime'] === 'application/pdf'; $page++) {
+                $pages[] = $this->linkFor($document, 'pages/' . $page . '.jpg');
+            }
+        }
+
+        return $this->present($document) + [
+            'garage_id' => $document['garage_id'],
+            'attachments' => $found['attachments'],
+            'text_content' => $document['text_content'],
+            'pages' => $pages,
+            'original_url' => $original === null ? null : $this->linkFor($document, $original),
+            'preview_url' => $preview === null ? null : $this->linkFor($document, $preview),
+            'can_edit' => $actor->via === Actor::VIA_WEB && $actor->canWrite($document['garage_id']),
+        ];
+    }
+
+    /**
+     * Liste für die Oberfläche: wie `list`, dazu `garage_id` und der signierte `preview_url`.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function listForHumans(Actor $actor, ?int $vehicleId, ?string $status, ?string $docType): array
+    {
+        if ($vehicleId !== null) {
+            $this->access->readable($vehicleId, $actor);
+        }
+        if ($status !== null) {
+            Validate::enum('status', $status, self::LIST_STATUSES);
+        }
+        if ($docType !== null) {
+            Validate::enum('doc_type', $docType, self::TYPES);
+        }
+        $documents = $this->documents->list($actor, $vehicleId, $status, $docType);
+        $attachments = $this->documents->attachmentsForMany(array_map(static fn (array $document): int => $document['id'], $documents), $actor);
+
+        return array_map(fn (array $document): array => $this->present($document) + [
+            'garage_id' => $document['garage_id'],
+            'attached_to' => $attachments[$document['id']] ?? [],
+            'preview_url' => $this->previewUrl($document),
+        ], $documents);
+    }
+
+    private function assertHuman(Actor $actor): void
+    {
+        if ($actor->via !== Actor::VIA_WEB) {
+            throw new DomainError('forbidden', 'Das ändert nur ein Mensch in der Oberfläche.');
+        }
     }
 
     /** Die Felder, die Agenten und Menschen sehen; ohne Hash, Ordnername und Volltext. @param array<string, mixed> $document @return array<string, mixed> */
@@ -790,6 +999,17 @@ final class DocumentService
         $image = $this->images->process($bytes, $mime, $tempDir);
 
         return ['width' => $image['width'], 'height' => $image['height'], 'captured_on' => $image['captured_on'], 'page_count' => 1];
+    }
+
+    /** @param list<string> $pageImages @return int Anzahl der Seiten */
+    private function writePages(array $pageImages, string $tempDir): int
+    {
+        $this->makeDir($tempDir . '/pages');
+        foreach ($pageImages as $index => $bytes) {
+            $this->images->processPage($bytes, sprintf('%s/pages/%d.jpg', $tempDir, $index + 1), self::PAGE_EDGE);
+        }
+
+        return count($pageImages);
     }
 
     /**

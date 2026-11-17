@@ -75,6 +75,31 @@ final class ImageProcessor
         return ['width' => $width, 'height' => $height, 'captured_on' => $capturedOn, 'files' => $files, 'peak_bytes' => $peak];
     }
 
+    /**
+     * Seitenbild eines PDFs (vom Browser gerendert, E12): nur JPEG, längste Kante höchstens `max_edge`-Variante 1568,
+     * genau eine Datei. Die Seite kommt aus einem Canvas und hat weder EXIF noch Drehung.
+     *
+     * @return array{width: int, height: int}
+     */
+    public function processPage(string $bytes, string $targetPath, int $maxEdge): array
+    {
+        $size = getimagesizefromstring($bytes);
+        if ($size === false || $size[2] !== IMAGETYPE_JPEG) {
+            throw new DomainError('invalid_value', 'Seitenbilder (pages[]) sind JPEG-Dateien.', ['field' => 'pages']);
+        }
+        if ($size[0] * $size[1] > (int) $this->documentsConfig['max_megapixels'] * 1_000_000) {
+            throw new DomainError('too_many_pixels', 'Ein Seitenbild hat zu viele Pixel.', ['field' => 'pages']);
+        }
+        $image = imagecreatefromstring($bytes);
+        if ($image === false) {
+            throw new DomainError('invalid_value', 'Ein Seitenbild lässt sich nicht lesen.', ['field' => 'pages']);
+        }
+        $image = $this->limitEdge($image, $maxEdge);
+        $this->saveJpeg($image, $targetPath, (int) $this->documentsConfig['variant_quality']);
+
+        return ['width' => imagesx($image), 'height' => imagesy($image)];
+    }
+
     /** Aufnahmedatum aus `DateTimeOriginal`; ohne Angabe, ohne Erweiterung oder bei Fehler `null`. */
     public function readCapturedOn(string $bytes): ?string
     {
