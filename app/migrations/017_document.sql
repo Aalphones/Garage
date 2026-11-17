@@ -1,0 +1,66 @@
+-- Meilenstein 3, Phase 1: Belege und Fotos, Anhaenge, Upload-Tickets.
+CREATE TABLE documents (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    garage_id INT UNSIGNED NOT NULL,
+    vehicle_id INT UNSIGNED NULL,
+    uid CHAR(12) NOT NULL,
+    doc_type ENUM('foto', 'rechnung', 'hu_bericht', 'police', 'bescheid', 'fahrzeugschein', 'kaufvertrag', 'sonstiges') NOT NULL DEFAULT 'sonstiges',
+    photo_tag ENUM('aussen', 'innen', 'motorraum', 'tacho', 'reifen', 'schaden') NULL,
+    title VARCHAR(200) NOT NULL DEFAULT '',
+    mime VARCHAR(40) NULL,
+    bytes INT UNSIGNED NULL,
+    sha256 CHAR(64) NULL,
+    width SMALLINT UNSIGNED NULL,
+    height SMALLINT UNSIGNED NULL,
+    page_count SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    captured_on DATE NULL,
+    text_content MEDIUMTEXT NULL,
+    status ENUM('wartet', 'unzugeordnet', 'zugeordnet', 'verworfen') NOT NULL,
+    status_reason VARCHAR(200) NULL,
+    channel ENUM('ticket', 'chatgpt', 'url', 'widget', 'web') NOT NULL,
+    actor VARCHAR(160) NOT NULL,
+    user_id INT UNSIGNED NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    UNIQUE KEY uq_documents_uid (uid),
+    UNIQUE KEY uq_documents_sha (garage_id, sha256),
+    KEY idx_documents_status (garage_id, status),
+    KEY idx_documents_vehicle (vehicle_id, status),
+    CONSTRAINT fk_documents_garage FOREIGN KEY (garage_id) REFERENCES garages (id),
+    CONSTRAINT fk_documents_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE attachments (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    garage_id INT UNSIGNED NOT NULL,
+    document_id INT UNSIGNED NOT NULL,
+    target_table VARCHAR(40) NOT NULL,
+    target_id INT UNSIGNED NOT NULL,
+    role ENUM('beleg', 'foto', 'anhang', 'titelbild') NOT NULL,
+    actor VARCHAR(160) NOT NULL,
+    user_id INT UNSIGNED NULL,
+    created_at DATETIME NOT NULL,
+    UNIQUE KEY uq_attachments_target (document_id, target_table, target_id, role),
+    KEY idx_attachments_target (target_table, target_id),
+    CONSTRAINT fk_attachments_garage FOREIGN KEY (garage_id) REFERENCES garages (id),
+    CONSTRAINT fk_attachments_document FOREIGN KEY (document_id) REFERENCES documents (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE upload_tickets (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    ticket_hash CHAR(64) NOT NULL,
+    user_id INT UNSIGNED NOT NULL,
+    garage_id INT UNSIGNED NOT NULL,
+    vehicle_id INT UNSIGNED NULL,
+    document_id INT UNSIGNED NULL,
+    max_bytes INT UNSIGNED NOT NULL,
+    expires_at DATETIME NOT NULL,
+    redeemed_at DATETIME NULL,
+    is_duplicate TINYINT(1) NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL,
+    UNIQUE KEY uq_upload_tickets_hash (ticket_hash),
+    CONSTRAINT fk_upload_tickets_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT fk_upload_tickets_garage FOREIGN KEY (garage_id) REFERENCES garages (id),
+    CONSTRAINT fk_upload_tickets_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles (id),
+    CONSTRAINT fk_upload_tickets_document FOREIGN KEY (document_id) REFERENCES documents (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
