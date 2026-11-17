@@ -102,7 +102,7 @@ final class RecordMerger
         $garageIds = $actor->garageIds();
         $statement = $this->pdo->prepare(
             sprintf(
-                "SELECT %s AS stored, source, source_url, confidence FROM %s WHERE id = ? AND status = 'aktiv' AND garage_id IN (%s) FOR UPDATE",
+                "SELECT %s AS old_value, source, source_url, confidence FROM %s WHERE id = ? AND status = 'aktiv' AND garage_id IN (%s) FOR UPDATE",
                 $field,
                 $table,
                 implode(', ', array_fill(0, count($garageIds), '?'))
@@ -120,7 +120,7 @@ final class RecordMerger
         $update->execute([$value, $provenance['source'], $provenance['source_url'], $provenance['confidence'], $rowId, ...$garageIds]);
 
         return [
-            'before' => [$field => $existing['stored'] === null ? null : (string) $existing['stored'], 'source' => (string) $existing['source'], 'confidence' => (string) $existing['confidence']],
+            'before' => [$field => $existing['old_value'] === null ? null : (string) $existing['old_value'], 'source' => (string) $existing['source'], 'confidence' => (string) $existing['confidence']],
             'after' => [$field => $value, 'source' => $provenance['source'], 'confidence' => $provenance['confidence']],
         ];
     }
