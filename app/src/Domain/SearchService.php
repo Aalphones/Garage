@@ -26,7 +26,7 @@ final class SearchService
     }
 
     /**
-     * Höchstens 10 Treffer je Quelle und 30 zusammen; Reihenfolge: Ereignisse, Positionen, Teile, Notizen, Klärfälle.
+     * Höchstens 10 Treffer je Quelle und 30 zusammen; Reihenfolge: Ereignisse, Positionen, Teile, Notizen, Klärfälle, Belege.
      *
      * @return list<array{type: string, id: int, vehicle_id: int|null, title: string, snippet: string, event_id?: int}>
      */
@@ -44,6 +44,7 @@ final class SearchService
             'part' => $this->search->parts($like, $vehicleId, self::PER_SOURCE, $actor),
             'note' => $this->search->notes($like, $vehicleId, self::PER_SOURCE, $actor),
             'open_item' => $this->search->openItems($like, $vehicleId, self::PER_SOURCE, $actor),
+            'document' => $this->search->documents($like, $vehicleId, self::PER_SOURCE, $actor),
         ];
 
         $hits = [];

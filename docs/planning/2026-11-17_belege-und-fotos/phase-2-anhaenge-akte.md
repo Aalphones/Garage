@@ -50,3 +50,15 @@
 - [ ] `docs/routes.md` (Tools, Erweiterungen `get_event`/`get_vehicle`/`get_dossier`/`search`), `docs/code-map.md`, `app/mcp/leitfaden-erfassung.md`: Schritt „Beleg anhängen“ nach `record_service_event` (`attach_document … role beleg`, erkannten Text mitgeben), „Tacho-Foto → `record_odometer` + `attach_document target kilometerstand`“.
 
 ## Report-Back
+
+**Status:** complete (2026-11-17), deployt auf Strato, keine Migration nötig. Alle Kästchen oben erfüllt.
+
+**Geprüft (Node gegen `https://quantum-canvas.de/garage`, 44 Prüfungen grün):** `tools/list` (`_meta` und Schema von `file`; Token ohne `garage:files` sieht `import_document_from_url` nicht, `attach_document` schon), `attach_document` (angelegt/unveraendert, `source_document_set` true/false, Status `zugeordnet`, Fahrzeug aus erstem Anhang, anderes Fahrzeug/andere Garage/fremder Nutzer → `not_found`, Dokument `wartet` → `invalid_value`, Titelbild nur Foto am Fahrzeug, neues Titelbild macht das alte zu `foto`, `text` ersetzt `text_content`), `get_event`/`get_vehicle` (`documents`, `preview_url` liefert JPEG), `get_dossier` (16 Abschnitte, Tabelle „Belege“), `search` (Treffer `document`, fremder Nutzer findet nichts), `store_document` mit `file` (`channel` chatgpt, `127.0.0.1` → `invalid_value`, `ticket_id` + `file` → `invalid_argument`), `import_document_from_url` (`channel` url, `localhost` → `invalid_value`, JSON-Antwort → `type_rejected`, PDF byte-gleich → Dublette).
+
+**Abweichungen:**
+
+- `get_event` und `get_vehicle` bekommen `documents` in der Tool-Schicht (`DocumentService::forTarget`/`forVehicle`), nicht in `EventService::get`/`VehicleService::get`: beide Dienste kennen die Konfiguration für die Links nicht, und die Akte ruft `EventService::get` ohne Links. Das Ergebnis ist wie geplant.
+- `HttpClient` meldet abgewiesene Adressen als `url_rejected`; `DocumentService::importFromUrl` übersetzt das in `invalid_value` (Meldung bleibt).
+- Zusätzliche Repository-Methoden `findTarget`, `insertAttachment`, `findAttachmentId`, `demoteCover`, `setSourceDocument`.
+
+**Offen / Hinweise:** 🟡 Die Produktionskonfiguration folgt Weiterleitungen (`max_redirects` 4); ob ChatGPT-Download-Adressen öffentlich abrufbar sind, zeigt erst die Verprobung (Inhaber, Phase 7). Prüfdaten (Fahrzeuge „M3P2 …“, Dokumente 3–13) liegen in den Testgaragen auf Strato.

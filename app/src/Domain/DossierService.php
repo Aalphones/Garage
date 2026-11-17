@@ -7,7 +7,7 @@ namespace Garage\Domain;
 use PDO;
 
 /**
- * Die Akte eines Fahrzeugs als Markdown, Aufbau fest (15 Abschnitte). Liest nur über die Dienste der Bereiche — jeder prüft
+ * Die Akte eines Fahrzeugs als Markdown, Aufbau fest (16 Abschnitte). Liest nur über die Dienste der Bereiche — jeder prüft
  * den Zugriff selbst — und rechnet nichts Eigenes; Fälligkeit und Prognose kommen aus `DueService`.
  */
 final class DossierService
@@ -59,7 +59,19 @@ final class DossierService
     ];
     private const EQUIPMENT_GROUPS = ['serie' => 'Serie', 'sonder' => 'Sonder'];
     private const RECALL_STATUS_WORDS = ['offen' => 'offen', 'erledigt' => 'erledigt', 'nicht_betroffen' => 'nicht betroffen'];
+    private const ATTACHMENT_WORDS = [
+        'vehicles' => 'Fahrzeug',
+        'events' => 'Ereignis',
+        'damages' => 'Schaden',
+        'recalls' => 'Rückruf',
+        'tire_sets' => 'Reifensatz',
+        'parts' => 'Teil',
+        'measurements' => 'Messwert',
+        'odometer_readings' => 'Kilometerstand',
+        'registrations' => 'Zulassung',
+    ];
 
+    private DocumentRepository $documents;
     private VehicleService $vehicles;
     private EventService $events;
     private DueService $due;
@@ -73,6 +85,7 @@ final class DossierService
 
     public function __construct(PDO $pdo)
     {
+        $this->documents = new DocumentRepository($pdo);
         $this->vehicles = new VehicleService($pdo);
         $this->events = new EventService($pdo);
         $this->due = new DueService($pdo);
@@ -109,6 +122,7 @@ final class DossierService
             self::section('Rückrufe', $this->recallLines($vehicleId, $actor)),
             self::section('Notizen', $this->noteLines($vehicleId, $actor)),
             self::section('Offene Klärfälle', $this->openItemLines($vehicleId, $actor)),
+            self::section('Belege', $this->documentLines($vehicleId, $actor)),
         ];
 
         return implode("\n\n", $blocks) . "\n";
@@ -636,6 +650,36 @@ final class DossierService
         }
 
         return $lines === [] ? [] : array_slice($lines, 0, -1);
+    }
+
+    /**
+     * Belege des Fahrzeugs als Tabelle, ohne Links: die Akte bleibt, Links laufen ab.
+     *
+     * @return list<string>
+     */
+    private function documentLines(int $vehicleId, Actor $actor): array
+    {
+        $documents = $this->documents->list($actor, $vehicleId, null, null);
+        if ($documents === []) {
+            return [];
+        }
+
+        $attachments = $this->documents->attachmentsForMany(array_map(static fn (array $document): int => $document['id'], $documents), $actor);
+        $rows = [];
+        foreach ($documents as $document) {
+            $attached = array_map(
+                static fn (array $attachment): string => (self::ATTACHMENT_WORDS[$attachment['target_table']] ?? $attachment['target_table']) . ' #' . $attachment['target_id'],
+                $attachments[$document['id']] ?? []
+            );
+            $rows[] = [
+                DossierFormat::date($document['captured_on'] ?? substr((string) $document['created_at'], 0, 10)),
+                DossierFormat::humanize($document['doc_type']),
+                $document['title'] !== '' ? $document['title'] : null,
+                $attached === [] ? ($document['status'] === DocumentRepository::STATUS_WAITING ? 'Original fehlt' : 'noch nichts') : implode(', ', array_values(array_unique($attached))),
+            ];
+        }
+
+        return DossierFormat::table(['Datum', 'Typ', 'Titel', 'hängt an'], $rows);
     }
 
     /** @return list<string> */

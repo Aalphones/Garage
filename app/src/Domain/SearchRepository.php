@@ -155,6 +155,25 @@ final class SearchRepository
         );
     }
 
+    /** Belege über Titel und erkannten Text, ohne verworfene. @return list<array{id: int, vehicle_id: int|null, title: string, texts: list<string>}> */
+    public function documents(string $like, ?int $vehicleId, int $limit, Actor $actor): array
+    {
+        return $this->run(
+            'SELECT d.id, d.vehicle_id, d.doc_type, d.title, d.text_content FROM documents d WHERE d.status <> \'verworfen\' AND %s AND %s ORDER BY d.id DESC LIMIT %d',
+            ['d.title', 'd.text_content'],
+            'd.garage_id',
+            'd.vehicle_id',
+            $like,
+            $vehicleId,
+            $limit,
+            $actor,
+            static fn (array $row): array => [
+                'title' => (string) $row['title'] !== '' ? (string) $row['title'] : ucfirst(str_replace('_', ' ', (string) $row['doc_type'])),
+                'texts' => [(string) ($row['text_content'] ?? ''), (string) $row['title']],
+            ]
+        );
+    }
+
     /**
      * @param list<string> $likeColumns
      * @param callable(array<string, mixed>): array{title: string, texts: list<string>} $describe

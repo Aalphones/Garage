@@ -6,6 +6,7 @@ namespace Garage\Mcp\Tools;
 
 use Garage\Auth\Scopes;
 use Garage\Domain\Actor;
+use Garage\Domain\DocumentService;
 use Garage\Domain\Provenance;
 use Garage\Domain\VehicleService;
 use Garage\Mcp\Registry;
@@ -22,6 +23,8 @@ final class VehicleTools
     {
         /** @var VehicleService $vehicles */
         $vehicles = $services['vehicles'];
+        /** @var DocumentService $documents */
+        $documents = $services['documents'];
 
         $registry->add(new Tool(
             'list_vehicles',
@@ -36,12 +39,13 @@ final class VehicleTools
         $registry->add(new Tool(
             'get_vehicle',
             'Fahrzeug lesen',
-            'Liefert ein Fahrzeug mit allen aktuellen Stammdaten, je Feld mit Wert, Herkunft (source, source_url), Konfidenz, Akteur und Zeitpunkt. „specs“ sind die Spezifikationen nach Bereich gruppiert (specs.motoroel.viskositaet), „registrations“ die Zulassungen (neueste zuerst), „holder_count“ die Zahl verschiedener Halter, „equipment“ die Ausstattung, „km_estimate“ den geschätzten Kilometerstand von heute mit Grundlage (km_estimate, per_day = Kilometer pro Tag, estimated = false ohne Hochrechnung, basis.from/to = die Stände dahinter; null ohne Kilometerstand). „disputed“ nennt Werte, die einem bestätigten Wert widersprechen und auf die Entscheidung eines Menschen warten (open_item_id). Beispiel: {"vehicle_id": 12}.',
+            'Liefert ein Fahrzeug mit allen aktuellen Stammdaten, je Feld mit Wert, Herkunft (source, source_url), Konfidenz, Akteur und Zeitpunkt. „specs“ sind die Spezifikationen nach Bereich gruppiert (specs.motoroel.viskositaet), „registrations“ die Zulassungen (neueste zuerst), „holder_count“ die Zahl verschiedener Halter, „equipment“ die Ausstattung, „km_estimate“ den geschätzten Kilometerstand von heute mit Grundlage (km_estimate, per_day = Kilometer pro Tag, estimated = false ohne Hochrechnung, basis.from/to = die Stände dahinter; null ohne Kilometerstand). „disputed“ nennt Werte, die einem bestätigten Wert widersprechen und auf die Entscheidung eines Menschen warten (open_item_id). „documents“ fasst die Belege zusammen: count (ohne verworfene), open (Datei fehlt oder an nichts angehängt) und cover (Titelbild mit document_id und preview_url, sonst null); die Liste liefert list_documents. Beispiel: {"vehicle_id": 12}.',
             Schema::object(['vehicle_id' => Schema::integer('ID des Fahrzeugs aus list_vehicles')], ['vehicle_id']),
             Tool::annotations('Fahrzeug lesen', 'R'),
             Scopes::READ,
-            static function (array $args, Actor $actor) use ($vehicles): ToolResult {
+            static function (array $args, Actor $actor) use ($vehicles, $documents): ToolResult {
                 $result = $vehicles->get((int) $args['vehicle_id'], $actor);
+                $result['documents'] = $documents->forVehicle((int) $args['vehicle_id'], $actor);
                 // Ein leeres PHP-Array würde als JSON-Liste statt als Objekt ausgegeben.
                 $result['facts'] = (object) $result['facts'];
                 $result['specs'] = (object) $result['specs'];

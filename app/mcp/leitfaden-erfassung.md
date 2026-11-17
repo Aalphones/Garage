@@ -38,6 +38,10 @@ Jede Zeile des Belegs wird eine Position:
 2. Dem Nutzer das Ergebnis samt Klärfällen zeigen.
 3. Nach seinem Okay `record_service_event`.
 
+## 4a. Beleg anhängen
+
+Nach `record_service_event` hängst du die Rechnung an das Ereignis: `attach_document {"document_id": <ID>, "target": "ereignis", "target_id": <event_id>, "role": "beleg", "text": "<erkannter Text>"}`. Den erkannten Text (Datum, Beträge, Positionen) gibst du mit; die Suche findet ihn. Das Dokument kommt vorher per `store_document` (Datei-Parameter, `request_upload` oder `import_document_from_url`); ohne Datei (Status „wartet“) lässt es sich nicht anhängen. Ein Tacho-Foto: `record_odometer`, dann `attach_document` mit `target` `kilometerstand` und der `reading_id`. Dasselbe Dokument zweimal anzuhängen schadet nicht (`unveraendert`).
+
 ## 5. Unleserlich oder widersprüchlich
 
 Ein unleserlicher Betrag, ein fehlendes Datum oder eine Position, die du nicht zuordnen kannst: **nie raten.** Lass den Wert weg und lege mit `open_item` eine Nachfrage an. Widerspricht der Beleg einem bestätigten Wert, entsteht ein Klärfall; sag dem Nutzer, dass er in der Oberfläche entscheidet.

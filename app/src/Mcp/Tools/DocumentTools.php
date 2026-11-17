@@ -43,9 +43,15 @@ final class DocumentTools
         $registry->add(new Tool(
             'store_document',
             'Beleg oder Foto beschreiben',
-            'Beschreibt einen Beleg oder ein Foto. Mit ticket_id (nach dem Upload an die Adresse aus request_upload) setzt es Typ, Fahrzeug, Titel und erkannten Text der hochgeladenen Datei; wurde dieselbe Datei schon abgelegt, ist duplicate true und das vorhandene Dokument bleibt unverändert. Ohne ticket_id entsteht ein Dokument im Status „wartet“ (Datei fehlt): das Ergebnis enthält dann einen upload-Block, und der Mensch reicht das Original im Eingang oder auf der Beleg-Seite nach. Den Inhalt (Datum, Beträge, Positionen) hältst du in text fest — GARAGE erkennt selbst keinen Text. Die Datei nie als Base64 ins Argument legen. Beispiel: {"ticket_id": 7, "vehicle_id": 12, "doc_type": "rechnung", "title": "Rechnung Werkstatt Müller", "text": "Ölwechsel 89,00 EUR"}.',
+            'Beschreibt einen Beleg oder ein Foto. Mit file (Dateiobjekt, das ChatGPT bei hochgeladenen Dateien selbst füllt: download_url und file_id) holt GARAGE die Datei ab und legt sie ab. Mit ticket_id (nach dem Upload an die Adresse aus request_upload) setzt es Typ, Fahrzeug, Titel und erkannten Text der hochgeladenen Datei; wurde dieselbe Datei schon abgelegt, ist duplicate true und das vorhandene Dokument bleibt unverändert. file und ticket_id nie zusammen. Ohne beides entsteht ein Dokument im Status „wartet“ (Datei fehlt): das Ergebnis enthält dann einen upload-Block, und der Mensch reicht das Original im Eingang oder auf der Beleg-Seite nach. Den Inhalt (Datum, Beträge, Positionen) hältst du in text fest — GARAGE erkennt selbst keinen Text. Die Datei nie als Base64 ins Argument legen. Beispiel: {"ticket_id": 7, "vehicle_id": 12, "doc_type": "rechnung", "title": "Rechnung Werkstatt Müller", "text": "Ölwechsel 89,00 EUR"}.',
             Schema::object([
-                'ticket_id' => Schema::integer('ticket_id aus request_upload, nachdem die Datei hochgeladen wurde; ohne: Dokument im Status „wartet“'),
+                'ticket_id' => Schema::integer('ticket_id aus request_upload, nachdem die Datei hochgeladen wurde; ohne ticket_id und file: Dokument im Status „wartet“'),
+                'file' => Schema::object([
+                    'download_url' => Schema::text('https-Adresse, unter der die Datei abrufbar ist'),
+                    'file_id' => Schema::text('Kennung der Datei im Client'),
+                    'mime_type' => Schema::text('Dateityp laut Client (GARAGE erkennt ihn selbst an den Bytes)'),
+                    'file_name' => Schema::text('Dateiname laut Client'),
+                ], ['download_url', 'file_id']),
                 'vehicle_id' => Schema::integer('ID des Fahrzeugs aus list_vehicles'),
                 'garage_id' => Schema::integer('Garage für ein Dokument ohne Fahrzeug, wenn der Nutzer mehrere Garagen hat'),
                 'doc_type' => Schema::choice(DocumentService::TYPES, 'Art des Dokuments'),
@@ -56,7 +62,55 @@ final class DocumentTools
             ], ['doc_type']),
             Tool::annotations('Beleg oder Foto beschreiben', 'W'),
             Scopes::FILES,
-            static fn (array $args, Actor $actor): ToolResult => ToolResult::json($documents->store($args, $actor))
+            static fn (array $args, Actor $actor): ToolResult => ToolResult::json($documents->store($args, $actor)),
+            ['openai/fileParams' => ['file']]
+        ));
+
+        $registry->add(new Tool(
+            'import_document_from_url',
+            'Beleg oder Foto von einer Adresse holen',
+            'Holt eine Datei (JPEG, PNG, WebP, GIF oder PDF, höchstens 30 MB) von einer öffentlichen https-Adresse und legt sie als Beleg oder Foto ab; private und interne Adressen werden abgewiesen. Danach wie store_document: doc_type ist Pflicht, Fahrzeug, Titel und erkannter Text sind optional; dieselbe Datei zweimal ergibt duplicate true. Beispiel: {"url": "https://werkstatt.example/rechnung.pdf", "doc_type": "rechnung", "vehicle_id": 12}.',
+            Schema::object([
+                'url' => Schema::text('Öffentliche http(s)-Adresse der Datei'),
+                'vehicle_id' => Schema::integer('ID des Fahrzeugs aus list_vehicles'),
+                'garage_id' => Schema::integer('Garage für ein Dokument ohne Fahrzeug, wenn der Nutzer mehrere Garagen hat'),
+                'doc_type' => Schema::choice(DocumentService::TYPES, 'Art des Dokuments'),
+                'title' => Schema::text('Kurzer Titel, bis 200 Zeichen, einzeilig'),
+                'photo_tag' => Schema::choice(DocumentService::TAGS, 'Nur bei doc_type foto: was das Foto zeigt'),
+                'captured_on' => Schema::text('Aufnahme- oder Belegdatum, YYYY-MM-DD'),
+                'text' => Schema::text('Erkannter Text oder Zusammenfassung des Belegs, bis 200000 Zeichen; die Suche findet ihn'),
+            ], ['url', 'doc_type']),
+            Tool::annotations('Beleg oder Foto von einer Adresse holen', 'WO'),
+            Scopes::FILES,
+            static fn (array $args, Actor $actor): ToolResult => ToolResult::json($documents->storeFromUrl(
+                $args,
+                Validate::text('url', $args['url'] ?? null, 1, 2048, '{"url": "https://werkstatt.example/rechnung.pdf", "doc_type": "rechnung"}'),
+                DocumentService::CHANNEL_URL,
+                $actor
+            ))
+        ));
+
+        $registry->add(new Tool(
+            'attach_document',
+            'Beleg oder Foto anhängen',
+            'Hängt ein abgelegtes Dokument an einen Datensatz der Akte. target: fahrzeug, ereignis, schaden, rueckruf, reifensatz, teil, messwert, kilometerstand oder zulassung; target_id ist die ID aus dem jeweiligen Lese-Tool. role: beleg (das Dokument belegt den Datensatz; bei beleg wird es als Quelle eingetragen, wenn noch keine gesetzt ist), foto, anhang oder titelbild (nur Foto am Fahrzeug, ersetzt das bisherige Titelbild). Mit text ersetzt du den erkannten Text des Dokuments. Dasselbe zweimal ergibt result „unveraendert“. Das Dokument muss eine Datei haben (nicht „wartet“) und zum selben Fahrzeug gehören. Beispiel: {"document_id": 5, "target": "ereignis", "target_id": 31, "role": "beleg"}.',
+            Schema::object([
+                'document_id' => Schema::integer('ID aus store_document oder list_documents'),
+                'target' => Schema::choice(array_keys(DocumentService::TARGETS), 'Art des Datensatzes'),
+                'target_id' => Schema::integer('ID des Datensatzes'),
+                'role' => Schema::choice(DocumentService::ROLES, 'Wozu das Dokument am Datensatz hängt'),
+                'text' => Schema::text('Erkannter Text; ersetzt den bisherigen, bis 200000 Zeichen'),
+            ], ['document_id', 'target', 'target_id', 'role']),
+            Tool::annotations('Beleg oder Foto anhängen', 'W'),
+            Scopes::WRITE,
+            static fn (array $args, Actor $actor): ToolResult => ToolResult::json($documents->attach(
+                (int) $args['document_id'],
+                (string) $args['target'],
+                (int) $args['target_id'],
+                (string) $args['role'],
+                isset($args['text']) ? (string) $args['text'] : null,
+                $actor
+            ))
         ));
 
         $registry->add(new Tool(

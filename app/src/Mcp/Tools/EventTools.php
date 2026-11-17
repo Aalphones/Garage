@@ -6,6 +6,7 @@ namespace Garage\Mcp\Tools;
 
 use Garage\Auth\Scopes;
 use Garage\Domain\Actor;
+use Garage\Domain\DocumentService;
 use Garage\Domain\EventService;
 use Garage\Mcp\Registry;
 use Garage\Mcp\Schema;
@@ -21,6 +22,8 @@ final class EventTools
     {
         /** @var EventService $events */
         $events = $services['events'];
+        /** @var DocumentService $documents */
+        $documents = $services['documents'];
 
         $registry->add(new Tool(
             'record_service_event',
@@ -60,11 +63,16 @@ final class EventTools
         $registry->add(new Tool(
             'get_event',
             'Ereignis lesen',
-            'Liefert ein Ereignis vollständig: Werkstatt, Rechnungsnummer, Beträge in Euro, Positionen in der Reihenfolge der Rechnung (type, description, task_key, part_number, quantity, unit, net_eur), den Kilometerstand und die Herkunft. Beispiel: {"event_id": 31}.',
+            'Liefert ein Ereignis vollständig: Werkstatt, Rechnungsnummer, Beträge in Euro, Positionen in der Reihenfolge der Rechnung (type, description, task_key, part_number, quantity, unit, net_eur), den Kilometerstand, die Herkunft und die angehängten Belege (documents: id, doc_type, title, role, preview_url — ein 10 Minuten gültiger Link auf die Vorschau, null ohne Vorschau; get_document liefert das Dokument selbst). Beispiel: {"event_id": 31}.',
             Schema::object(['event_id' => Schema::integer('ID des Ereignisses aus list_events')], ['event_id']),
             Tool::annotations('Ereignis lesen', 'R'),
             Scopes::READ,
-            static fn (array $args, Actor $actor): ToolResult => ToolResult::json($events->get((int) $args['event_id'], $actor))
+            static function (array $args, Actor $actor) use ($events, $documents): ToolResult {
+                $event = $events->get((int) $args['event_id'], $actor);
+                $event['documents'] = $documents->forTarget('events', $event['id'], $actor);
+
+                return ToolResult::json($event);
+            }
         ));
     }
 

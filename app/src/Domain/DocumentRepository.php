@@ -245,6 +245,141 @@ final class DocumentRepository
     }
 
     /**
+     * Zeile eines Anhangsziels samt Garage und Fahrzeug; `$table` stammt aus `DocumentService::TARGETS` (nie aus Eingaben).
+     *
+     * @return array{id: int, garage_id: int, vehicle_id: int}|null
+     */
+    public function findTarget(string $table, int $id, Actor $actor): ?array
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return null;
+        }
+
+        $vehicleColumn = $table === 'vehicles' ? 'id' : 'vehicle_id';
+        $statement = $this->pdo->prepare(
+            sprintf('SELECT id, garage_id, %s AS vehicle_id FROM %s WHERE id = ? AND garage_id IN (%s)', $vehicleColumn, $table, self::placeholders($garageIds))
+        );
+        $statement->execute([$id, ...$garageIds]);
+        $row = $statement->fetch();
+
+        return $row === false ? null : ['id' => (int) $row['id'], 'garage_id' => (int) $row['garage_id'], 'vehicle_id' => (int) $row['vehicle_id']];
+    }
+
+    /** @return bool `true`, wenn der Anhang neu entstand; `false`, wenn es ihn schon gab */
+    public function insertAttachment(int $garageId, int $documentId, string $table, int $targetId, string $role, Actor $actor): bool
+    {
+        $statement = $this->pdo->prepare(
+            'INSERT IGNORE INTO attachments (garage_id, document_id, target_table, target_id, role, actor, user_id, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())'
+        );
+        $statement->execute([$garageId, $documentId, $table, $targetId, $role, $actor->name, $actor->userId]);
+
+        return $statement->rowCount() === 1;
+    }
+
+    public function findAttachmentId(int $documentId, string $table, int $targetId, string $role): int
+    {
+        $statement = $this->pdo->prepare('SELECT id FROM attachments WHERE document_id = ? AND target_table = ? AND target_id = ? AND role = ?');
+        $statement->execute([$documentId, $table, $targetId, $role]);
+
+        return (int) $statement->fetchColumn();
+    }
+
+    /**
+     * Ein neues Titelbild löst das alte ab: dessen Anhang wird Rolle `foto` (gibt es den schon, entfällt die doppelte Zeile).
+     */
+    public function demoteCover(int $garageId, int $vehicleId, int $exceptDocumentId): void
+    {
+        $statement = $this->pdo->prepare(
+            "SELECT id, document_id FROM attachments WHERE garage_id = ? AND target_table = 'vehicles' AND target_id = ? AND role = 'titelbild' AND document_id <> ? FOR UPDATE"
+        );
+        $statement->execute([$garageId, $vehicleId, $exceptDocumentId]);
+        foreach ($statement->fetchAll() as $row) {
+            $demote = $this->pdo->prepare("UPDATE IGNORE attachments SET role = 'foto' WHERE id = ?");
+            $demote->execute([(int) $row['id']]);
+            if ($demote->rowCount() === 0) {
+                $drop = $this->pdo->prepare('DELETE FROM attachments WHERE id = ?');
+                $drop->execute([(int) $row['id']]);
+            }
+        }
+    }
+
+    /** Setzt `source_document_id` nur, wenn die Spalte noch leer ist. @return bool `true`, wenn der Wert gesetzt wurde */
+    public function setSourceDocument(string $table, int $targetId, int $garageId, int $documentId): bool
+    {
+        $statement = $this->pdo->prepare(sprintf('UPDATE %s SET source_document_id = ? WHERE id = ? AND garage_id = ? AND source_document_id IS NULL', $table));
+        $statement->execute([$documentId, $targetId, $garageId]);
+
+        return $statement->rowCount() === 1;
+    }
+
+    /**
+     * Belege an einer Zeile, für `get_event` und Co.
+     *
+     * @return list<array{id: int, doc_type: string, title: string, role: string, mime: string|null, page_count: int}>
+     */
+    public function documentsFor(string $table, int $targetId, Actor $actor): array
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return [];
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf(
+                'SELECT d.id, d.doc_type, d.title, a.role, d.mime, d.page_count
+                 FROM attachments a JOIN documents d ON d.id = a.document_id
+                 WHERE a.target_table = ? AND a.target_id = ? AND a.garage_id IN (%s) AND d.garage_id = a.garage_id AND d.status <> ?
+                 ORDER BY a.id',
+                self::placeholders($garageIds)
+            )
+        );
+        $statement->execute([$table, $targetId, ...$garageIds, self::STATUS_DISCARDED]);
+
+        return array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'],
+            'doc_type' => (string) $row['doc_type'],
+            'title' => (string) $row['title'],
+            'role' => (string) $row['role'],
+            'mime' => $row['mime'] === null ? null : (string) $row['mime'],
+            'page_count' => (int) $row['page_count'],
+        ], $statement->fetchAll());
+    }
+
+    /** @return array{id: int, mime: string|null, page_count: int}|null das Titelbild des Fahrzeugs */
+    public function coverFor(int $vehicleId, Actor $actor): ?array
+    {
+        foreach ($this->documentsFor('vehicles', $vehicleId, $actor) as $document) {
+            if ($document['role'] === 'titelbild') {
+                return ['id' => $document['id'], 'mime' => $document['mime'], 'page_count' => $document['page_count']];
+            }
+        }
+
+        return null;
+    }
+
+    /** @return array{count: int, open: int} Belege des Fahrzeugs ohne verworfene; `open` = wartet oder unzugeordnet */
+    public function countsFor(int $vehicleId, Actor $actor): array
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return ['count' => 0, 'open' => 0];
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf(
+                'SELECT COUNT(*) AS total, COALESCE(SUM(status IN (?, ?)), 0) AS open_count FROM documents WHERE vehicle_id = ? AND garage_id IN (%s) AND status <> ?',
+                self::placeholders($garageIds)
+            )
+        );
+        $statement->execute([self::STATUS_WAITING, self::STATUS_UNASSIGNED, $vehicleId, ...$garageIds, self::STATUS_DISCARDED]);
+        $row = $statement->fetch();
+
+        return ['count' => (int) $row['total'], 'open' => (int) $row['open_count']];
+    }
+
+    /**
      * Anhänge mehrerer Dokumente in einer Abfrage, für die Liste.
      *
      * @param list<int> $documentIds

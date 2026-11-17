@@ -17,6 +17,7 @@ final readonly class Tool
      * @param array<string, mixed> $inputSchema JSON-Schema-Objekt
      * @param array<string, mixed> $annotations title + die vier Hints, alle Pflicht
      * @param Closure(array<string, mixed>, \Garage\Domain\Actor): ToolResult $handler
+     * @param array<string, mixed> $meta `_meta` in `tools/list`, etwa `openai/fileParams`; leer = kein `_meta`
      */
     public function __construct(
         public string $name,
@@ -25,7 +26,8 @@ final readonly class Tool
         public array $inputSchema,
         public array $annotations,
         public string $scope,
-        public Closure $handler
+        public Closure $handler,
+        public array $meta = []
     ) {
         if (!in_array($scope, Scopes::ALL, true)) {
             throw new LogicException(sprintf('Tool %s: unbekannter Scope „%s“.', $name, $scope));
@@ -61,12 +63,17 @@ final readonly class Tool
     /** @return array<string, mixed> */
     public function describe(): array
     {
-        return [
+        $description = [
             'name' => $this->name,
             'title' => $this->title,
             'description' => $this->description,
             'inputSchema' => $this->inputSchema,
             'annotations' => $this->annotations,
         ];
+        if ($this->meta !== []) {
+            $description['_meta'] = $this->meta;
+        }
+
+        return $description;
     }
 }

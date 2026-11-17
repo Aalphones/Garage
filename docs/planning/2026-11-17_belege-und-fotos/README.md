@@ -9,7 +9,7 @@ Quelle des Umfangs: [`../../PROJECT.md`](../../PROJECT.md) → Meilenstein 3, Fa
 | # | Phase | Rating | Status |
 |---|---|---|---|
 | 1 | [Ablage-Kern](phase-1-ablage-kern.md) — Tabellen, Bildverarbeitung, signierte Links, Upload-Ticket, `request_upload`, `store_document` per Ticket, `get_document`, `list_documents` | heikel | complete |
-| 2 | [Anhänge, Datei-Parameter, Akte](phase-2-anhaenge-akte.md) — `attach_document`, ChatGPT-Datei-Parameter, `import_document_from_url`, Belege in `get_event`/`get_vehicle`/Akte/Suche | standard | pending |
+| 2 | [Anhänge, Datei-Parameter, Akte](phase-2-anhaenge-akte.md) — `attach_document`, ChatGPT-Datei-Parameter, `import_document_from_url`, Belege in `get_event`/`get_vehicle`/Akte/Suche | standard | complete |
 | 3 | [Eingang auf dem Server](phase-3-eingang-server.md) — Eingangs-Tabellen, `list_inbox`/`claim_inbox_item`/`release_inbox_item`, Web-API für Belege und Eingang, Prompt `eingang_abarbeiten` | heikel | pending |
 | 4 | [Oberfläche Eingang und Belege](phase-4-oberflaeche.md) — Seiten nach Entwurf, Fotos im Browser verkleinern, PDF-Seiten per pdf.js | standard | pending |
 | 5 | [Teilen-Ziel Android](phase-5-teilen-ziel.md) — Manifest, Service Worker, Übernahme geteilter Dateien | standard | pending |

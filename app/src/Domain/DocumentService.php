@@ -10,6 +10,7 @@ use Finfo;
 use Garage\Auth\FileLink;
 use Garage\Auth\Scopes;
 use Garage\Db\Transaction;
+use Garage\Util\HttpClient;
 use Garage\Util\ImageProcessor;
 use PDO;
 use Throwable;
@@ -25,8 +26,24 @@ final class DocumentService
     public const MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
     public const LIST_STATUSES = ['wartet', 'unzugeordnet', 'zugeordnet', 'offen', 'verworfen', 'alle'];
 
+    /** Anhangsziele (E5): Name im Tool → Tabelle. Alle außer `vehicles` tragen `source_document_id`; M5 ergänzt Verträge ohne Migration. */
+    public const TARGETS = [
+        'fahrzeug' => 'vehicles',
+        'ereignis' => 'events',
+        'schaden' => 'damages',
+        'rueckruf' => 'recalls',
+        'reifensatz' => 'tire_sets',
+        'teil' => 'parts',
+        'messwert' => 'measurements',
+        'kilometerstand' => 'odometer_readings',
+        'zulassung' => 'registrations',
+    ];
+    public const ROLES = ['beleg', 'foto', 'anhang', 'titelbild'];
+
     public const CHANNEL_TICKET = 'ticket';
     public const CHANNEL_WIDGET = 'widget';
+    public const CHANNEL_CHATGPT = 'chatgpt';
+    public const CHANNEL_URL = 'url';
 
     private const MAX_TEXT = 200000;
     private const MAX_TITLE = 200;
@@ -59,11 +76,191 @@ final class DocumentService
      */
     public function store(array $input, Actor $actor): array
     {
+        if (isset($input['file'])) {
+            if (isset($input['ticket_id'])) {
+                throw new DomainError('invalid_argument', 'ticket_id und file schließen sich aus: entweder die Datei über ein Upload-Ticket hochladen oder das Dateiobjekt übergeben, nicht beides.', ['field' => 'file']);
+            }
+            $file = self::validFile($input['file']);
+
+            return $this->storeFromUrl($input, $file['download_url'], self::CHANNEL_CHATGPT, $actor);
+        }
         if (isset($input['ticket_id'])) {
             return $this->describeUploaded((int) $input['ticket_id'], $input, $actor);
         }
 
         return $this->createWaiting($input, $actor);
+    }
+
+    /**
+     * `import_document_from_url` und ChatGPT-Datei-Parameter: Datei abholen, ablegen, beschreiben. Die Abholung läuft vor der
+     * Transaktion, damit keine Sperre während des Netzwerkzugriffs offen bleibt.
+     *
+     * @param array<string, mixed> $input Felder wie bei `store_document` (ohne ticket_id)
+     * @return array<string, mixed> wie `store`
+     */
+    public function storeFromUrl(array $input, string $url, string $channel, Actor $actor): array
+    {
+        Validate::enum('doc_type', $input['doc_type'] ?? null, self::TYPES);
+        $stored = $this->importFromUrl(
+            $url,
+            $channel,
+            $actor,
+            isset($input['garage_id']) ? (int) $input['garage_id'] : null,
+            isset($input['vehicle_id']) ? (int) $input['vehicle_id'] : null
+        );
+
+        return Transaction::run($this->pdo, function () use ($stored, $input, $actor): array {
+            $document = $stored;
+            // Eine Dublette ist ein schon beschriebenes Dokument; die Angaben des Agenten überschreiben es nicht.
+            if (!$stored['duplicate']) {
+                $document = $this->describe($stored['id'], $input, $actor);
+            }
+
+            return $this->storeResult($document, $stored['duplicate']);
+        });
+    }
+
+    /**
+     * Holt die Datei unter `$url` ab (SSRF-Schutz im `HttpClient`) und legt sie ab.
+     *
+     * @return array<string, mixed> Dokument plus `duplicate`
+     */
+    public function importFromUrl(string $url, string $channel, Actor $actor, ?int $garageId, ?int $vehicleId): array
+    {
+        $target = $this->resolveTarget($actor, $garageId, $vehicleId, null);
+        $client = new HttpClient((array) $this->config['http'], $this->baseUrl());
+        try {
+            $response = $client->get($url, (int) $this->documentsConfig['max_bytes']);
+        } catch (DomainError $error) {
+            if ($error->errorCode === 'url_rejected') {
+                throw new DomainError('invalid_value', $error->getMessage(), ['field' => 'url'] + $error->details);
+            }
+
+            throw $error;
+        }
+
+        return $this->storeBytes($response->body, $channel, $actor, $target['garage_id'], $target['vehicle_id']);
+    }
+
+    /**
+     * Hängt ein Dokument an einen Datensatz (E5). Bei Rolle `beleg` wird `source_document_id` gesetzt, wenn die Spalte leer ist;
+     * ein neues Titelbild löst das alte ab.
+     *
+     * @return array{attachment_id: int, result: string, source_document_set: bool}
+     */
+    public function attach(int $documentId, string $target, int $targetId, string $role, ?string $text, Actor $actor): array
+    {
+        $example = '{"document_id": 5, "target": "ereignis", "target_id": 31, "role": "beleg"}';
+        $table = self::TARGETS[Validate::enum('target', $target, array_keys(self::TARGETS))];
+        Validate::enum('role', $role, self::ROLES);
+        $newText = $text === null ? null : self::validText($text);
+
+        return Transaction::run($this->pdo, function () use ($documentId, $table, $targetId, $role, $text, $newText, $actor, $example): array {
+            $document = $this->documents->find($documentId, $actor, true);
+            if ($document === null) {
+                throw $this->notFound($documentId);
+            }
+            if ($document['status'] === DocumentRepository::STATUS_WAITING) {
+                throw Validate::invalid('document_id', 'Erst das Original ablegen: das Dokument hat noch keine Datei (Status „wartet“).', $example);
+            }
+            if ($document['status'] === DocumentRepository::STATUS_DISCARDED) {
+                throw Validate::invalid('document_id', 'Das Dokument ist verworfen und lässt sich nicht anhängen.', $example);
+            }
+
+            $row = $this->documents->findTarget($table, $targetId, $actor);
+            if ($row === null || $row['garage_id'] !== $document['garage_id'] || ($document['vehicle_id'] !== null && $document['vehicle_id'] !== $row['vehicle_id'])) {
+                throw new DomainError('not_found', 'Dieses Ziel gibt es für das Dokument nicht: es muss zum selben Fahrzeug gehören. list_events, list_documents und die anderen Lese-Tools nennen die IDs.', ['target_id' => $targetId]);
+            }
+            $this->access->writable($row['vehicle_id'], $actor);
+
+            if ($role === 'titelbild' && ($table !== 'vehicles' || $document['doc_type'] !== 'foto')) {
+                throw Validate::invalid('role', 'Ein Titelbild ist nur ein Foto (doc_type „foto“) und nur am Fahrzeug (target „fahrzeug“).', '{"document_id": 5, "target": "fahrzeug", "target_id": 12, "role": "titelbild"}');
+            }
+            if ($role === 'titelbild') {
+                $this->documents->demoteCover($row['garage_id'], $row['vehicle_id'], $documentId);
+            }
+
+            $isNew = $this->documents->insertAttachment($row['garage_id'], $documentId, $table, $targetId, $role, $actor);
+            $attachmentId = $this->documents->findAttachmentId($documentId, $table, $targetId, $role);
+            $isSourceSet = $role === 'beleg' && $table !== 'vehicles' && $this->documents->setSourceDocument($table, $targetId, $row['garage_id'], $documentId);
+
+            $fields = ['status' => DocumentRepository::STATUS_ASSIGNED];
+            if ($document['vehicle_id'] === null) {
+                $fields['vehicle_id'] = $row['vehicle_id'];
+            }
+            if ($text !== null) {
+                $fields['text_content'] = $newText;
+            }
+            $this->documents->update($documentId, $document['garage_id'], $fields);
+
+            if ($isNew || $isSourceSet || $text !== null) {
+                $this->audit->record(
+                    $actor,
+                    'document.attach',
+                    sprintf('documents:%d', $documentId),
+                    $document['garage_id'],
+                    null,
+                    ['target' => $table, 'target_id' => $targetId, 'role' => $role, 'source_document_set' => $isSourceSet, 'text_replaced' => $text !== null],
+                    $row['vehicle_id']
+                );
+            }
+
+            return ['attachment_id' => $attachmentId, 'result' => $isNew ? 'angelegt' : 'unveraendert', 'source_document_set' => $isSourceSet];
+        });
+    }
+
+    /**
+     * Belege an einem Datensatz für `get_event` und Co.; `preview_url` ist ein signierter Link (`null` ohne Vorschau).
+     *
+     * @return list<array{id: int, doc_type: string, title: string, role: string, preview_url: string|null}>
+     */
+    public function forTarget(string $table, int $targetId, Actor $actor): array
+    {
+        return array_map(fn (array $row): array => [
+            'id' => $row['id'],
+            'doc_type' => $row['doc_type'],
+            'title' => $row['title'],
+            'role' => $row['role'],
+            'preview_url' => $this->previewUrl($row),
+        ], $this->documents->documentsFor($table, $targetId, $actor));
+    }
+
+    /**
+     * Zusammenfassung für `get_vehicle`.
+     *
+     * @return array{count: int, open: int, cover: array{document_id: int, preview_url: string|null}|null}
+     */
+    public function forVehicle(int $vehicleId, Actor $actor): array
+    {
+        $cover = $this->documents->coverFor($vehicleId, $actor);
+
+        return $this->documents->countsFor($vehicleId, $actor) + [
+            'cover' => $cover === null ? null : ['document_id' => $cover['id'], 'preview_url' => $this->previewUrl($cover)],
+        ];
+    }
+
+    /** @param array{id: int, mime: string|null, page_count: int} $row */
+    private function previewUrl(array $row): ?string
+    {
+        $file = $this->previewFile($row);
+
+        return $file === null ? null : $this->linkFor($row, $file);
+    }
+
+    /**
+     * @return array{download_url: string, file_id: string}
+     */
+    private static function validFile(mixed $raw): array
+    {
+        $example = '{"file": {"download_url": "https://files.example/abc", "file_id": "file_123"}, "doc_type": "rechnung"}';
+        if (!is_array($raw) || array_is_list($raw)) {
+            throw Validate::invalid('file', 'file ist ein Objekt mit download_url und file_id.', $example);
+        }
+
+        return [
+            'download_url' => Validate::text('file.download_url', $raw['download_url'] ?? null, 1, 2048, $example),
+            'file_id' => Validate::text('file.file_id', $raw['file_id'] ?? null, 1, 200, $example),
+        ];
     }
 
     /**

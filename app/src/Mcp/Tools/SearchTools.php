@@ -23,7 +23,7 @@ final class SearchTools
         $registry->add(new Tool(
             'search',
             'In der Akte suchen',
-            'Sucht einen Text (3 bis 100 Zeichen, ohne Rücksicht auf Groß- und Kleinschreibung) in Ereignissen (Titel, Rechnungsnummer), Positionen (Text, Teilenummer), Teilen (Bauteil, OEM- und Artikelnummer), Notizen (Thema, Text) und offenen Klärfällen. Je Quelle höchstens 10, zusammen höchstens 30 Treffer: type (event, event_item, part, note, open_item), id, vehicle_id, title, snippet; bei event_item zusätzlich event_id für get_event. Platzhalter wie % und _ werden wörtlich gesucht. Beispiel: {"query": "Ölfilter", "vehicle_id": 12}.',
+            'Sucht einen Text (3 bis 100 Zeichen, ohne Rücksicht auf Groß- und Kleinschreibung) in Ereignissen (Titel, Rechnungsnummer), Positionen (Text, Teilenummer), Teilen (Bauteil, OEM- und Artikelnummer), Notizen (Thema, Text), offenen Klärfällen und Belegen (Titel, erkannter Text; get_document liest den Beleg). Je Quelle höchstens 10, zusammen höchstens 30 Treffer: type (event, event_item, part, note, open_item, document), id, vehicle_id, title, snippet; bei event_item zusätzlich event_id für get_event. Platzhalter wie % und _ werden wörtlich gesucht. Beispiel: {"query": "Ölfilter", "vehicle_id": 12}.',
             Schema::object([
                 'query' => Schema::text('Suchtext, 3 bis 100 Zeichen'),
                 'vehicle_id' => Schema::integer('nur dieses Fahrzeug (ID aus list_vehicles); ohne Angabe alle Fahrzeuge'),
