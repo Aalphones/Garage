@@ -108,7 +108,8 @@ final class Validate
             return null;
         }
 
-        $example = sprintf('{"%s": "1288.70"}', $field);
+        // Bei verschachtelten Feldern („items[0].net_eur“) zeigt das Beispiel nur den Schlüssel selbst.
+        $example = sprintf('{"%s": "1288.70"}', str_contains($field, '.') ? substr($field, (int) strrpos($field, '.') + 1) : $field);
         $text = match (true) {
             is_int($raw) => (string) $raw,
             // Gleitkomma über Text runden, damit 1288.7 nicht als 1288.6999… endet.
