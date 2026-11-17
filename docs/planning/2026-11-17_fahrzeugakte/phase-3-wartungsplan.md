@@ -1,6 +1,6 @@
 # Phase 3 — Wartungsplan und Fälligkeiten
 
-Rating: **heikel** (Rechenregel „was zuerst eintritt“, Datumsarithmetik, Prognose). Status: **pending**.
+Rating: **heikel** (Rechenregel „was zuerst eintritt“, Datumsarithmetik, Prognose). Status: **complete**.
 
 ## Kontext — vorher lesen
 
@@ -12,16 +12,16 @@ Rating: **heikel** (Rechenregel „was zuerst eintritt“, Datumsarithmetik, Pro
 
 ## Abnahmekriterien
 
-- [ ] `DueCalculator::addMonths('2026-01-31', 1)` = `2026-02-28`, `addMonths('2024-01-31', 1)` = `2024-02-29`, `addMonths('2026-03-02', 12)` = `2027-03-02` — lokal per `php -r` mit `require 'app/src/Domain/DueCalculator.php'` geprüft (reine Klasse, keine Datenbank).
-- [ ] `OdometerForecast`: gültige Stände 20.000 km am 2025-11-17 und 26.000 km am 2026-05-17, heute 2026-11-17 → `km_estimate` 32.099, `per_day` 33,1 (in der Ausgabe auf eine Stelle gerundet, gerechnet wird ungerundet; Werte per PHP nachgerechnet), `estimated: true`; nur ein Stand → `km_estimate` = dieser Stand, `estimated: false`, `per_day: null`.
-- [ ] `upsert_task_rule` neu → `angelegt` (legt Aufgabe und Regel an); identisch erneut → `unveraendert`; andere Werte gegen nicht bestätigte → `aktualisiert` (alte Regel `abgeloest`); andere Werte gegen bestätigte → `klaerfall` mit `proposal_json` der neuen Regel; Regel ohne `interval_km` und ohne `interval_months` → `invalid_value`.
-- [ ] Clio-Fall: Regel `innenraumfilter` 12 Monate (bestätigt), Ereignis 2025-01-15 mit Position `task_key: innenraumfilter` → `get_due_items` zeigt `ueberfaellig`, `due_date` 2026-01-15 und einen Rechenweg, der Ereignis-Datum, Intervall und Ergebnis nennt.
-- [ ] Regel 15.000 km / 24 Monate, letzte Ausführung bei 26.000 km am 2026-05-17, Prognose wie oben → `due_km` 41.000, `due_date` 2028-05-17, `km_due_date` 2027-08-13 (453 Tage ab 2026-05-17 bei 33,149 km/Tag, nachgerechnet), `effective_date` 2027-08-13, Status `ok`.
-- [ ] Regel mit Konfidenz `unsicher` → `rule_uncertain: true` (Gelb im Konzept), unabhängig vom Status.
-- [ ] Aufgabe ohne Ausführung und ohne Erstzulassung → `due_date: null`, Status `unbekannt`, Rechenweg sagt, was fehlt („Erstzulassung fehlt — set_vehicle_facts mit erstzulassung“).
-- [ ] `list_vehicles` liefert je Fahrzeug `km_estimate` und `next_due`; `get_vehicle` liefert `km_estimate` mit Grundlage.
-- [ ] `record_service_event` mit `task_key`, für den es keine Aufgabe gibt → Warnung „task_key ‚x‘ hat noch keine Intervallregel (upsert_task_rule)“, Ereignis trotzdem gespeichert.
-- [ ] Mandanten: `get_due_items` ohne `vehicle_id` liefert nur Fahrzeuge der eigenen Garagen; `upsert_task_rule` an fremdem Fahrzeug → `not_found`.
+- [x] `DueCalculator::addMonths('2026-01-31', 1)` = `2026-02-28`, `addMonths('2024-01-31', 1)` = `2024-02-29`, `addMonths('2026-03-02', 12)` = `2027-03-02` — lokal per `php -r` mit `require 'app/src/Domain/DueCalculator.php'` geprüft (reine Klasse, keine Datenbank).
+- [x] `OdometerForecast`: gültige Stände 20.000 km am 2025-11-17 und 26.000 km am 2026-05-17, heute 2026-11-17 → `km_estimate` 32.099, `per_day` 33,1 (in der Ausgabe auf eine Stelle gerundet, gerechnet wird ungerundet; Werte per PHP nachgerechnet), `estimated: true`; nur ein Stand → `km_estimate` = dieser Stand, `estimated: false`, `per_day: null`.
+- [x] `upsert_task_rule` neu → `angelegt` (legt Aufgabe und Regel an); identisch erneut → `unveraendert`; andere Werte gegen nicht bestätigte → `aktualisiert` (alte Regel `abgeloest`); andere Werte gegen bestätigte → `klaerfall` mit `proposal_json` der neuen Regel; Regel ohne `interval_km` und ohne `interval_months` → `invalid_value`.
+- [x] Clio-Fall: Regel `innenraumfilter` 12 Monate (bestätigt), Ereignis 2025-01-15 mit Position `task_key: innenraumfilter` → `get_due_items` zeigt `ueberfaellig`, `due_date` 2026-01-15 und einen Rechenweg, der Ereignis-Datum, Intervall und Ergebnis nennt.
+- [x] Regel 15.000 km / 24 Monate, letzte Ausführung bei 26.000 km am 2026-05-17, Prognose wie oben → `due_km` 41.000, `due_date` 2028-05-17, `km_due_date` 2027-08-13 (453 Tage ab 2026-05-17 bei 33,149 km/Tag, nachgerechnet), `effective_date` 2027-08-13, Status `ok`.
+- [x] Regel mit Konfidenz `unsicher` → `rule_uncertain: true` (Gelb im Konzept), unabhängig vom Status.
+- [x] Aufgabe ohne Ausführung und ohne Erstzulassung → `due_date: null`, Status `unbekannt`, Rechenweg sagt, was fehlt („Erstzulassung fehlt — set_vehicle_facts mit erstzulassung“).
+- [x] `list_vehicles` liefert je Fahrzeug `km_estimate` und `next_due`; `get_vehicle` liefert `km_estimate` mit Grundlage.
+- [x] `record_service_event` mit `task_key`, für den es keine Aufgabe gibt → Warnung „task_key ‚x‘ hat noch keine Intervallregel (upsert_task_rule)“, Ereignis trotzdem gespeichert.
+- [x] Mandanten: `get_due_items` ohne `vehicle_id` liefert nur Fahrzeuge der eigenen Garagen; `upsert_task_rule` an fremdem Fahrzeug → `not_found`.
 
 ## Datenmodell — `app/migrations/010_task.sql`
 
@@ -61,27 +61,38 @@ Sortierung: `ueberfaellig`, `bald`, `unbekannt`, `ok`; innerhalb nach `effective
 
 ### Fachlogik
 
-- [ ] `app/src/Domain/OdometerForecast.php` (reine Klasse, nur `DateTimeImmutable`), Rückgabe `array{km_estimate: int, per_day: float|null, estimated: bool, basis: array{from: array{date,km}|null, to: array{date,km}}}|null`.
-- [ ] `app/src/Domain/DueCalculator.php` (reine Klasse): `addMonths`, `compute(array $task, ?array $rule, ?array $lastDone, ?string $firstRegistration, ?array $forecast, ?array $lastReading, string $today): array` nach Rechenregel 3–9; Konstanten `SOON_MONTHS = 3`, `SOON_KM = 3000`.
-- [ ] `app/src/Domain/TaskRepository.php`: `findTask(vehicleId, taskKey, Actor)`, `insertTask`, `currentRule(taskId, Actor)`, `insertRule`, `supersedeRule`, `listTasksWithRules(list<int> $vehicleIds, Actor)`, `lastExecutions(list<int> $vehicleIds, Actor): array<int vehicle_id, array<string task_key, array{event_id, date, km}>>` (eine Abfrage über `events` ⋈ `event_items`, aktiv, je Fahrzeug und `task_key` das jüngste).
-- [ ] `app/src/Domain/TaskService.php`: `upsertRule(array $input, Actor)` — Regel aus Kontrakt; Vergleich über `interval_km`, `interval_months`, `first_km`, `first_months`, `mode` (als Text, `null` = leer); gleich → `unveraendert` (höhere Konfidenz → neue Zeile `aktuell`, alte `abgeloest`, `aktualisiert`); `title` abweichend → Titel überschreiben (kein Klärfall). Konflikt-Text: „Intervallregel ‚<task_key>‘ am Fahrzeug ‚<label>‘: bestätigt ist <alt>, neu gemeldet <neu> (Quelle …). Ein Mensch entscheidet.“ Audit `task_rule.create|update|dispute`.
-- [ ] `app/src/Domain/DueService.php`: `dueItems(?int $vehicleId, int $horizonMonths, Actor)` — Fahrzeuge (eins über `VehicleAccess::readable` oder alle über `VehicleRepository::listForActor`, ohne Status `geloescht`), Erstzulassung über `VehicleRepository::currentValues(..., ['erstzulassung'])`, Stände über `OdometerService::validReadings`, Rest über `TaskRepository`; Horizont: Einträge mit `effective_date` null oder ≤ `addMonths(heute, horizon)`. `summary(list<int> $vehicleIds, Actor): array<int, array{km_estimate: int|null, next_due: array|null}>` für `list_vehicles`. `horizon_months` 1–120, Standard 36.
-- [ ] `VehicleService::list` ergänzt `km_estimate`, `next_due` (`{task_key, title, effective_date, status}` oder `null`) über `DueService::summary`; `VehicleService::get` ergänzt `km_estimate` (Ergebnis von `OdometerForecast`). `VehicleService` bekommt `DueService` im Konstruktor erzeugt (kein Kreis: `DueService` nutzt nur Repositories).
-- [ ] `EventService::record`: Warnung je `task_key` ohne Aufgabe (nach Schreiben der Positionen prüfen).
+- [x] `app/src/Domain/OdometerForecast.php` (reine Klasse, nur `DateTimeImmutable`), Rückgabe `array{km_estimate: int, per_day: float|null, estimated: bool, basis: array{from: array{date,km}|null, to: array{date,km}}}|null`.
+- [x] `app/src/Domain/DueCalculator.php` (reine Klasse): `addMonths`, `compute(array $task, ?array $rule, ?array $lastDone, ?string $firstRegistration, ?array $forecast, ?array $lastReading, string $today): array` nach Rechenregel 3–9; Konstanten `SOON_MONTHS = 3`, `SOON_KM = 3000`.
+- [x] `app/src/Domain/TaskRepository.php`: `findTask(vehicleId, taskKey, Actor)`, `insertTask`, `currentRule(taskId, Actor)`, `insertRule`, `supersedeRule`, `listTasksWithRules(list<int> $vehicleIds, Actor)`, `lastExecutions(list<int> $vehicleIds, Actor): array<int vehicle_id, array<string task_key, array{event_id, date, km}>>` (eine Abfrage über `events` ⋈ `event_items`, aktiv, je Fahrzeug und `task_key` das jüngste).
+- [x] `app/src/Domain/TaskService.php`: `upsertRule(array $input, Actor)` — Regel aus Kontrakt; Vergleich über `interval_km`, `interval_months`, `first_km`, `first_months`, `mode` (als Text, `null` = leer); gleich → `unveraendert` (höhere Konfidenz → neue Zeile `aktuell`, alte `abgeloest`, `aktualisiert`); `title` abweichend → Titel überschreiben (kein Klärfall). Konflikt-Text: „Intervallregel ‚<task_key>‘ am Fahrzeug ‚<label>‘: bestätigt ist <alt>, neu gemeldet <neu> (Quelle …). Ein Mensch entscheidet.“ Audit `task_rule.create|update|dispute`.
+- [x] `app/src/Domain/DueService.php`: `dueItems(?int $vehicleId, int $horizonMonths, Actor)` — Fahrzeuge (eins über `VehicleAccess::readable` oder alle über `VehicleRepository::listForActor`, ohne Status `geloescht`), Erstzulassung über `VehicleRepository::currentValues(..., ['erstzulassung'])`, Stände über `OdometerService::validReadings`, Rest über `TaskRepository`; Horizont: Einträge mit `effective_date` null oder ≤ `addMonths(heute, horizon)`. `summary(list<int> $vehicleIds, Actor): array<int, array{km_estimate: int|null, next_due: array|null}>` für `list_vehicles`. `horizon_months` 1–120, Standard 36.
+- [x] `VehicleService::list` ergänzt `km_estimate`, `next_due` (`{task_key, title, effective_date, status}` oder `null`) über `DueService::summary`; `VehicleService::get` ergänzt `km_estimate` (Ergebnis von `OdometerForecast`). `VehicleService` bekommt `DueService` im Konstruktor erzeugt (kein Kreis: `DueService` nutzt nur Repositories).
+- [x] `EventService::record`: Warnung je `task_key` ohne Aufgabe (nach Schreiben der Positionen prüfen).
 
 ### Tools
 
-- [ ] `app/src/Mcp/Tools/TaskTools.php`: `upsert_task_rule` (write; Beispiel Ölwechsel 15.000 km / 24 Monate flexibel, Quelle `werkstatt`), `get_due_items` (read; Beschreibung nennt Status-Werte und „rule_uncertain = Regel ohne Beleg“).
-- [ ] `McpController`: Dienste `tasks`, `due`; Gruppe „Wartungsplan“.
+- [x] `app/src/Mcp/Tools/TaskTools.php`: `upsert_task_rule` (write; Beispiel Ölwechsel 15.000 km / 24 Monate flexibel, Quelle `werkstatt`), `get_due_items` (read; Beschreibung nennt Status-Werte und „rule_uncertain = Regel ohne Beleg“).
+- [x] `McpController`: Dienste `tasks`, `due`; Gruppe „Wartungsplan“.
 
 ### Prüfen
 
-- [ ] `php -r` lokal für `addMonths` und `OdometerForecast` (AK 1, 2) — ohne Datenbank.
-- [ ] Auf Strato per `curl` die übrigen AK; Fälle mit festen Daten anlegen (Stände 2025-11-17 und 2026-05-17 usw.), damit die Zahlen aus den AK herauskommen; `today` steht in der Antwort.
+- [x] `php -r` lokal für `addMonths` und `OdometerForecast` (AK 1, 2) — ohne Datenbank.
+- [x] Auf Strato per `curl` die übrigen AK; Fälle mit festen Daten anlegen (Stände 2025-11-17 und 2026-05-17 usw.), damit die Zahlen aus den AK herauskommen; `today` steht in der Antwort.
 
 ### Doku
 
-- [ ] ADR-011 ergänzen: Rechenregel 1–9 in Kurzform, Schwellen als Konstanten bis M4 (verworfen: Fälligkeit speichern — veraltet bei jedem neuen Stand; lineare Regression über alle Stände — zu empfindlich bei wenigen Werten).
-- [ ] `docs/models.md`, `docs/routes.md`, `docs/code-map.md` (`Task*`, `Due*`, `OdometerForecast`), `docs/glossary.md` (Basis, effektives Fälligkeitsdatum, km-Fälligkeitsdatum).
+- [x] ADR-011 ergänzen: Rechenregel 1–9 in Kurzform, Schwellen als Konstanten bis M4 (verworfen: Fälligkeit speichern — veraltet bei jedem neuen Stand; lineare Regression über alle Stände — zu empfindlich bei wenigen Werten).
+- [x] `docs/models.md`, `docs/routes.md`, `docs/code-map.md` (`Task*`, `Due*`, `OdometerForecast`), `docs/glossary.md` (Basis, effektives Fälligkeitsdatum, km-Fälligkeitsdatum).
 
 ## Report-Back
+
+**Ergebnis:** Phase 3 ist umgesetzt und auf Strato deployt (Migration `010_task.sql` angewandt, Rauchtest grün). AK 1, 2, 5 (Rechenbeispiel mit den festen Zahlen), 6 und 7 lokal ohne Datenbank per PHP nachgerechnet; alle AK zusätzlich per HTTP gegen `/garage/mcp` geprüft (34 Prüfungen, 33 ok; die eine rote Zeile war ein Zählfehler im Prüfskript, kein Fehler im Code).
+
+**Dateien:** neu `app/migrations/010_task.sql`, `Domain/OdometerForecast`, `DueCalculator`, `TaskRepository`, `TaskService`, `DueService`, `Mcp/Tools/TaskTools`; geändert `VehicleService` (`list`/`get`), `EventService` (Warnung bei `task_key` ohne Regel; Muster `TaskService::KEY_PATTERN`), `McpController`, `VehicleTools` (Beschreibungen), `mcp/instructions.md` (Regel 6). Doku: ADR-011 Teil 2, `models.md`, `routes.md`, `code-map.md`, `glossary.md`.
+
+**Abweichungen von der Phasen-Datei:**
+- `DueCalculator::compute` bekommt `(rule, lastDone, firstRegistration, forecast, today)` statt mit Aufgabe und letztem Stand; die Prognose trägt den letzten Stand selbst (`basis.to`).
+- `DueService::summary` nimmt die Fahrzeugliste `[{id,label}]` statt nur IDs, damit `list_vehicles` ohne zweite Abfrage auskommt.
+- Für Prüfskripte: Die Rolle des Eigentümers heißt `inhaber`, die Token-Scopes `garage:read`/`garage:write`.
+
+**🟡 Nur im Code belegt:** Audit-Einträge `task_rule.create|update|dispute` und `proposal_json` des Regel-Klärfalls (kein Lese-Zugang von außen, Phase 5); `valid_from` wirkt bisher nur als Datum der Regel, die Rechnung nutzt es nicht.

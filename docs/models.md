@@ -8,6 +8,8 @@ Quelle der Wahrheit sind die Migrationen in `app/migrations/`. Geplantes Modell 
 
 `009_event.sql` legt `workshops`, `events`, `event_items` und `odometer_readings` an (Phase 2: Scheckheft und Kilometer).
 
+`010_task.sql` legt `tasks` und `task_rules` an (Phase 3: Wartungsplan). Fälligkeiten werden nie gespeichert, sondern beim Lesen berechnet (ADR-011 Teil 2).
+
 ## Bestehende Tabellen
 
 | Tabelle | Spalten | Angelegt von |
@@ -45,6 +47,8 @@ Weitere Tabellen aus `009_event.sql`:
 | `workshops` | `id` PK, `garage_id`, `name` VARCHAR(120), `city` VARCHAR(80) (leer statt NULL), `manufacturer_partner` TINYINT(1) NULL, `actor`, `created_at`; UNIQUE `(garage_id, name, city)` | je Garage, Groß-/Kleinschreibung egal; `manufacturer_partner` wird nur gesetzt, solange es unbekannt ist (`WorkshopRepository::findOrCreate`) |
 | `event_items` | `id` PK, `garage_id`, `event_id` FK, `line_no` SMALLINT, `item_type` ENUM(`arbeit`,`teil`,`material`,`pauschale`), `description` VARCHAR(200), `task_key` VARCHAR(41) NULL, `part_number` VARCHAR(60) NULL, `manufacturer` VARCHAR(80) NULL, `quantity` DECIMAL(12,3) NULL, `unit` VARCHAR(10) NULL, `net_cents` INT NULL (negativ für Rabatte), `status` ENUM(`aktiv`,`abgeloest`), `created_at`; Index `(event_id, status)`, `(task_key)` | Positionen sind ein Ganzes: abweichende Positionen ändern nichts, sondern öffnen einen Klärfall (`proposal_json.items`) |
 | `odometer_readings` | `id` PK, `garage_id`, `vehicle_id` FK, `read_on` DATE, `km` INT UNSIGNED, `event_id` NULL, `note` VARCHAR(200) NULL, `reading_status` ENUM(`gueltig`,`strittig`,`verworfen`), Herkunftsblock; Index `(vehicle_id, reading_status, read_on)`, `(event_id)` | Vorwärts-Regel: ADR-011; kein `RecordMerger` |
+| `tasks` | `id` PK, `garage_id`, `vehicle_id` FK, `task_key` VARCHAR(41), `title` VARCHAR(120), `status` ENUM(`aktiv`,`inaktiv`), `actor`, `created_at`, `updated_at`; UNIQUE `(vehicle_id, task_key)` | eine Aufgabe je Fahrzeug und Schlüssel; derselbe `task_key` steht an Positionen in `event_items` (Verbindung über den Schlüssel, kein FK) |
+| `task_rules` | `id` PK, `garage_id`, `task_id` FK, `interval_km` INT UNSIGNED NULL, `interval_months` SMALLINT UNSIGNED NULL, `first_km`, `first_months` (Erstintervall, NULL = wie Intervall), `mode` ENUM(`fest`,`flexibel`), `valid_from` DATE, `rule_status` ENUM(`aktuell`,`abgeloest`), Herkunftsblock (`source`, `source_url`, `source_document_id`, `confidence`), `actor`, `user_id`, `created_at`; Index `(task_id, rule_status)` | je Aufgabe höchstens eine Zeile `aktuell`; Abgleich in `TaskService` (ADR-009-Muster, abweichende Regel gegen bestätigte → Klärfall mit `proposal_json`); abgelöste Zeilen bleiben als Verlauf |
 
 `tokens` mit `kind` `oauth_access`/`oauth_refresh` trägt `user_id` des zustimmenden Nutzers, `client_id` und `family` (Verbindung); eine Familie ist eine „verbundene App“.
 

@@ -25,7 +25,12 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 | Wartungsaufgabe (`tasks`) | Wiederkehrende Arbeit an einem Fahrzeug, etwa Ölwechsel. |
 | Intervallregel (`task_rules`) | Wann eine Wartungsaufgabe fällig wird: km, Monate, Erstintervall, fest oder flexibel; mit Quelle und Konfidenz. |
 | Fälligkeit | Berechnet aus Regel, letzter Ausführung und Kilometerprognose — „was zuerst eintritt"; nie gespeichert. |
-| Kilometerprognose | Aus den Kilometerständen geschätzter heutiger Stand; geschätzte Werte tragen „≈". |
+| Kilometerprognose | Aus den Kilometerständen geschätzter heutiger Stand; geschätzte Werte tragen „≈". Grundlage: Kilometer pro Tag zwischen dem letzten Stand und einem Vergleichsstand 30 bis 365 Tage davor (ADR-011 Teil 2). |
+| Basis (einer Fälligkeit) | Ausgangspunkt der Rechnung: die letzte Ausführung der Aufgabe (Ereignis mit Position desselben `task_key`), sonst Erstzulassung bei 0 km mit den Erstintervallen. |
+| Effektives Fälligkeitsdatum | Das frühere von Fälligkeitsdatum (aus Monaten) und km-Fälligkeitsdatum. |
+| km-Fälligkeitsdatum | Tag, an dem die Kilometerprognose den fälligen Stand (Basis-km + Intervall) erreicht. |
+| Fälligkeitsstatus | `ueberfaellig`, `bald` (innerhalb von 3 Monaten oder 3.000 km), `ok`, `unbekannt` (nicht berechenbar, z. B. ohne Ausführung und Erstzulassung). |
+| Unsichere Regel (`rule_uncertain`) | Intervallregel mit Konfidenz `unsicher`, also ohne Beleg; die Fälligkeit ist dann nur ein Anhaltspunkt. |
 | Herkunft (`source`) | Woher eine Angabe stammt: Beleg, Nutzer, Recherche, Agent, Werkstatt. Pflichtfeld jeder Faktenzeile. |
 | Konfidenz | Sicherheit einer Angabe: bestätigt, wahrscheinlich, unsicher. |
 | Fakt (`vehicle_facts`) | Eine Angabe zu einem Fahrzeug: Feld, Wert, Herkunft, Konfidenz, Akteur, Zeitpunkt. Ein Fahrzeug hat je Feld höchstens einen aktuellen Fakt. |
