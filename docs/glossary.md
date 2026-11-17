@@ -43,6 +43,14 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 | Strittiger Stand | Kilometerstand, der einem früheren größeren oder späteren kleineren widerspricht (Kilometer laufen nur vorwärts, ADR-011): gespeichert, aber ohne Wirkung auf die Prognose, bis ein Mensch entscheidet. |
 | Zulassung (`registrations`) | Kennzeichen eines Fahrzeugs ab einem Datum, optional mit Halter; mehrere über die Zeit. Schlüssel: Kennzeichen + gültig ab. |
 | Ausstattung (`equipment`) | Serien- oder Sonderausstattung mit optionalem Code und Listenpreis. Schlüssel: Name. |
+| Messwert (`measurements`) | Gemessene Größe an einem Tag (Profiltiefe, Reifendruck, Bremsbelag, Batterie …) mit Position und fester Einheit. Schlüssel: Datum + Größe + Position + Bezeichnung. |
+| Reifensatz (`tire_sets`) | Ein Satz Reifen oder Räder (z. B. „Sommer 16 Zoll“) mit Größe, Saison, DOT und Lagerort. Schlüssel: Bezeichnung. |
+| Montage (`tire_mounts`) | Zeitraum, in dem ein Reifensatz am Fahrzeug ist (montiert am, ausgebaut am). Höchstens ein Satz ist montiert; Montieren beendet die Montage des vorigen Satzes am selben Tag. |
+| DOT (`dot`) | Produktionsdatum eines Reifens als vier Ziffern `WWYY` (Woche, Jahr); `dot_age_years` sind die vollen Jahre seit dem Montag dieser Woche. |
+| Teil (`parts`) | Verbautes Teil oder passende Alternative zu einem Bauteil, mit Marke, Artikel- und OEM-Nummer; `verified` heißt Passform am Fahrzeug geprüft. |
+| Schaden (`damages`) | Unfall, Hagel, Lack, Glas oder Vandalismus an einem Datum, mit Reparaturstand, Gutachten und Wertminderung. |
+| Rückruf (`recalls`) | Herstellerrückruf mit Herstellernummer und/oder KBA-Referenz und Status (offen, erledigt, nicht betroffen). |
+| Notiz-Revision (`note_revisions`) | Eine Fassung der Notiz zu einem Thema. Jede Änderung ist eine neue Revision; die alten bleiben, die Akte zeigt die neueste. |
 
 ## Belege
 

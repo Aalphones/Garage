@@ -11,7 +11,7 @@ Quelle des Umfangs: [`../../PROJECT.md`](../../PROJECT.md) → Meilenstein 2, Fa
 | 1 | [Fundament und Stammdaten](phase-1-fundament-stammdaten.md) — Datensatz-Abgleich, Klärfall-Vorschlag, Zulassung, Ausstattung, Spezifikationen | heikel | complete |
 | 2 | [Scheckheft und Kilometer](phase-2-scheckheft-kilometer.md) — Werkstätten, Ereignisse mit Positionen, Kilometerstände, Trockenlauf | heikel | complete |
 | 3 | [Wartungsplan und Fälligkeiten](phase-3-wartungsplan.md) — Aufgaben, Intervallregeln, Kilometerprognose, Fälligkeitsrechnung | heikel | complete |
-| 4 | [Messwerte, Reifen, Teile, Schäden, Rückrufe, Notizen](phase-4-messwerte-reifen-teile.md) | standard | pending |
+| 4 | [Messwerte, Reifen, Teile, Schäden, Rückrufe, Notizen](phase-4-messwerte-reifen-teile.md) | standard | complete |
 | 5 | [Klärfälle, Verlauf, Suche](phase-5-klaerfaelle.md) — Tools, Web-API zum Lösen, Platzhalter-Seite | heikel | pending |
 | 6 | [Akte, Resources, Prompts](phase-6-akte.md) — `get_dossier`, `garage://`-Resources, zwei Prompts, Server-Anweisungen | standard | pending |
 | 7 | [Abschluss auf Strato](phase-7-abschluss.md) — Mandanten-Liste über alle Tools, Testkonten sperren, Doku, Archiv | mechanisch | pending |
