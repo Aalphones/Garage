@@ -23,7 +23,7 @@ Kontext, Scope, Meilensteine: [`docs/PROJECT.md`](docs/PROJECT.md). Fachkonzept:
 | Backend | PHP 8.5, kein Framework, kein Composer |
 | Datenbank | MySQL (Strato, eigene Datenbank), PDO |
 | Oberfläche | HTML-Hülle, Vanilla-JS-ES-Module gegen `/garage/api` |
-| Agenten | MCP-Server mit OAuth 2.1 + CIMD, aus DISPATCH übernommen ([ADR-005](docs/decisions/005-kern-aus-dispatch-kopiert.md)) |
+| Agenten | MCP-Server mit OAuth 2.1 + CIMD, aus DISPATCH übernommen ([ADR-005](docs/decisions/005-kern-aus-dispatch-kopiert.md)); Konten per Einladung ([ADR-006](docs/decisions/006-konten-per-einladung-sitzung-je-nutzer.md)) |
 | Hosting | Strato Shared Hosting, SFTP auf `www/` |
 | Deploy | `deploy.cmd` + WinSCP ([ADR-003](docs/decisions/003-deploy-skript.md)) |
 | CI | GitHub Actions, PHP-Syntaxprüfung |
@@ -32,7 +32,7 @@ Kontext, Scope, Meilensteine: [`docs/PROJECT.md`](docs/PROJECT.md). Fachkonzept:
 
 ## Lokal starten
 
-PHP 8.5 (Erweiterungen `curl, fileinfo, gd, mbstring, openssl, pdo_mysql`) und MySQL mit Datenbank `garage_dev`. `dev.env.example` nach `app/.env.local` kopieren und ausfüllen, dann `php -S localhost:8081 dev-router.php` im Repo-Ordner. Prüfen: `curl http://localhost:8081/garage/api/health`. Migrationen lokal: `curl -X POST -H "Authorization: Bearer <GARAGE_DEPLOY_TOKEN>" http://localhost:8081/garage/api/deploy`.
+PHP 8.5 (Erweiterungen `curl, fileinfo, gd, mbstring, openssl, pdo_mysql`) und MySQL mit Datenbank `garage_dev`. `dev.env.example` nach `app/.env.local` kopieren und ausfüllen (auch `GARAGE_JWT_SECRET`, mindestens 64 Zeichen — ohne ihn antworten Anmeldung und Einladung mit 503), dann `php -S localhost:8081 dev-router.php` im Repo-Ordner. Prüfen: `curl http://localhost:8081/garage/api/health`. Migrationen lokal: `curl -X POST -H "Authorization: Bearer <GARAGE_DEPLOY_TOKEN>" http://localhost:8081/garage/api/deploy`.
 
 ---
 

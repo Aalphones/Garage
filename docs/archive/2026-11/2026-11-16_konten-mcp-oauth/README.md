@@ -2,7 +2,7 @@
 
 Ziel: Menschen haben Konten in Garagen, melden sich mit Passwort an und verbinden ChatGPT und Claude per OAuth (oder Claude Code per festem Token) mit `/garage/mcp`. Der Agent sieht nur die Fahrzeuge der Garagen seines Nutzers und kann Fahrzeuge anlegen, lesen und Stammdaten mit Herkunft ergänzen.
 
-Quelle des Umfangs: [`../../PROJECT.md`](../../PROJECT.md) → Meilenstein 1. Vorlage für allen kopierten Code: DISPATCH unter `C:\Users\sasch\develop\Blog\app\` (ADR-005).
+Quelle des Umfangs: [`../../../PROJECT.md`](../../../PROJECT.md) → Meilenstein 1. Vorlage für allen kopierten Code: DISPATCH unter `C:\Users\sasch\develop\Blog\app\` (ADR-005).
 
 ## Phasen
 
@@ -12,7 +12,7 @@ Quelle des Umfangs: [`../../PROJECT.md`](../../PROJECT.md) → Meilenstein 1. Vo
 | 2 | [Konto-Seiten und feste Tokens](phase-2-konto-seiten.md) — Anmeldung, Einladung annehmen, Tokens im Browser | standard | complete (2026-11-16) |
 | 3 | [OAuth und Zustimmung](phase-3-oauth.md) — Discovery, Authorize/Token, Zustimmungsseite mit Anmeldung | heikel | complete (2026-11-16; echte claude.ai-Verbindung offen, siehe FINDINGS) |
 | 4 | [MCP und Fahrzeug-Tools](phase-4-mcp-fahrzeuge.md) — Protokollschicht, vier Tools, Fakten mit Herkunft | heikel | complete (2026-11-17; echte claude.ai-Verbindung offen, siehe FINDINGS) |
-| 5 | [Abschluss auf Strato](phase-5-abschluss.md) — Fernprüfung, Doku, Meilenstein abhaken | mechanisch | pending |
+| 5 | [Abschluss auf Strato](phase-5-abschluss.md) — Fernprüfung, Doku, Meilenstein abhaken | mechanisch | complete (2026-11-17) |
 
 Jede Phase endet mit `deploy.cmd` und Prüfung auf Strato: lokal gibt es kein MySQL (geprüft 2026-11-16: kein MySQL-Dienst, keine `app/.env.local`).
 
@@ -101,14 +101,16 @@ Fehler immer `{"error":"…","message":"…"}` wie bisher.
 
 ## Finale Abnahmekriterien
 
-- [ ] Eine Einladung aus dem Deploy-Endpunkt ergibt nach Annahme ein Konto, eine Garage mit Rolle `inhaber` und eine laufende Sitzung.
-- [ ] Anmeldung mit E-Mail und Passwort; falsches Passwort und falsche E-Mail ergeben dieselbe Meldung; nach 10 Fehlversuchen in 15 Minuten sperrt die IP.
-- [ ] Im Konto: feste Tokens anlegen (Klartext einmal sichtbar), auflisten, widerrufen; verbundene Apps auflisten und trennen — jeweils nur die eigenen.
-- [ ] Claude (claude.ai) und ChatGPT verbinden sich per OAuth mit `https://quantum-canvas.de/garage/mcp`; die Zustimmungsseite verlangt die Anmeldung und zeigt den Host der App.
-- [ ] Claude Code verbindet sich mit einem festen `gmcp_`-Token.
-- [ ] Ein Agent legt ein Fahrzeug an, ergänzt Stammdaten mit Herkunft, liest sie zurück; ein Widerspruch zu einem bestätigten Wert erzeugt einen Klärfall statt zu überschreiben.
-- [ ] Nutzer B sieht über keinen Weg (MCP, API) ein Fahrzeug, Token oder Grant von Nutzer A; ein Token mit Rolle `lesend` oder ohne `garage:write` kann nicht schreiben.
-- [ ] `/garage-app/.env` antwortet nach jedem Deploy mit 403; der Rauchtest von `deploy.cmd` ist grün.
+Stand 2026-11-17, Belege in [`phase-5-abschluss.md`](phase-5-abschluss.md) → Report-Back. `[x]` = auf Strato belegt, `[ ]` = braucht den Inhaber.
+
+- [x] Eine Einladung aus dem Deploy-Endpunkt ergibt nach Annahme ein Konto, eine Garage mit Rolle `inhaber` und eine laufende Sitzung.
+- [x] Anmeldung mit E-Mail und Passwort; falsches Passwort und falsche E-Mail ergeben dieselbe Meldung; nach 10 Fehlversuchen in 15 Minuten sperrt die IP.
+- [x] Im Konto: feste Tokens anlegen (Klartext einmal sichtbar), auflisten, widerrufen; verbundene Apps auflisten und trennen — jeweils nur die eigenen (per API; die Konto-Seite selbst im Browser in Phase 2 geprüft).
+- [ ] Claude (claude.ai) und ChatGPT verbinden sich per OAuth mit `https://quantum-canvas.de/garage/mcp`; die Zustimmungsseite verlangt die Anmeldung und zeigt den Host der App. **Braucht Inhaber:** der Server-Ablauf ist mit dem CIMD-Dokument von claude.ai per curl belegt (Zustimmung verlangt Anmeldung, zeigt Host `claude.ai`), die echte Verbindung aus claude.ai und ChatGPT nicht.
+- [ ] Claude Code verbindet sich mit einem festen `gmcp_`-Token. **Braucht Inhaber:** `initialize`, `tools/list` und alle Tools mit `gmcp_`-Token per curl belegt, der `claude`-Client selbst nicht gestartet.
+- [x] Ein Agent legt ein Fahrzeug an, ergänzt Stammdaten mit Herkunft, liest sie zurück; ein Widerspruch zu einem bestätigten Wert erzeugt einen Klärfall statt zu überschreiben.
+- [x] Nutzer B sieht über keinen Weg (MCP, API) ein Fahrzeug, Token oder Grant von Nutzer A; ein Token mit Rolle `lesend` oder ohne `garage:write` kann nicht schreiben.
+- [x] `/garage-app/.env` antwortet nach jedem Deploy mit 403; der Rauchtest von `deploy.cmd` ist grün.
 
 ## Risiken und Konfidenz
 
@@ -119,13 +121,28 @@ Fehler immer `{"error":"…","message":"…"}` wie bisher.
 
 ## Summary
 
+Status: **archiviert 2026-11-17** — Server-seitig fertig und auf Strato belegt, echte Client-Verbindung steht aus.
+
+Menschen haben Konten per Einladung, melden sich mit Passwort an, verwalten feste Tokens und verbundene Apps; claude.ai-artige Clients verbinden sich per OAuth (CIMD) mit `/garage/mcp`; vier Tools legen Fahrzeuge an und führen Stammdaten mit Herkunft, Widersprüche werden Klärfälle; Mandantentrennung über Akteur, Rolle und Scope. Entscheidungen: ADR-006, 007, 008.
+
 ## Files touched
+
+`app/src/` (Auth, Domain, Api, OAuth, Mcp), `app/migrations/001–007`, `app/mcp/instructions.md`, `web/` (Konto-, Einladungs- und Zustimmungsseite, `js/`, `css/`), `docs/` (PROJECT, ADR-006/007/008, models, routes, code-map, glossary, GAPS), `AGENTS.md`.
 
 ## Commits
 
+`396b287` Konten · `15a13ed` Konto-Seiten · `79ba1fe`/`2ffc10d` OAuth · `bb2f2c3`/`4b24679` Fahrzeuge und MCP · Phase 5 (Migration 007, Doku, Archiv) im Commit „abschluss meilenstein 1“. Lokal committet, nicht gepusht.
+
 ## Deviations from plan
+
+- Token ohne `garage:write` bekommt am MCP-Endpunkt den Protokollfehler `insufficient_scope` (403) statt des Tool-Fehlers `forbidden`, damit Clients einen erweiterten Scope anfragen können (ADR-008); `forbidden` gilt für die Rolle `lesend`.
+- Testkonten per Migration `007_testkonten_sperren.sql` gesperrt, nicht per `UPDATE` (Datenbank von außen nicht erreichbar).
+- Mandanten-Liste in Phase 5 vor dem letzten Deploy gelaufen (identischer Code), weil dessen Migration die Testkonten sperrt.
 
 ## Follow-ups
 
+- **Inhaber:** echte Verbindung aus claude.ai und ChatGPT (Pfad-Aussteller, Zustimmungsseite im Browser, Handy) und `claude mcp add` mit festem Token. Bei Fehlschlag: Fallbacks in `docs/knowledge/GAPS.md`.
+- Offene Vault-Einträge (`→ Vault` in `FINDINGS.md`): `deploy.cmd` aus PowerShell aufrufen, `sed` mit Backslash in Git Bash.
+- Abgelaufene Einladung nie belegt (kein Weg, die Zeit zu verschieben).
 - Erlaubte Fahrzeuge je Token (E9).
 - Einladungen und Mitgliederverwaltung in der Oberfläche (Meilenstein 6).

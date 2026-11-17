@@ -2,6 +2,8 @@
 
 Quelle der Wahrheit sind die Migrationen in `app/migrations/`. Geplantes Modell (44 Tabellen in sechs Bereichen): [`design/konzept-garage.md`](design/konzept-garage.md) → „Datenmodell".
 
+`007_testkonten_sperren.sql` legt keine Tabelle an: sie setzt Nutzer mit Adresse `test-…@example.com` auf `gesperrt` und widerruft deren Tokens (Aufräumen der Handprüfungen aus Meilenstein 1).
+
 ## Bestehende Tabellen
 
 | Tabelle | Spalten | Angelegt von |
