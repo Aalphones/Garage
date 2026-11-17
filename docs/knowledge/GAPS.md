@@ -9,4 +9,6 @@ Offene Recherche- und Klärungsfragen mit Datum.
 - 2026-11-17 — Korrektur eines falsch angelegten Ereignisses oder Datensatzes durch Agenten geht nur über Klärfälle und Überschreiben nicht bestätigter Werte; Löschen durch Menschen kommt in Meilenstein 4.
 - 2026-11-17 — Nur im Code belegt, nie von außen gelesen: Revision 1 einer Notiz nach Revision 2 und die Audit-Einträge der Phasen 1–4 (`audit_log`, kein Lese-Zugang außer `list_changes`, das erst ab Phase 5 existiert).
 - 2026-11-17 — Die Sperre der Testkonten durch Migration 016 ist für die Konten aus Phase 1–7 nicht einzeln gesehen (kein Datenbankzugriff von außen; die Passwörter der Prüfläufe werden nicht aufbewahrt). Gleiche Anweisung wie Migration 007, dort an Konten belegt.
+- 2026-11-17 — iOS: kein Teilen-Ziel (Web Share Target wird von Safari nicht unterstützt); dort bleiben Kamera und „Datei wählen“ in `eingang.html`.
+- 2026-11-17 — Teilen-Ziel Android: Manifest, Service Worker und Auslieferung sind auf Strato belegt, das Teilen selbst (Installieren, „GARAGE“ in der Teilen-Liste, geteiltes PDF und Foto im Formular, Cache danach leer, Teilen ohne Anmeldung) ist nicht auf einem Handy gesehen — offen für den Inhaber.
 - 2026-11-16 — Ob ChatGPT auf dem Handy Datei-Parameter an MCP-Tools zuverlässig übergibt (im Konzept 🟡); klärt die Verprobung in Meilenstein 3.

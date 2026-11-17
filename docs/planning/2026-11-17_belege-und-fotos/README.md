@@ -12,7 +12,7 @@ Quelle des Umfangs: [`../../PROJECT.md`](../../PROJECT.md) → Meilenstein 3, Fa
 | 2 | [Anhänge, Datei-Parameter, Akte](phase-2-anhaenge-akte.md) — `attach_document`, ChatGPT-Datei-Parameter, `import_document_from_url`, Belege in `get_event`/`get_vehicle`/Akte/Suche | standard | complete |
 | 3 | [Eingang auf dem Server](phase-3-eingang-server.md) — Eingangs-Tabellen, `list_inbox`/`claim_inbox_item`/`release_inbox_item`, Web-API für Belege und Eingang, Prompt `eingang_abarbeiten` | heikel | complete |
 | 4 | [Oberfläche Eingang und Belege](phase-4-oberflaeche.md) — Seiten nach Entwurf, Fotos im Browser verkleinern, PDF-Seiten per pdf.js | standard | complete |
-| 5 | [Teilen-Ziel Android](phase-5-teilen-ziel.md) — Manifest, Service Worker, Übernahme geteilter Dateien | standard | pending |
+| 5 | [Teilen-Ziel Android](phase-5-teilen-ziel.md) — Manifest, Service Worker, Übernahme geteilter Dateien | standard | complete |
 | 6 | [Claude-Widget](phase-6-widget.md) — MCP App `ui://garage/beleg-ablegen`, wartende Belege, `confirm_document`, CORS am Upload | heikel | pending |
 | 7 | [Abschluss auf Strato](phase-7-abschluss.md) — Mandanten-Liste, Testkonten sperren, Doku, Archiv, Verprobungs-Matrix für den Inhaber | mechanisch | pending |
 

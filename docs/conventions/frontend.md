@@ -22,6 +22,10 @@
 
 **Einzige Ausnahme:** pdf.js 4.10.38 liegt lokal unter `web/vendor/pdfjs/` (ADR-014) und wird nur von `web/js/pdfpages.js` geladen, per `import()` erst bei einem PDF. Ein Update ist eine bewusste Entscheidung mit neuer Prüfsumme in `web/vendor/pdfjs/VERSION.md`; die CSP bleibt `'self'`.
 
+## Service Worker
+
+`web/sw.js` existiert nur fürs Teilen-Ziel auf Android (E14): er fängt den POST auf `/garage/teilen` ab. Er legt kein Offline-Cache der Oberfläche an und fasst keine andere Anfrage an (kein `respondWith` außerhalb des Teilen-POST); Seiten laden immer frisch vom Server. Der Cache `garage-geteilt` wird beim Übernehmen in `eingang.html` geleert. `sw.js` wird mit `no-cache` und `Service-Worker-Allowed: /garage/` ausgeliefert.
+
 ## Seiten
 
 `index.html` (Anmeldung, Konto, Klärfälle), `eingang.html` (Fotos und PDFs in den Eingang legen, Eingang ansehen), `belege.html` (Belege als Liste oder Galerie, Detail unter `#beleg/<id>`), `einladung.html`, `zustimmung.html`. Die Navigation „Konto · Eingang · Belege“ steht unter der `h1` der drei Hauptseiten. Der Entwurf liegt in `docs/planning/2026-11-17_belege-und-fotos/artifacts/entwurf-belege.html`.
