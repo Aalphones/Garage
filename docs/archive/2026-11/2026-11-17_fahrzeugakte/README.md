@@ -2,7 +2,7 @@
 
 Ziel: Ein Agent führt über MCP die ganze Akte eines Fahrzeugs — Zulassung, Ausstattung, Spezifikationen, Scheckheft mit Positionen, Kilometerstände, Wartungsplan mit berechneten Fälligkeiten, Messwerte, Reifen, Teile, Schäden, Rückrufe, Notizen — jede Angabe mit Herkunft, Widersprüche als Klärfälle. Ein Mensch löst Klärfälle auf einer schlichten Seite im Konto. `get_dossier` liefert die Akte als Markdown.
 
-Quelle des Umfangs: [`../../PROJECT.md`](../../PROJECT.md) → Meilenstein 2, Fachkonzept [`../../design/konzept-garage.md`](../../design/konzept-garage.md) → „Datenmodell“, „MCP-Oberfläche“. Vorbild für allen neuen Code: Meilenstein 1 (`VehicleService`, `VehicleRepository`, `VehicleTools`), Plan im Archiv [`../../archive/2026-11/2026-11-16_konten-mcp-oauth/`](../../archive/2026-11/2026-11-16_konten-mcp-oauth/README.md).
+Quelle des Umfangs: [`../../../PROJECT.md`](../../../PROJECT.md) → Meilenstein 2, Fachkonzept [`../../../design/konzept-garage.md`](../../../design/konzept-garage.md) → „Datenmodell“, „MCP-Oberfläche“. Vorbild für allen neuen Code: Meilenstein 1 (`VehicleService`, `VehicleRepository`, `VehicleTools`), Plan im Archiv [`../2026-11-16_konten-mcp-oauth/`](../2026-11-16_konten-mcp-oauth/README.md).
 
 ## Phasen
 
@@ -14,7 +14,7 @@ Quelle des Umfangs: [`../../PROJECT.md`](../../PROJECT.md) → Meilenstein 2, Fa
 | 4 | [Messwerte, Reifen, Teile, Schäden, Rückrufe, Notizen](phase-4-messwerte-reifen-teile.md) | standard | complete |
 | 5 | [Klärfälle, Verlauf, Suche](phase-5-klaerfaelle.md) — Tools, Web-API zum Lösen, Platzhalter-Seite | heikel | complete |
 | 6 | [Akte, Resources, Prompts](phase-6-akte.md) — `get_dossier`, `garage://`-Resources, zwei Prompts, Server-Anweisungen | standard | complete |
-| 7 | [Abschluss auf Strato](phase-7-abschluss.md) — Mandanten-Liste über alle Tools, Testkonten sperren, Doku, Archiv | mechanisch | pending |
+| 7 | [Abschluss auf Strato](phase-7-abschluss.md) — Mandanten-Liste über alle Tools, Testkonten sperren, Doku, Archiv | mechanisch | complete |
 
 Reihenfolge ist Pflicht: jede Phase baut auf den Klassen der vorigen. Jede Phase endet mit `deploy.cmd` und Prüfung per `curl` auf Strato — lokal gibt es kein MySQL (geprüft 2026-11-17: kein MySQL-Dienst, keine `app/.env.local`).
 
@@ -114,13 +114,17 @@ Annotationen: lesende `R`, schreibende `W`; keins ist destruktiv. Fehler wie M1:
 
 ## Finale Abnahmekriterien
 
-- [ ] Ein Agent erfasst für ein Testfahrzeug Zulassung, Ausstattung, Spezifikationen, zwei Werkstattrechnungen mit Positionen, drei Kilometerstände, vier Intervallregeln, Messwerte, einen Reifensatz mit Montage, Teile, einen Schaden, einen Rückruf und eine Notiz — jede Angabe mit Herkunft; derselbe Aufruf ein zweites Mal ergibt `unveraendert` und keine Doppelung.
-- [ ] Widersprüche werden Klärfälle statt Überschreibungen: Spezifikation gegen bestätigte, Rechnung mit anderen Positionen, kleinerer Kilometerstand nach größerem, abweichende bestätigte Intervallregel.
-- [ ] `get_due_items` rechnet „was zuerst eintritt“ mit Rechenweg; das Clio-Beispiel aus dem Konzept (Innenraumfilter jährlich, zuletzt 01/2025) erscheint als `ueberfaellig`.
-- [ ] Ein Mensch löst auf der Platzhalter-Seite je einen Klärfall mit „Bisheriger Wert gilt“, „Neuer Wert gilt“ und „Verwerfen“; die Akte zeigt danach den gewählten Wert. Ein Agenten-Token kann nichts lösen.
-- [ ] `get_dossier` liefert die ganze Akte als Markdown mit Herkunft an jedem Wert; `garage://fahrzeug/{id}/akte` liefert denselben Text.
-- [ ] Nutzer B sieht über keinen Weg (MCP, Resource, API) Daten von Nutzer A; Rolle `lesend` und Token ohne `garage:write` schreiben nichts.
-- [ ] `/garage-app/.env` antwortet nach jedem Deploy mit 403; der Rauchtest von `deploy.cmd` ist grün.
+Belege: Report-Backs der Phasen 1–6 (curl gegen Strato, Phase 5 zusätzlich Browser) und Phase 7 (Mandanten-Liste, 96 Prüfungen, Rauchtest).
+
+- [x] Ein Agent erfasst für ein Testfahrzeug Zulassung, Ausstattung, Spezifikationen, zwei Werkstattrechnungen mit Positionen, drei Kilometerstände, vier Intervallregeln, Messwerte, einen Reifensatz mit Montage, Teile, einen Schaden, einen Rückruf und eine Notiz — jede Angabe mit Herkunft; derselbe Aufruf ein zweites Mal ergibt `unveraendert` und keine Doppelung. (Phasen 1–4, je Schreib-Tool zweimal gesendet; in Phase 7 zusätzlich alle Schreib-Tools gegen ein frisches Fahrzeug.)
+- [x] Widersprüche werden Klärfälle statt Überschreibungen: Spezifikation gegen bestätigte, Rechnung mit anderen Positionen, kleinerer Kilometerstand nach größerem, abweichende bestätigte Intervallregel. (Phasen 1–3; Phase 7: Fakt-Konflikt und strittiger Stand erzeugen Klärfälle.)
+- [x] `get_due_items` rechnet „was zuerst eintritt“ mit Rechenweg; das Clio-Beispiel aus dem Konzept (Innenraumfilter jährlich, zuletzt 01/2025) erscheint als `ueberfaellig`. (Phase 3)
+- [x] Ein Mensch löst auf der Platzhalter-Seite je einen Klärfall mit „Bisheriger Wert gilt“, „Neuer Wert gilt“ und „Verwerfen“; die Akte zeigt danach den gewählten Wert. Ein Agenten-Token kann nichts lösen. (Phase 5; Phase 7: `gmcp_`-Token an `resolve` → 401, Rolle `lesend` → 403, Fremder → 404.)
+- [x] `get_dossier` liefert die ganze Akte als Markdown mit Herkunft an jedem Wert; `garage://fahrzeug/{id}/akte` liefert denselben Text. (Phase 6)
+- [x] Nutzer B sieht über keinen Weg (MCP, Resource, API) Daten von Nutzer A; Rolle `lesend` und Token ohne `garage:write` schreiben nichts. (Phase 7)
+- [x] `/garage-app/.env` antwortet nach jedem Deploy mit 403; der Rauchtest von `deploy.cmd` ist grün. (Phase 7: `/garage-app/.env` 403, `/garage-app/config.php` 403, `/garage/` 200, `/garage/api/health` 200, Nachbarn `/`, `/card/`, `/scanner/capture` 200.)
+
+Braucht Inhaber (nicht stellvertretend abgehakt): echte Verbindung aus claude.ai/ChatGPT, `claude mcp add` mit echtem Client, Handy.
 
 ## Risiken und Konfidenz
 
@@ -132,10 +136,32 @@ Annotationen: lesende `R`, schreibende `W`; keins ist destruktiv. Fehler wie M1:
 
 ## Summary
 
+Status: **archiviert 2026-11-17** — Server-seitig fertig und auf Strato belegt, echte Client-Verbindung steht aus (Inhaber).
+
+Ein Agent führt über 28 MCP-Tools die ganze Akte eines Fahrzeugs (Zulassung, Ausstattung, Spezifikationen, Scheckheft mit Positionen, Kilometerstände, Wartungsplan mit berechneten Fälligkeiten, Messwerte, Reifen, Teile, Schäden, Rückrufe, Notizen); jede Angabe trägt Herkunft, Widersprüche werden Klärfälle mit gespeichertem Vorschlag. Ein Mensch löst Klärfälle auf einer Platzhalter-Seite im Konto; `get_dossier` und `garage://`-Resources liefern die Akte als Markdown. Entscheidungen: ADR-009 (Abgleich, Spezifikationen als Fakten), ADR-010 (Klärfall lösen nur im Browser), ADR-011 (Fälligkeit, Kilometer).
+
+Abschluss-Prüfung (Phase 7, Strato): 96 Prüfungen der Mandanten-Liste grün — Nutzer B gegen A über alle 28 Tools, die drei Resource-Arten und die Klärfall-Routen; Rolle `lesend` (jedes schreibende Tool `forbidden`); Token nur `garage:read` (kein schreibendes Tool in `tools/list`, Aufruf → 403 `insufficient_scope`).
+
 ## Files touched
+
+`app/src/Domain/` (38 Dateien: Abgleich, Ereignisse, Kilometer, Wartungsplan und Fälligkeit, Messwerte, Reifen, Teile, Schäden, Notizen, Klärfälle, Verlauf, Suche, Akte), `app/src/Mcp/` und `Mcp/Tools/` (Registry, Resources, Prompts, 16 Tool-Dateien), `app/src/Api/` (Klärfall-Routen), `app/migrations/008–016`, `app/mcp/` (Anweisungen, zwei Leitfäden), `web/` (Klärfall-Abschnitt), `docs/` (PROJECT, ADR-009/010/011, models, routes, code-map, glossary, GAPS). 97 Dateien, +9.233/−166 Zeilen gegenüber dem Stand vor dem Plan.
 
 ## Commits
 
+Phase 1: `3180e82` `60411c9` `b69461d` `2aec2d8` `7210be6` · Phase 2: `7c8d68b` `0bd1458` `1633da4` `3f46de8` `3b6b8a8` `1f22b45` `c778300` · Phase 3: `f287e37` `bce6de0` · Phase 4: `a7519a3` `66f03a0` `d380484` `0e89db6` · Phase 5: `5238395` `2d7d390` `4ba8c1a` `201e746` `fc6f50d` · Phase 6: `6a99aeb` `67508d3` · Phase 7: `59d4d9d` (Migration 016) und der Abschluss-Commit (Doku, Archiv). Lokal committet, nicht gepusht.
+
 ## Deviations from plan
 
+- `RecordRepository` hat keinen `$orderBy`-Parameter; die Sortierung bleibt die Konstante `ORDER` (Phase 2/4).
+- Token nur `garage:read` bekommt am MCP-Endpunkt den Protokollfehler `-32003` mit HTTP 403 und `WWW-Authenticate: …insufficient_scope` (Header, nicht im Text), nicht den Tool-Fehler `forbidden` (ADR-008 aus Meilenstein 1); `forbidden` gilt für die Rolle `lesend`.
+- Testkonten aus Phase 2 hießen `p2ra|p2rb|p2rc-…@example.com` statt `test-m2-…`; Migration 016 nennt beide Muster.
+- Mandanten-Liste lief vor dem Deploy von Migration 016 (identischer Code), weil die Migration die Konten sperrt.
+- Die Klärfall-Seite (Phase 5) lief nur im Browser auf Strato; „Neuer Wert gilt“ bei Kilometerständen wertet spätere Stände nicht neu (siehe Follow-ups).
+
 ## Follow-ups
+
+- **Inhaber:** echte Verbindung aus claude.ai/ChatGPT und `claude mcp add` mit festem Token (aus Meilenstein 1, Fallbacks in `docs/knowledge/GAPS.md`); `get_dossier` und die Resources einmal in einer echten Sitzung lesen.
+- Kilometer-Randfall nach „Neuer Wert gilt“ (`OpenItemEffect::resolveReading`): spätere gültige Stände werden nicht neu bewertet — Entscheidung in Meilenstein 4, Eintrag in `docs/knowledge/GAPS.md`.
+- Löschen, Statuswechsel (verkauft/stillgelegt) und Korrektur falscher Ereignisse durch Menschen: Meilenstein 4; Belege: Meilenstein 3; Kauf/Verkauf: Meilenstein 5; erlaubte Fahrzeuge je Token: offen aus Meilenstein 1.
+- Nur im Code belegt: Notiz-Revision 1 nach Revision 2, Audit-Einträge der Phasen 1–4 (`list_changes` gibt es erst seit Phase 5), Sperre der Testkonten aus den Phasen 1–7 (kein Datenbankzugriff von außen).
+- Nach einem Deploy kurz warten (OPcache bei Strato, Phase 3), bevor ein Fix per `curl` geprüft wird — steht nur in `FINDINGS.md`, nicht im Vault.

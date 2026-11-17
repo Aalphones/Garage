@@ -10,6 +10,10 @@ Quelle der Wahrheit sind die Migrationen in `app/migrations/`. Geplantes Modell 
 
 `010_task.sql` legt `tasks` und `task_rules` an (Phase 3: Wartungsplan). Fälligkeiten werden nie gespeichert, sondern beim Lesen berechnet (ADR-011 Teil 2).
 
+`011_measurement.sql` bis `015_note.sql` legen Messwerte, Reifensätze mit Montagen, Teile, Schäden und Rückrufe sowie Notizen mit Revisionen an (Phase 4); die Spalten stehen in der Tabelle unten.
+
+`016_testkonten_m2_sperren.sql` legt keine Tabelle an: sie setzt Nutzer mit Adresse `test-m2-…@example.com` oder `p2r…@example.com` auf `gesperrt` und widerruft deren Tokens (Aufräumen der Prüfungen aus Meilenstein 2).
+
 ## Bestehende Tabellen
 
 | Tabelle | Spalten | Angelegt von |
