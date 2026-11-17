@@ -122,8 +122,19 @@ final class Registry
         return null;
     }
 
-    private static function matchesType(string $type, mixed $value): bool
+    /** @param string|list<string> $type JSON-Schema-Typ; eine Liste (etwa Geldbeträge: Zahl oder Text) trifft, wenn ein Typ passt */
+    private static function matchesType(string|array $type, mixed $value): bool
     {
+        if (is_array($type)) {
+            foreach ($type as $singleType) {
+                if (self::matchesType($singleType, $value)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         return match ($type) {
             'string' => is_string($value),
             'integer' => is_int($value),
@@ -136,8 +147,13 @@ final class Registry
         };
     }
 
-    private static function typeLabel(string $type): string
+    /** @param string|list<string> $type */
+    private static function typeLabel(string|array $type): string
     {
+        if (is_array($type)) {
+            return implode(' oder ', array_map(self::typeLabel(...), $type));
+        }
+
         return match ($type) {
             'string' => 'ein Text',
             'integer' => 'eine ganze Zahl',
@@ -149,8 +165,10 @@ final class Registry
         };
     }
 
-    private static function example(string $field, string $type): string
+    /** @param string|list<string> $type */
+    private static function example(string $field, string|array $type): string
     {
+        $type = is_array($type) ? $type[0] : $type;
         $value = match ($type) {
             'integer' => '1',
             'number' => '1.5',
