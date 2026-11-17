@@ -85,6 +85,14 @@ final class OdometerService
         return $this->readings->listValid($vehicleId, $actor);
     }
 
+    /** @return array{read_on: string, km: int, source: string, source_url: string|null, confidence: string}|null */
+    public function latestValid(int $vehicleId, Actor $actor): ?array
+    {
+        $this->access->readable($vehicleId, $actor);
+
+        return $this->readings->latestValid($vehicleId, $actor);
+    }
+
     public static function validKm(string $field, mixed $raw): string
     {
         return Validate::int($field, $raw, sprintf('{"%s": 26910}', $field), 0, self::MAX_KM);

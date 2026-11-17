@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Garage\Mcp;
 
-/** Ergebnis eines Tools: ein Textblock mit kompaktem JSON, dazu optional Bild-Blöcke (ab Meilenstein 3). */
+/** Ergebnis eines Tools: ein Textblock mit kompaktem JSON (oder Markdown), dazu optional Bild-Blöcke (ab Meilenstein 3). */
 final readonly class ToolResult
 {
     private const JSON_FLAGS = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR;
@@ -18,6 +18,12 @@ final readonly class ToolResult
     public static function json(mixed $data, array $images = []): self
     {
         return new self([self::text($data), ...$images], false);
+    }
+
+    /** Ein Textblock mit Markdown, kein JSON (die Akte). */
+    public static function markdown(string $text): self
+    {
+        return new self([['type' => 'text', 'text' => $text]], false);
     }
 
     /** @param array<string, mixed> $details */

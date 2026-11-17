@@ -98,6 +98,41 @@ final class OdometerRepository
         return self::readings($statement->fetchAll());
     }
 
+    /**
+     * Jüngster gültiger Stand mit Herkunft (Akte); bei gleichem Datum gewinnt der höhere.
+     *
+     * @return array{read_on: string, km: int, source: string, source_url: string|null, confidence: string}|null
+     */
+    public function latestValid(int $vehicleId, Actor $actor): ?array
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return null;
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf(
+                "SELECT read_on, km, source, source_url, confidence FROM odometer_readings
+                 WHERE vehicle_id = ? AND status = 'aktiv' AND reading_status = 'gueltig' AND garage_id IN (%s)
+                 ORDER BY read_on DESC, km DESC, id DESC LIMIT 1",
+                implode(', ', array_fill(0, count($garageIds), '?'))
+            )
+        );
+        $statement->execute([$vehicleId, ...$garageIds]);
+        $row = $statement->fetch();
+        if ($row === false) {
+            return null;
+        }
+
+        return [
+            'read_on' => (string) $row['read_on'],
+            'km' => (int) $row['km'],
+            'source' => (string) $row['source'],
+            'source_url' => $row['source_url'] === null ? null : (string) $row['source_url'],
+            'confidence' => (string) $row['confidence'],
+        ];
+    }
+
     /** @return array{id: int, read_on: string, km: int, reading_status: string, note: string|null}|null der Stand zu einem Ereignis */
     public function findForEvent(int $eventId, Actor $actor): ?array
     {

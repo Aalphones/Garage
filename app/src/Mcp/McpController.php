@@ -10,6 +10,7 @@ use Garage\Db\Connection;
 use Garage\Domain\Actor;
 use Garage\Domain\ChangeService;
 use Garage\Domain\DamageService;
+use Garage\Domain\DossierService;
 use Garage\Domain\DueService;
 use Garage\Domain\EquipmentService;
 use Garage\Domain\EventService;
@@ -29,6 +30,7 @@ use Garage\Http\Request;
 use Garage\Http\Response;
 use Garage\Mcp\Tools\ChangeTools;
 use Garage\Mcp\Tools\DamageTools;
+use Garage\Mcp\Tools\DossierTools;
 use Garage\Mcp\Tools\EquipmentTools;
 use Garage\Mcp\Tools\EventTools;
 use Garage\Mcp\Tools\MeasurementTools;
@@ -53,7 +55,7 @@ final class McpController
 {
     private const SERVER_NAME = 'garage';
     private const SERVER_TITLE = 'GARAGE';
-    private const SERVER_VERSION = '0.1.0';
+    private const SERVER_VERSION = '0.2.0';
     private const CACHE_TTL_MS = 300000;
     private const JSON_FLAGS = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR;
 
@@ -87,6 +89,7 @@ final class McpController
             'openItems' => new OpenItemService($pdo),
             'changes' => new ChangeService($pdo),
             'search' => new SearchService($pdo),
+            'dossier' => new DossierService($pdo),
             'pdo' => $pdo,
             'config' => $config,
         ];
@@ -201,9 +204,9 @@ final class McpController
             'ping' => new stdClass(),
             'tools/list' => $this->listTools($era, $actor, $services),
             'tools/call' => $this->callTool($params, $actor, $services),
-            'resources/list' => $this->readOnlyList($actor, static fn (): array => ['resources' => (new Resources())->list()], $era),
-            'resources/templates/list' => $this->readOnlyList($actor, static fn (): array => ['resourceTemplates' => (new Resources())->templates()], $era),
-            'resources/read' => $this->readResource($params, $actor, $era),
+            'resources/list' => $this->readOnlyList($actor, static fn (): array => ['resources' => (new Resources($services, $actor))->list()], $era),
+            'resources/templates/list' => $this->readOnlyList($actor, static fn (): array => ['resourceTemplates' => (new Resources($services, $actor))->templates()], $era),
+            'resources/read' => $this->readResource($params, $actor, $services, $era),
             'prompts/list' => $this->readOnlyList($actor, static fn (): array => ['prompts' => (new Prompts())->list()], $era),
             'prompts/get' => $this->getPrompt($params, $actor),
             default => throw new ProtocolError(
@@ -312,10 +315,11 @@ final class McpController
 
     /**
      * @param array<string, mixed> $params
+     * @param array<string, mixed> $services
      * @param array{version: string, modern: bool} $era
      * @return array<string, mixed>
      */
-    private function readResource(array $params, Actor $actor, array $era): array
+    private function readResource(array $params, Actor $actor, array $services, array $era): array
     {
         self::requireReadScope($actor);
         $uri = $params['uri'] ?? null;
@@ -323,7 +327,7 @@ final class McpController
             throw new ProtocolError(ProtocolError::INVALID_PARAMS, 'resources/read braucht params.uri (Text), z. B. "garage://fahrzeuge".');
         }
 
-        return self::cacheable(['contents' => (new Resources())->read($uri)], $era);
+        return self::cacheable(['contents' => (new Resources($services, $actor))->read($uri)], $era);
     }
 
     /**
@@ -404,6 +408,8 @@ final class McpController
         OpenItemTools::register($registry, $services);
         ChangeTools::register($registry, $services);
         SearchTools::register($registry, $services);
+        $registry->group('Akte');
+        DossierTools::register($registry, $services);
 
         return $registry;
     }
