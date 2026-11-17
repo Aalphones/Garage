@@ -131,7 +131,7 @@ Menschen haben Konten per Einladung, melden sich mit Passwort an, verwalten fest
 
 ## Commits
 
-`396b287` Konten · `15a13ed` Konto-Seiten · `79ba1fe`/`2ffc10d` OAuth · `bb2f2c3`/`4b24679` Fahrzeuge und MCP · Phase 5 (Migration 007, Doku, Archiv) im Commit „abschluss meilenstein 1“. Lokal committet, nicht gepusht.
+`396b287` Konten · `15a13ed` Konto-Seiten · `79ba1fe`/`2ffc10d` OAuth · `bb2f2c3`/`4b24679` Fahrzeuge und MCP · `99609f7` Migration 007 · `be5f57a` Doku und Archiv (Phase 5). Lokal committet, nicht gepusht.
 
 ## Deviations from plan
 
