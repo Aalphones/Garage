@@ -67,6 +67,14 @@ Weitere Listen-Tabellen aus Phase 4 (`011`–`014`; alle mit `id` PK, `garage_id
 | `notes` | `id` PK, `garage_id`, `vehicle_id` FK, `topic` VARCHAR(120), `status` ENUM(`aktiv`,`geloescht`), `created_at`, `updated_at`; UNIQUE `(vehicle_id, topic)` | Thema je Fahrzeug, Groß-/Kleinschreibung egal; kein Abgleich, keine Herkunft |
 | `note_revisions` | `id` PK, `garage_id`, `note_id` FK, `revision` INT, `body` MEDIUMTEXT, `actor`, `user_id` NULL, `created_at`; UNIQUE `(note_id, revision)` | jede Änderung eine neue Revision; die alten bleiben (`NoteService`, `NoteRepository`) |
 
+Belege (`017_document.sql`, ADR-012; alle mit `garage_id` FK, Zugriff nur über `DocumentRepository` mit Akteur):
+
+| Tabelle | Spalten | Hinweis |
+|---|---|---|
+| `documents` | `id` PK, `garage_id`, `vehicle_id` FK NULL, `uid` CHAR(12) UNIQUE (Ordnername), `doc_type` ENUM(`foto`,`rechnung`,`hu_bericht`,`police`,`bescheid`,`fahrzeugschein`,`kaufvertrag`,`sonstiges`), `photo_tag` NULL, `title`, `mime` NULL, `bytes`, `sha256` CHAR(64) NULL, `width`/`height` NULL, `page_count`, `captured_on` DATE NULL, `text_content` MEDIUMTEXT NULL, `status` ENUM(`wartet`,`unzugeordnet`,`zugeordnet`,`verworfen`), `status_reason`, `channel`, `actor`, `user_id` NULL, `created_at`, `updated_at`; UNIQUE `(garage_id, sha256)`, Index `(garage_id, status)` | `mime`/`sha256` leer, solange `wartet`; Bilder immer `image/jpeg`; Dublette = gleicher SHA je Garage |
+| `attachments` | `id` PK, `garage_id`, `document_id` FK, `target_table`, `target_id`, `role`, `actor`, `user_id` NULL, `created_at`; UNIQUE `(document_id, target_table, target_id, role)` | Logik ab Phase 2 |
+| `upload_tickets` | `id` PK, `ticket_hash` CHAR(64) UNIQUE (SHA-256 des Slugs), `user_id` FK, `garage_id`, `vehicle_id` NULL, `document_id` NULL, `max_bytes`, `expires_at`, `redeemed_at` NULL, `is_duplicate` TINYINT(1), `created_at` | Ablauf in SQL gegen `UTC_TIMESTAMP()`; `is_duplicate` = hochgeladene Datei existierte schon |
+
 `tokens` mit `kind` `oauth_access`/`oauth_refresh` trägt `user_id` des zustimmenden Nutzers, `client_id` und `family` (Verbindung); eine Familie ist eine „verbundene App“.
 
 Tokens, Einladungen und Passwörter liegen nur als Hash in der Datenbank; Klartext gibt es einmal bei der Ausgabe.

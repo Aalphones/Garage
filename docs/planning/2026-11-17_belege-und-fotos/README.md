@@ -8,7 +8,7 @@ Quelle des Umfangs: [`../../PROJECT.md`](../../PROJECT.md) → Meilenstein 3, Fa
 
 | # | Phase | Rating | Status |
 |---|---|---|---|
-| 1 | [Ablage-Kern](phase-1-ablage-kern.md) — Tabellen, Bildverarbeitung, signierte Links, Upload-Ticket, `request_upload`, `store_document` per Ticket, `get_document`, `list_documents` | heikel | pending |
+| 1 | [Ablage-Kern](phase-1-ablage-kern.md) — Tabellen, Bildverarbeitung, signierte Links, Upload-Ticket, `request_upload`, `store_document` per Ticket, `get_document`, `list_documents` | heikel | complete |
 | 2 | [Anhänge, Datei-Parameter, Akte](phase-2-anhaenge-akte.md) — `attach_document`, ChatGPT-Datei-Parameter, `import_document_from_url`, Belege in `get_event`/`get_vehicle`/Akte/Suche | standard | pending |
 | 3 | [Eingang auf dem Server](phase-3-eingang-server.md) — Eingangs-Tabellen, `list_inbox`/`claim_inbox_item`/`release_inbox_item`, Web-API für Belege und Eingang, Prompt `eingang_abarbeiten` | heikel | pending |
 | 4 | [Oberfläche Eingang und Belege](phase-4-oberflaeche.md) — Seiten nach Entwurf, Fotos im Browser verkleinern, PDF-Seiten per pdf.js | standard | pending |
@@ -52,7 +52,7 @@ Gilt für alle Phasen; Abweichung nur per Eintrag in `FINDINGS.md` und Plan-Änd
 |---|---|---|
 | `Util\ImageProcessor` | 1 | aus DISPATCH kopiert und angepasst: `process(string $bytes, string $mime, string $dir): array{width,height,captured_on,files}` — schreibt `original.jpg`, `1568.jpg`, `400.jpg` |
 | `Auth\FileLink` | 1 | `sign(int $documentId, string $file, int $ttl = 600): string` (Slug), `verify(string $slug): array{document_id, file}` (wirft `DomainError('not_found')` bei falscher Signatur oder Ablauf) |
-| `Domain\DocumentRepository` | 1 | Lesen/Schreiben `documents`, `attachments`, `upload_tickets`, immer mit Akteur |
+| `Domain\DocumentRepository` (Kontrakt-Nachtrag Phase 1: `upload_tickets.is_duplicate`, damit `store_document` das Dublette-Kennzeichen kennt) | 1 | Lesen/Schreiben `documents`, `attachments`, `upload_tickets`, immer mit Akteur |
 | `Domain\DocumentService` | 1, 2, 6 | `storeBytes`, `describe` (Metadaten setzen), `get`, `list`, `issueTicket`, `redeemTicket`, `attach` (2), `importFromUrl` (2), `confirm` (6), `filePath`, `TARGETS`, `TYPES`, `TAGS` |
 | `Mcp\ImageBlocks` | 1 | aus DISPATCH angepasst: Kante ≤ 1568, höchstens 6 Blöcke, nutzt `1568.jpg` bzw. `pages/<n>.jpg` |
 | `Mcp\Tools\DocumentTools` | 1, 2, 6 | die Beleg-Tools |

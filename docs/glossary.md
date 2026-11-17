@@ -60,7 +60,10 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 |---|---|
 | Dokument / Beleg (`documents`) | Abgelegte Datei: Foto, Rechnung, HU-Bericht, Police, Bescheid, Fahrzeugschein, Kaufvertrag. |
 | Anhang (`attachments`) | Verbindung eines Dokuments mit einem Datensatz (Ereignis, Vertrag, Schaden …) mit Rolle. |
-| Upload-Ticket | Einmalige Upload-Adresse, 15 Minuten gültig, damit Dateien nie durch das Sprachmodell laufen. |
+| Upload-Ticket (`upload_tickets`) | Einmalige Upload-Adresse, 15 Minuten gültig, damit Dateien nie durch das Sprachmodell laufen; in der Datenbank nur als SHA-256 des Slugs. |
+| Signierter Link | Zeitlich begrenzte Adresse `/garage/files/{slug}` (600 Sekunden), die eine Datei ohne Login ausliefert; die Signatur ist die Berechtigung. |
+| Dublette | Datei mit gleichem SHA-256 in derselben Garage; der Upload liefert das vorhandene Dokument mit `duplicate: true`. |
+| Wartet (Status) | Dokument ist angelegt, die Datei fehlt noch; der Upload auf dessen Ticket füllt genau dieses Dokument. |
 | Eingang (`inbox_items`) | In der App hochgeladene Belege, die ein Agent später abarbeitet (Weg B). |
 | Weg A / Weg B | Beleg kommt im Chat (A) oder über den Eingang der App (B) herein. |
 

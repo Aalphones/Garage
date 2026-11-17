@@ -10,6 +10,7 @@ use Garage\Db\Connection;
 use Garage\Domain\Actor;
 use Garage\Domain\ChangeService;
 use Garage\Domain\DamageService;
+use Garage\Domain\DocumentService;
 use Garage\Domain\DossierService;
 use Garage\Domain\DueService;
 use Garage\Domain\EquipmentService;
@@ -30,6 +31,7 @@ use Garage\Http\Request;
 use Garage\Http\Response;
 use Garage\Mcp\Tools\ChangeTools;
 use Garage\Mcp\Tools\DamageTools;
+use Garage\Mcp\Tools\DocumentTools;
 use Garage\Mcp\Tools\DossierTools;
 use Garage\Mcp\Tools\EquipmentTools;
 use Garage\Mcp\Tools\EventTools;
@@ -90,6 +92,7 @@ final class McpController
             'changes' => new ChangeService($pdo),
             'search' => new SearchService($pdo),
             'dossier' => new DossierService($pdo),
+            'documents' => new DocumentService($pdo, $config),
             'pdo' => $pdo,
             'config' => $config,
         ];
@@ -410,6 +413,8 @@ final class McpController
         SearchTools::register($registry, $services);
         $registry->group('Akte');
         DossierTools::register($registry, $services);
+        $registry->group('Belege');
+        DocumentTools::register($registry, $services);
 
         return $registry;
     }

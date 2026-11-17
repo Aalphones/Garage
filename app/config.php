@@ -28,6 +28,17 @@ return [
         'access_seconds' => 3600,
         'refresh_seconds' => 5184000,           // 60 Tage, bei jeder Erneuerung neu
         'grace_seconds' => 30,
-        'default_scopes' => ['garage:read', 'garage:write'],
+        'default_scopes' => ['garage:read', 'garage:write', 'garage:files'],
+    ],
+    // Belege und Fotos (E1–E4, ADR-012): Grenzen der Ablage, Bildvarianten, Lebensdauer von Ticket und Link.
+    'documents' => [
+        'max_bytes' => 31457280,
+        'max_megapixels' => 50,
+        'max_edge' => 4000,
+        'variant_widths' => [1568, 400],
+        'jpeg_quality' => 90,
+        'variant_quality' => 85,
+        'ticket_seconds' => 900,
+        'link_seconds' => 600,
     ],
 ];

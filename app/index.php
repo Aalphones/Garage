@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use Garage\Api\AuthController;
 use Garage\Api\DeployController;
+use Garage\Api\FileController;
+use Garage\Api\UploadController;
 use Garage\Api\HealthController;
 use Garage\Api\InvitationController;
 use Garage\Api\MeController;
@@ -53,6 +55,11 @@ $router->add('GET', '/garage/api/oauth/requests/{slug}', static fn (array $param
 $router->add('POST', '/garage/api/oauth/consent', static fn () => (new OAuthController($config))->consent($request));
 $router->add('GET', '/garage/api/oauth/grants', static fn () => (new OAuthController($config))->grants($request));
 $router->add('DELETE', '/garage/api/oauth/grants/{slug}', static fn (array $parameters) => (new OAuthController($config))->disconnect($request, (string) $parameters['slug']));
+
+// Beide ohne Anmeldung: Ticket bzw. Signatur im Pfad ist die Berechtigung (ADR-012).
+$router->add('POST', '/garage/upload/{slug}', static fn (array $parameters) => (new UploadController($config))->upload($request, (string) $parameters['slug']));
+$router->add('GET', '/garage/files/{slug}', static fn (array $parameters) => (new FileController($config))->show($request, (string) $parameters['slug']));
+$router->add('HEAD', '/garage/files/{slug}', static fn (array $parameters) => (new FileController($config))->show($request, (string) $parameters['slug']));
 
 $router->add('POST', '/garage/mcp', static fn () => (new McpController($config))->handle($request));
 

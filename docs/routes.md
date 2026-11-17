@@ -32,6 +32,13 @@ Quelle: `app/index.php`. Alle Pfade absolut; die Brücke liegt unter `/garage/` 
 
 Ein `gmcp_`-Token als Bearer an diesen Routen ergibt 401: sie nehmen nur Access-JWTs.
 
+Ohne Anmeldung, die Berechtigung steckt im Pfad (ADR-012):
+
+| Methode | Pfad | Controller | Schutz | Antwort |
+|---|---|---|---|---|
+| POST | `/garage/upload/{slug}` | `Api\UploadController::upload` | Upload-Ticket (32 Hex, einmalig, 15 min) | Body = Datei roh oder multipart Feld `file`; 201 `{ticket_id,document_id,status,duplicate}`; 404 `ticket_not_found`, 410 `ticket_used`/`ticket_expired`, 413 `too_large`, 415 `type_rejected`, 422 `too_many_pixels`/`invalid_value`, 500 `store_failed` |
+| GET, HEAD | `/garage/files/{slug}` | `Api\FileController::show` | signierter Link (600 s) | Datei inline mit `nosniff`, `Cache-Control: private, max-age=600`; ungültig/abgelaufen → 404 `not_found` |
+
 Ohne `GARAGE_JWT_SECRET` (mindestens 64 Zeichen) antworten Anmeldung und Annahme mit 503 `not_configured`.
 
 Fehler immer als JSON `{"error": "…", "message": "…"}`; unbekannter Pfad 404 `not_found`, falsche Methode 405 mit `Allow`.
@@ -89,5 +96,9 @@ Unbekannte Adresse, ungültige ID und fremdes Fahrzeug antworten gleich: JSON-RP
 | `list_changes` | read | `vehicle_id?`, `limit?` (1–200, Standard 50) | `{changes:[{id,at,actor,action,target,vehicle_id,before,after}]}` aus dem Audit-Log der eigenen Garagen, neueste zuerst; fremdes Fahrzeug → `not_found` |
 | `search` | read | `query` (3–100 Zeichen), `vehicle_id?` | `{hits:[{type,id,vehicle_id,title,snippet}]}`, `type` = `event`\|`event_item`\|`part`\|`note`\|`open_item` (Positionstreffer tragen zusätzlich `event_id`); je Quelle höchstens 10, zusammen 30; `%`, `_` wörtlich; nur offene Klärfälle, aktive Datensätze |
 | `get_dossier` | read | `vehicle_id` | die ganze Akte als **Markdown-Text** (kein JSON), 15 Abschnitte in fester Reihenfolge: Stammdaten, Zulassung, Ausstattung, Spezifikationen, Kilometerstand, Fälligkeiten, Wartungsplan, Scheckheft, Messwerte, Reifen, Teile, Schäden, Rückrufe, Notizen, Offene Klärfälle; Herkunft in Klammern an jedem Wert, geschätzte Werte mit „≈“, leere Abschnitte „Noch nichts erfasst.“; fremdes Fahrzeug → `not_found` |
+| `request_upload` | files | `vehicle_id?`, `garage_id?` | `{ticket_id,upload_url,expires_at,max_bytes,accepted}`; Rolle `lesend` → `forbidden` |
+| `store_document` | files | `ticket_id?`, `vehicle_id?`, `garage_id?`, `doc_type`, `title?`, `photo_tag?` (nur `foto`), `captured_on?`, `text?` | `{document_id,status,duplicate,files,upload?}`; mit `ticket_id` beschreibt es die hochgeladene Datei (Dublette: nichts überschrieben, `duplicate` true; noch kein Upload → `invalid_value`); ohne Ticket Status `wartet` samt `upload`-Block, der Upload füllt dieses Dokument |
+| `get_document` | read | `document_id`, `page?`, `half?` (`oben`\|`unten`) | Text-Block `{document,attachments,text_content,download_url}` plus Bildblöcke (Foto `1568.jpg`; PDF mit Seitenbildern bis zu 6); fremde ID → `not_found` |
+| `list_documents` | read | `vehicle_id?`, `status?` (`wartet`\|`unzugeordnet`\|`zugeordnet`\|`offen`\|`verworfen`\|`alle`), `doc_type?` | `{documents:[…]}`, neueste zuerst, höchstens 500 |
 
 Tool-Fehler kommen als Ergebnis mit `isError: true` und `{error,message,details}`: `not_found` (fremdes oder unbekanntes Fahrzeug/Garage), `forbidden` (Rolle `lesend`), `invalid_value` (mit Feldname und Beispiel), `invalid_argument` (Pflichtargument fehlt oder falscher Typ).
