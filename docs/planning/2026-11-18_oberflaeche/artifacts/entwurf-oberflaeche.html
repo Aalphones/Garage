@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GARAGE · Entwurf Meilenstein 4 „Oberfläche“</title>
+<style>
+/* ===== Design-Tokens (GARAGE, Familie „Dark Botanical“ wie DISPATCH) ===== */
+:root, :root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #090C0C; --bg-deep: #0C2421; --surface: #131918; --raised: #1B2322; --border: #56746E; --line: #232D2B;
+  --text: #EEF2EC; --muted: #9DADA8;
+  --primary: #43D6C5; --primary-hover: #62E0D0; --on-primary: #04201D;
+  --leaf: #78C850;
+  --bad: #F08A80; --bad-soft: #2E1715; --warn: #EDC961; --warn-soft: #2B2612;
+  --focus: #43D6C5;
+  --shadow: 0 10px 28px rgba(0,0,0,.55);
+  /* Verläufe: Schwarz auf Dunkelgrün für Flächen, Teal-Schimmer für Hervorhebungen */
+  --grad-page: radial-gradient(120% 70% at 100% 0%, #0E2C28 0%, transparent 60%), linear-gradient(180deg, #090C0C 0%, #0A1513 100%);
+  --grad-surface: linear-gradient(160deg, #161E1D 0%, #111615 100%);
+  --grad-head: linear-gradient(90deg, #0C2421 0%, #090C0C 85%);
+  --grad-hi: linear-gradient(90deg, color-mix(in oklab, #43D6C5 22%, transparent) 0%, transparent 100%);
+  --grad-primary: linear-gradient(135deg, #43D6C5 0%, #6FD39A 100%);
+}
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #F3F6F2; --surface: #FFFFFF; --raised: #E6EEEA; --border: #6B8A81; --line: #D5E3DE;
+  --text: #10231F; --muted: #4C625C;
+  --primary: #0A6E65; --primary-hover: #075C54; --on-primary: #FFFFFF;
+  --leaf: #3F7F22;
+  --bad: #B42318; --bad-soft: #FDECEA; --warn: #7A5200; --warn-soft: #FFF3CF;
+  --focus: #0A6E65;
+  --shadow: 0 10px 28px rgba(16,35,31,.16);
+  --bg-deep: #E3EEEA;
+  --grad-page: linear-gradient(180deg, #F3F6F2 0%, #EAF2EE 100%);
+  --grad-surface: linear-gradient(160deg, #FFFFFF 0%, #FAFCFB 100%);
+  --grad-head: linear-gradient(90deg, #E3EEEA 0%, #F3F6F2 85%);
+  --grad-hi: linear-gradient(90deg, color-mix(in oklab, #0A6E65 14%, transparent) 0%, transparent 100%);
+  --grad-primary: linear-gradient(135deg, #0A6E65 0%, #0B7D5E 100%);
+}
+:root {
+  --radius-card: 14px; --radius-control: 999px; --radius-field: 10px;
+  --t-fast: 150ms; --t-mid: 220ms; --ease-out: cubic-bezier(.2,.7,.2,1);
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --touch: 2.75rem;
+  --nav-h: 4rem; --side-w: 15rem;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 var(--sans); }
+body { background: var(--grad-page) fixed; min-height: 100vh; }
+a { color: var(--primary); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+/* ===== Entwurfsleiste (nicht Teil der App) ===== */
+.dz { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; gap: .4rem .8rem; align-items: center; padding: .4rem .75rem; background: #2b2b2b; color: #eee; font-size: 12px; border-bottom: 2px dashed #888; }
+.dz b { color: #fff; }
+.dz select, .dz button { background: #444; color: #fff; border: 1px solid #777; border-radius: 6px; padding: .15rem .4rem; font-size: 12px; }
+.dz label { display: inline-flex; gap: .3rem; align-items: center; }
+.dz .bp { margin-left: auto; background: #555; padding: .1rem .45rem; border-radius: 4px; }
+.dz .whytxt { flex-basis: 100%; color: #ccc; font-size: 12px; }
+.bsp { font-size: 10px; letter-spacing: .04em; text-transform: uppercase; padding: 0 .3rem; border: 1px dashed #999; border-radius: 4px; color: #999; margin-left: .3rem; vertical-align: middle; white-space: nowrap; }
+.tool { display: none; font: 11px/1.3 ui-monospace, Consolas, monospace; color: var(--muted); border: 1px dashed var(--border); border-radius: 6px; padding: .05rem .35rem; margin-left: .35rem; white-space: nowrap; }
+body.tools .tool { display: inline-block; }
+
+/* ===== Schale ===== */
+.shell { min-height: 100vh; }
+.side { display: none; }
+.bottom { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; height: var(--nav-h); display: grid; grid-template-columns: repeat(4, 1fr); background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+.bottom a { display: grid; place-items: center; align-content: center; gap: .15rem; color: var(--muted); text-decoration: none; font-size: 12px; position: relative; }
+.bottom a svg { width: 22px; height: 22px; }
+.bottom a[aria-current='page'] { color: var(--primary); font-weight: 600; }
+.bottom a[aria-current='page']::before { content: ''; position: absolute; top: 0; left: 30%; right: 30%; height: 3px; border-radius: 0 0 3px 3px; background: var(--primary); }
+.count { min-width: 1.15rem; height: 1.15rem; padding: 0 .3rem; border-radius: 999px; background: var(--primary); color: var(--on-primary); font-size: 11px; font-weight: 700; display: inline-grid; place-items: center; }
+.bottom .count { position: absolute; top: .45rem; left: calc(50% + 6px); }
+main { padding: 1rem 1rem calc(var(--nav-h) + 5.5rem); max-width: 72rem; margin: 0 auto; }
+.brandbar { display: flex; align-items: center; gap: .5rem; padding: .7rem 1rem 0; max-width: 72rem; margin: 0 auto; }
+.logo { display: inline-flex; align-items: center; gap: .45rem; font-weight: 800; letter-spacing: .14em; font-size: 14px; color: var(--text); text-decoration: none; }
+.logo svg { width: 22px; height: 22px; color: var(--leaf); }
+.brandbar .who { margin-left: auto; color: var(--muted); font-size: 13px; }
+
+@media (min-width: 992px) {
+  .shell { display: grid; grid-template-columns: var(--side-w) 1fr; }
+  .bottom, .brandbar { display: none; }
+  .side { display: flex; flex-direction: column; gap: .2rem; position: sticky; top: 0; height: 100vh; padding: 1.2rem 0; border-right: 1px solid var(--line); background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg) 55%); }
+  .side .logo { padding: 0 1.4rem 1.2rem; }
+  .side a.nav { display: flex; align-items: center; gap: .7rem; padding: .65rem 1.4rem; color: var(--muted); text-decoration: none; border-left: 3px solid transparent; }
+  .side a.nav svg { width: 20px; height: 20px; }
+  .side a.nav:hover { color: var(--text); background: var(--raised); }
+  .side a.nav[aria-current='page'] { color: var(--text); background: var(--grad-hi); border-left-color: var(--primary); }
+  .side a.nav[aria-current='page'] svg { color: var(--primary); }
+  .side a.nav .count { margin-left: auto; }
+  .side .foot { margin-top: auto; color: var(--muted); font-size: 12.5px; padding: 0 .7rem; }
+  main { padding: 1.5rem 2rem 3rem; }
+}
+
+/* ===== Bauteile ===== */
+h2 { font-size: 1.05rem; margin: 0; }
+.sec { margin: 1.4rem 0 0; }
+.sec-h { display: flex; align-items: baseline; gap: .6rem; margin-bottom: .55rem; }
+.sec-h h2 { font-size: .95rem; text-transform: none; }
+.sec-h .more { margin-left: auto; font-size: 13.5px; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+
+/* Knopf-Rollen */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: var(--touch); padding: 0 1.1rem; border-radius: var(--radius-control); border: 1px solid var(--border); background: transparent; color: var(--text); font-weight: 600; cursor: pointer; text-decoration: none; transition: border-color var(--t-fast), background var(--t-fast), transform 80ms; }
+.btn:hover { border-color: var(--primary); }
+.btn:active { transform: scale(.97); }
+.btn svg { width: 18px; height: 18px; }
+.btn.primary { background: var(--grad-primary); border-color: transparent; color: var(--on-primary); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.quiet { border-color: transparent; color: var(--primary); padding: 0 .6rem; }
+.btn.quiet:hover { background: var(--raised); }
+.btn.danger { border-color: var(--bad); color: var(--bad); }
+.btn.danger:hover { background: var(--bad-soft); }
+.btn[aria-disabled='true'] { opacity: .45; cursor: not-allowed; }
+.btn.sm { min-height: 2.1rem; padding: 0 .8rem; font-size: 13.5px; }
+.iconbtn { width: var(--touch); height: var(--touch); padding: 0; border-radius: 50%; }
+
+/* Kennzeichen */
+.plate { display: inline-flex; align-items: stretch; height: 1.9rem; border: 2px solid #1b1b1b; border-radius: 5px; background: #fafafa; color: #111; font: 700 1rem/1 "Arial Narrow", "Roboto Condensed", var(--sans); letter-spacing: .06em; overflow: hidden; white-space: nowrap; flex: none; }
+.plate .eu { width: 1.15rem; background: #1f4fa0; color: #fff; font-size: 9px; display: grid; place-items: end center; padding-bottom: 2px; letter-spacing: 0; }
+.plate .num { padding: 0 .5rem; display: grid; place-items: center; }
+.plate.lg { height: 2.4rem; font-size: 1.3rem; }
+
+/* Zustand */
+.st { display: inline-flex; align-items: center; gap: .35rem; font-size: 13.5px; white-space: nowrap; }
+.st::before { content: ''; width: .55rem; height: .55rem; border-radius: 50%; background: var(--muted); flex: none; }
+.st.bad { color: var(--bad); font-weight: 600; } .st.bad::before { background: var(--bad); }
+.st.warn { color: var(--warn); font-weight: 600; } .st.warn::before { background: var(--warn); }
+.st.ok { color: var(--muted); }
+.st.unk::before { background: transparent; border: 2px dashed var(--warn); }
+.st.unk { color: var(--warn); }
+
+/* Herkunft */
+.src { display: inline-flex; align-items: center; gap: .25rem; height: 1.35rem; padding: 0 .45rem; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 11.5px; cursor: pointer; white-space: nowrap; vertical-align: middle; }
+.src svg { width: 12px; height: 12px; }
+.src:hover { border-color: var(--primary); color: var(--text); }
+.src.unsicher { border-color: var(--warn); color: var(--warn); border-style: dashed; }
+.src .c { width: .45rem; height: .45rem; border-radius: 50%; background: var(--muted); }
+.src.bestaetigt .c { background: var(--primary); }
+.src.wahrscheinlich .c { background: transparent; border: 1.5px solid var(--muted); }
+.src.unsicher .c { background: transparent; border: 1.5px dashed var(--warn); }
+.est { color: var(--muted); cursor: help; border-bottom: 1px dotted var(--muted); }
+
+/* Kennzahlen-Leiste */
+.kpis { display: grid; grid-template-columns: repeat(2, 1fr); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.kpi { padding: .65rem .9rem; border-top: 1px solid var(--line); }
+.kpi:nth-child(-n+2) { border-top: 0; }
+.kpi:nth-child(even) { border-left: 1px solid var(--line); }
+.kpi .v { font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.kpi .l { font-size: 12.5px; color: var(--muted); }
+.kpi.bad .v { color: var(--bad); }
+.kpi.warn .v { color: var(--warn); }
+.kpi a { color: inherit; text-decoration: none; display: block; }
+@media (min-width: 600px) { .kpis { grid-template-columns: repeat(4, 1fr); } .kpi { border-top: 0; border-left: 1px solid var(--line); } .kpi:first-child { border-left: 0; } }
+
+/* Listen */
+.list { border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.row { display: grid; grid-template-columns: 1fr auto; gap: .2rem .8rem; padding: .7rem .9rem; border-top: 1px solid var(--line); align-items: center; text-decoration: none; color: inherit; }
+.row:first-child { border-top: 0; }
+a.row:hover, button.row:hover { background: var(--raised); }
+button.row { width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); cursor: pointer; }
+.row .t { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.row .s { grid-column: 1 / -1; font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: .3rem .6rem; align-items: center; }
+.row .r { text-align: right; }
+
+/* Fahrzeugkarten */
+.cars { display: grid; gap: .9rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); }
+.group { border: 1px solid var(--line); border-radius: calc(var(--radius-card) + 4px); padding: .8rem; background: color-mix(in oklab, var(--surface) 45%, var(--bg)); }
+.group-h { display: flex; align-items: center; gap: .6rem; margin: 0 0 .7rem .2rem; }
+.group-h h2 { font-size: .95rem; }
+.car { position: relative; display: block; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); overflow: hidden; text-decoration: none; color: inherit; container-type: inline-size; transition: border-color var(--t-fast); }
+.car:hover { border-color: var(--primary); }
+.car .bg { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(22px) saturate(.8); opacity: .22; transform: scale(1.2); }
+.car .in { position: relative; padding: .9rem; display: grid; gap: .7rem; }
+.car .top { display: flex; gap: .8rem; align-items: center; }
+.car .thumb { width: 5.5rem; height: 3.8rem; border-radius: 9px; background: var(--raised) center/cover; flex: none; display: grid; place-items: center; color: var(--muted); }
+.car .thumb svg { width: 30px; height: 30px; }
+.car .name { font-weight: 700; font-size: 1.02rem; overflow-wrap: anywhere; }
+.car .meta { display: grid; grid-template-columns: 1fr 1fr; gap: .1rem .8rem; font-size: 13.5px; }
+.car .meta dt { color: var(--muted); font-size: 12px; }
+.car .meta dd { margin: 0 0 .35rem; font-weight: 600; }
+.car .foot { display: flex; gap: .8rem; align-items: center; flex-wrap: wrap; font-size: 13px; border-top: 1px solid var(--line); padding-top: .6rem; }
+.car.retired { opacity: .75; }
+
+/* Fahrzeugkopf + Reiter */
+.vhead { display: flex; align-items: center; gap: .6rem; min-height: 3rem; flex-wrap: wrap; }
+.back { display: inline-flex; align-items: center; gap: .2rem; color: var(--primary); text-decoration: none; font-weight: 600; min-height: var(--touch); padding-right: .3rem; }
+.back svg { width: 18px; height: 18px; }
+.vhead .nm { font-weight: 700; overflow-wrap: anywhere; }
+.vhead .menu { margin-left: auto; }
+.tabs { position: sticky; top: 0; z-index: 20; display: flex; gap: .2rem; overflow-x: auto; scrollbar-width: none; margin: .4rem -1rem 1rem; padding: 0 1rem; background: var(--bg); border-bottom: 1px solid var(--line); }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs a { flex: none; padding: .75rem .7rem .65rem; color: var(--muted); text-decoration: none; font-weight: 600; font-size: 14px; border-bottom: 3px solid transparent; display: inline-flex; gap: .35rem; align-items: center; }
+.tabs a:hover { color: var(--text); }
+.tabs a[aria-selected='true'] { color: var(--text); border-bottom-color: var(--primary); }
+.tabs .count { background: var(--raised); color: var(--text); }
+@media (min-width: 992px) { .tabs { margin: .4rem 0 1.2rem; padding: 0; } }
+body.has-dz .tabs { top: 0; }
+
+.panel { animation: fade var(--t-mid) var(--ease-out); }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+.cols { display: grid; gap: 0 1.6rem; }
+@media (min-width: 992px) { .cols { grid-template-columns: 1.35fr 1fr; } }
+
+/* Fortschritt */
+.bar { position: relative; height: .45rem; border-radius: 999px; background: var(--raised); overflow: hidden; min-width: 5rem; }
+.bar i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--muted); }
+.bar.bad i { background: var(--bad); }
+.bar.warn i { background: var(--warn); }
+
+/* Tabelle */
+.tbl { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; font-size: 14px; }
+.tbl th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: .55rem .8rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tbl td { padding: .6rem .8rem; border-top: 1px solid var(--line); vertical-align: middle; }
+.tbl tr:first-child td { border-top: 0; }
+.tbl .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tbl tr.sub td { background: color-mix(in oklab, var(--raised) 55%, var(--surface)); font-size: 13px; }
+
+/* Werkzeugleiste Liste */
+.tb { display: flex; gap: .5rem; align-items: center; margin-bottom: .8rem; flex-wrap: wrap; }
+.tb .seg { margin-left: auto; display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+.tb .seg button { border: 0; background: none; min-height: 2.2rem; padding: 0 .8rem; cursor: pointer; color: var(--muted); font-size: 13.5px; display: inline-flex; align-items: center; gap: .3rem; }
+.tb .seg button svg { width: 16px; height: 16px; }
+.tb .seg button[aria-pressed='true'] { background: color-mix(in oklab, var(--primary) 18%, var(--surface)); color: var(--text); font-weight: 600; }
+.chip { display: inline-flex; align-items: center; gap: .3rem; min-height: 2.2rem; padding: 0 .85rem; border-radius: 999px; border: 1px solid var(--border); background: none; color: var(--muted); cursor: pointer; font-size: 13.5px; }
+.chip[aria-pressed='true'] { border-color: var(--primary); color: var(--text); background: color-mix(in oklab, var(--primary) 14%, var(--surface)); }
+.chip[aria-pressed='true']::before { content: '✓'; color: var(--primary); font-weight: 700; }
+
+/* Zeitstrahl */
+.tl { position: relative; margin-left: .55rem; padding-left: 1.3rem; border-left: 2px solid var(--line); }
+.ev { position: relative; margin-bottom: .8rem; }
+.ev::before { content: ''; position: absolute; left: calc(-1.3rem - 7px); top: 1.05rem; width: 12px; height: 12px; border-radius: 50%; background: var(--bg); border: 2px solid var(--primary); }
+.ev.gap::before { border-color: var(--bad); background: var(--bad); }
+.ev .card { border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.ev details > summary { list-style: none; cursor: pointer; padding: .7rem .9rem; display: grid; grid-template-columns: 1fr auto; gap: .15rem .8rem; align-items: center; }
+.ev details > summary::-webkit-details-marker { display: none; }
+.ev details > summary:hover { background: var(--raised); border-radius: var(--radius-card); }
+.ev .d { font-size: 12.5px; color: var(--muted); }
+.ev .ttl { font-weight: 700; overflow-wrap: anywhere; }
+.ev .sum { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+.ev .body { padding: 0 .9rem .9rem; border-top: 1px solid var(--line); }
+.ev .actions { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .7rem; }
+.gapcard { border: 1.5px dashed var(--bad); border-radius: var(--radius-card); padding: .65rem .9rem; color: var(--bad); background: var(--bad-soft); font-size: 14px; }
+.kind { font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--primary); }
+.year { font-weight: 800; color: var(--muted); margin: 1.1rem 0 .5rem -2.05rem; background: var(--bg); padding: .1rem 0; font-size: 13px; width: max-content; }
+
+/* Anhänge-Leiste */
+.att { display: flex; gap: .45rem; margin-top: .7rem; overflow-x: auto; }
+.att button { flex: none; width: 4.2rem; height: 5.2rem; border-radius: 8px; border: 1px solid var(--line); background: var(--raised); display: grid; place-items: center; color: var(--muted); font-size: 11px; cursor: pointer; padding: .3rem; text-align: center; }
+.att button svg { width: 22px; height: 22px; }
+
+/* Klärfälle */
+.oi { border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); padding: .9rem; margin-bottom: .8rem; }
+.oi-h { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; margin-bottom: .5rem; }
+.oi-h .kindtag { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--warn); }
+.oi .q { font-weight: 600; margin: 0 0 .7rem; overflow-wrap: anywhere; }
+.vs { display: grid; gap: .6rem; grid-template-columns: 1fr; }
+@media (min-width: 560px) { .vs { grid-template-columns: 1fr 1fr; } }
+.opt { border: 1px solid var(--border); border-radius: 12px; padding: .7rem .8rem; display: grid; gap: .45rem; align-content: start; }
+.opt .lab { font-size: 12px; color: var(--muted); font-weight: 600; }
+.opt .val { font-size: 1.15rem; font-weight: 700; overflow-wrap: anywhere; }
+.oi .acts { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .8rem; align-items: center; }
+.oi .note { width: 100%; }
+
+/* Felder */
+.field { display: grid; gap: .3rem; margin-top: .8rem; }
+.field label { font-size: 13px; font-weight: 600; }
+.field input, .field select, .field textarea { min-height: var(--touch); border-radius: var(--radius-field); border: 1px solid var(--border); background: var(--bg); color: var(--text); padding: .5rem .7rem; font: inherit; }
+.field textarea { min-height: 4.5rem; }
+.radio { display: grid; gap: .4rem; margin-top: .6rem; }
+.radio label { display: flex; gap: .6rem; align-items: center; min-height: var(--touch); padding: 0 .8rem; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; }
+.radio label:has(input:checked) { border-color: var(--primary); background: color-mix(in oklab, var(--primary) 12%, var(--surface)); }
+.radio input { accent-color: var(--primary); width: 18px; height: 18px; }
+
+/* Blatt / Dialog */
+.scrim { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.5); display: grid; align-items: end; }
+.sheet { background: var(--surface); border-radius: 18px 18px 0 0; padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom)); max-height: 88vh; overflow: auto; box-shadow: var(--shadow); animation: up var(--t-mid) var(--ease-out); }
+.sheet .grab { width: 2.5rem; height: 4px; border-radius: 4px; background: var(--border); margin: 0 auto .8rem; }
+.sheet h2 { font-size: 1.1rem; }
+.sheet .foot { display: flex; gap: .5rem; justify-content: flex-end; margin-top: 1.1rem; flex-wrap: wrap; }
+@keyframes up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (min-width: 768px) { .scrim { place-items: center; } .sheet { width: min(32rem, 92vw); border-radius: 18px; } .sheet .grab { display: none; } }
+
+/* Menü */
+.pop { position: absolute; right: 0; top: 100%; z-index: 40; min-width: 14rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: .3rem; }
+.pop button { display: flex; width: 100%; gap: .6rem; align-items: center; min-height: var(--touch); padding: 0 .7rem; border: 0; background: none; border-radius: 8px; cursor: pointer; text-align: left; }
+.pop button:hover { background: var(--raised); }
+.pop button.dangerous { color: var(--bad); }
+.pop hr { border: 0; border-top: 1px solid var(--line); margin: .3rem 0; }
+
+/* Schwebender Kamera-Knopf */
+.fab { position: fixed; right: 1rem; bottom: calc(var(--nav-h) + 1rem); z-index: 25; height: 3.5rem; min-width: 3.5rem; border-radius: 999px; border: 0; background: var(--grad-primary); color: var(--on-primary); display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: 0 1.1rem; font-weight: 700; box-shadow: var(--shadow); cursor: pointer; text-decoration: none; }
+.fab svg { width: 22px; height: 22px; }
+@media (min-width: 992px) { .fab { bottom: 1.5rem; right: 1.5rem; } }
+
+/* Toast mit Rückgängig */
+.toast { position: fixed; left: 50%; bottom: calc(var(--nav-h) + 5.2rem); transform: translateX(-50%); z-index: 70; display: flex; gap: .8rem; align-items: center; background: var(--text); color: var(--bg); padding: .55rem .6rem .55rem 1rem; border-radius: 12px; box-shadow: var(--shadow); max-width: calc(100vw - 2rem); font-size: 14px; animation: up var(--t-mid) var(--ease-out); }
+.toast button { background: none; border: 0; color: var(--bg); font-weight: 800; text-decoration: underline; min-height: 2.2rem; cursor: pointer; padding: 0 .4rem; }
+@media (min-width: 992px) { .toast { bottom: 2rem; } }
+
+/* Popover Herkunft */
+.tip { position: fixed; z-index: 65; max-width: 19rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: .7rem .8rem; font-size: 13.5px; }
+.tip dl { display: grid; grid-template-columns: auto 1fr; gap: .2rem .7rem; margin: .3rem 0 .5rem; }
+.tip dt { color: var(--muted); }
+.tip dd { margin: 0; }
+
+/* Leere, Laden, Fehler */
+.empty { border: 1.5px dashed var(--border); border-radius: var(--radius-card); padding: 1.6rem 1rem; text-align: center; display: grid; gap: .6rem; justify-items: center; }
+.empty svg { width: 36px; height: 36px; color: var(--muted); }
+.empty .h { font-weight: 700; }
+.skel { border-radius: var(--radius-card); background: linear-gradient(90deg, var(--surface), var(--raised), var(--surface)); background-size: 200% 100%; animation: sk 1.2s linear infinite; height: 9rem; margin-bottom: .8rem; }
+@keyframes sk { to { background-position: -200% 0; } }
+.err { border: 1px solid var(--bad); background: var(--bad-soft); color: var(--text); border-radius: var(--radius-card); padding: .9rem; display: grid; gap: .5rem; }
+.err b { color: var(--bad); }
+.banner { border: 1px solid var(--warn); background: var(--warn-soft); border-radius: var(--radius-card); padding: .65rem .9rem; display: flex; gap: .7rem; align-items: center; flex-wrap: wrap; margin-bottom: .9rem; font-size: 14px; }
+.banner b { color: var(--warn); }
+
+/* Diagramme */
+.chart { border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); padding: .8rem; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin-top: .4rem; }
+.chart .legend i { display: inline-block; width: 1.2rem; height: 0; border-top: 2px solid var(--primary); vertical-align: middle; margin-right: .3rem; }
+.chart .legend i.dash { border-top-style: dashed; }
+.chart .legend i.min { border-top-color: var(--bad); }
+.wheels { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.wheel { border: 1px solid var(--line); border-radius: 12px; padding: .6rem .7rem; background: var(--surface); }
+.wheel .p { font-size: 12px; color: var(--muted); font-weight: 600; }
+.wheel .v { font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Reifen */
+.tires { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); }
+.tire { border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); padding: .9rem; display: grid; gap: .5rem; }
+.tire.on { border-color: var(--primary); box-shadow: inset 4px 0 0 var(--primary); }
+.tire .hd { display: flex; gap: .5rem; align-items: center; }
+.tire .hd b { overflow-wrap: anywhere; }
+.tire dl { display: grid; grid-template-columns: auto 1fr; gap: .15rem .8rem; margin: 0; font-size: 13.5px; }
+.tire dt { color: var(--muted); }
+.tire dd { margin: 0; }
+
+/* Teile */
+.copy { display: inline-flex; align-items: center; gap: .3rem; font: 600 13px/1 ui-monospace, Consolas, monospace; border: 1px solid var(--border); border-radius: 8px; background: none; color: var(--text); min-height: 2rem; padding: 0 .55rem; cursor: pointer; }
+.copy svg { width: 14px; height: 14px; color: var(--muted); }
+.copy:hover { border-color: var(--primary); }
+
+/* Belege-Raster */
+.docs { display: grid; gap: .7rem; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); }
+.doc { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; text-align: left; padding: 0; cursor: pointer; }
+.doc .pv { aspect-ratio: 3/4; background: repeating-linear-gradient(0deg, var(--raised) 0 10px, var(--surface) 10px 12px); display: grid; place-items: center; color: var(--muted); }
+.doc .pv svg { width: 30px; height: 30px; }
+.doc .cap { padding: .45rem .55rem; font-size: 12.5px; }
+.doc .cap b { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Stammdaten */
+.facts { display: grid; grid-template-columns: 1fr; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.fact { display: grid; grid-template-columns: minmax(6.5rem, 11rem) 1fr 6.8rem; gap: .6rem; padding: .55rem .9rem; border-top: 1px solid var(--line); align-items: center; font-size: 14px; }
+.fact:first-child { border-top: 0; }
+.fact .k { color: var(--muted); font-size: 13px; }
+.fact .v { display: flex; flex-wrap: wrap; gap: .1rem .5rem; align-items: baseline; min-width: 0; overflow-wrap: anywhere; }
+.fact .b { justify-self: start; }
+.fact.disputed .v > span:first-child { color: var(--warn); font-weight: 600; }
+
+/* Auswahl (gestaltet statt Browser-Element) */
+.dd { position: relative; display: inline-block; }
+.dd > button { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.4rem; padding: 0 .75rem 0 .9rem; border: 1px solid var(--border); border-radius: var(--radius-field); background: var(--grad-surface); color: var(--text); cursor: pointer; font-weight: 600; font-size: 14px; }
+.dd > button:hover { border-color: var(--primary); }
+.dd > button svg { width: 16px; height: 16px; color: var(--muted); transition: transform var(--t-fast); }
+.dd > button[aria-expanded='true'] svg { transform: rotate(180deg); }
+.dd [role=listbox] { position: absolute; right: 0; top: calc(100% + 4px); z-index: 40; min-width: 100%; width: max-content; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: .3rem; margin: 0; list-style: none; }
+.dd.up [role=listbox] { top: auto; bottom: calc(100% + 4px); }
+.dd [role=option] { display: flex; align-items: center; gap: .6rem; min-height: var(--touch); padding: 0 .8rem 0 .6rem; border-radius: 8px; cursor: pointer; color: var(--text); }
+.dd [role=option]::before { content: ''; width: 1rem; text-align: center; color: var(--primary); font-weight: 800; }
+.dd [role=option][aria-selected='true'] { background: var(--grad-hi); }
+.dd [role=option][aria-selected='true']::before { content: '✓'; }
+.dd [role=option]:hover, .dd [role=option].active { background: var(--raised); }
+
+/* Hintergrundbild des Inhaltsbereichs: nur Struktur, kaum sichtbar */
+.content { position: relative; isolation: isolate; min-width: 0; }
+.content::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: url('_entwurf-oberflaeche/hintergrund.jpg') center bottom / cover no-repeat; opacity: .16; }
+:root[data-theme='light'] .content::before { filter: invert(1) hue-rotate(180deg); opacity: .07; }
+@media (min-width: 992px) { .content::before { left: var(--side-w); } }
+
+/* Aktionen am Fahrzeug, direkt sichtbar */
+.vacts { display: flex; gap: .3rem; flex-wrap: wrap; margin-left: auto; }
+.vacts .btn { min-height: 2.1rem; padding: 0 .65rem; font-size: 13px; font-weight: 600; gap: .35rem; }
+.vacts .btn svg { width: 16px; height: 16px; }
+@media (max-width: 767px) { .vacts { margin-left: -.45rem; width: calc(100% + .45rem); gap: 0; flex-wrap: nowrap; } .vacts .btn { padding: 0 .45rem; } }
+.facts.two { display: grid; }
+@media (min-width: 992px) { .facts.two { grid-template-columns: 1fr 1fr; } .facts.two .fact:nth-child(2) { border-top: 0; } .facts.two .fact:nth-child(even) { border-left: 1px solid var(--line); } }
+
+/* Flächen mit Verlauf (dunkel: Schwarz-Grau, hell: Weiß) */
+.list, .kpis, .car, .ev .card, .oi, .tire, .chart, .facts, .wheel, .doc, .tbl { background: var(--grad-surface); }
+.group { background: linear-gradient(180deg, color-mix(in oklab, var(--bg-deep) 70%, transparent) 0%, transparent 70%); }
+.bottom { background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%); }
+.tabs a[aria-selected='true'] { background: linear-gradient(0deg, color-mix(in oklab, var(--primary) 14%, transparent) 0%, transparent 70%); }
+.tire.on, .car:hover { border-color: var(--primary); }
+
+/* Druckansicht */
+.print { background: #fff; color: #111; border-radius: 6px; padding: 1.4rem; max-width: 46rem; margin: 0 auto; font-size: 13px; box-shadow: var(--shadow); }
+.print h1 { font-size: 1.4rem; margin: 0 0 .2rem; }
+.print h2 { font-size: 1rem; margin: 1.1rem 0 .3rem; border-bottom: 1.5px solid #111; padding-bottom: .15rem; }
+.print table { width: 100%; border-collapse: collapse; }
+.print td, .print th { border-bottom: 1px solid #ccc; padding: .25rem .3rem; text-align: left; vertical-align: top; }
+.print .h { color: #555; font-size: 11px; }
+@media print { .dz, .side, .bottom, .brandbar, .why, .no-print, .fab { display: none !important; } .print { box-shadow: none; } main { padding: 0; } }
+</style>
+</head>
+<body class="has-dz">
+
+<div class="dz" role="region" aria-label="Entwurfsleiste">
+  <b>Entwurf M4 · Oberfläche</b>
+  <label>Thema <select id="dz-theme"><option value="dark">dunkel</option><option value="light">hell</option></select></label>
+  <label>Rolle <select id="dz-role"><option value="inhaber">Inhaber</option><option value="mitglied">Mitglied</option><option value="lesend">lesend</option></select></label>
+  <label>Zustand <select id="dz-state"><option value="normal">normal</option><option value="leer">leer / erster Start</option><option value="laden">lädt</option><option value="fehler">Fehler</option></select></label>
+  <label><input type="checkbox" id="dz-tools"> Werkzeug zeigen</label>
+  <label>Springen <select id="dz-jump">
+    <option value="">…</option>
+    <option value="#garage">Garage</option>
+    <option value="#fz/golf/uebersicht">Golf · Übersicht</option>
+    <option value="#fz/golf/scheckheft">Golf · Scheckheft</option>
+    <option value="#fz/golf/wartung">Golf · Wartung</option>
+    <option value="#fz/golf/messwerte">Golf · Messwerte</option>
+    <option value="#fz/clio/reifen">Clio · Reifen</option>
+    <option value="#fz/golf/teile">Golf · Teile</option>
+    <option value="#fz/golf/belege">Golf · Belege</option>
+    <option value="#klaerfaelle">Klärfälle</option>
+    <option value="#eingang">Eingang</option>
+    <option value="#konto">Konto</option>
+    <option value="#druck/golf">Akte drucken (Golf)</option>
+  </select></label>
+  <span class="bp" id="dz-bp">–</span>
+  <span class="whytxt" id="dz-why"></span>
+</div>
+
+<div class="shell">
+  <nav class="side" aria-label="Hauptnavigation">
+    <a class="logo" href="#garage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-6 9 6"/><path d="M5 10v9h14v-9"/><path d="M12 19c0-4 2-6 5-6-1 3-2 5-5 6z"/></svg>GARAGE</a>
+    <a class="nav" data-nav="garage" href="#garage">ICON_GARAGE<span>Garage</span></a>
+    <a class="nav" data-nav="eingang" href="#eingang">ICON_INBOX<span>Eingang</span><span class="count" data-c="inbox"></span></a>
+    <a class="nav" data-nav="klaerfaelle" href="#klaerfaelle">ICON_OI<span>Klärfälle</span><span class="count" data-c="oi"></span></a>
+    <a class="nav" data-nav="konto" href="#konto">ICON_USER<span>Konto</span></a>
+    <div class="foot">Sascha · Familie <span class="bsp">Beispiel</span></div>
+  </nav>
+  <div class="content">
+    <div class="brandbar"><a class="logo" href="#garage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-6 9 6"/><path d="M5 10v9h14v-9"/><path d="M12 19c0-4 2-6 5-6-1 3-2 5-5 6z"/></svg>GARAGE</a><span class="who">Sascha</span></div>
+    <main id="main" tabindex="-1"></main>
+  </div>
+  <nav class="bottom" aria-label="Hauptnavigation">
+    <a data-nav="garage" href="#garage">ICON_GARAGE<span>Garage</span></a>
+    <a data-nav="eingang" href="#eingang">ICON_INBOX<span>Eingang</span><span class="count" data-c="inbox"></span></a>
+    <a data-nav="klaerfaelle" href="#klaerfaelle">ICON_OI<span>Klärfälle</span><span class="count" data-c="oi"></span></a>
+    <a data-nav="konto" href="#konto">ICON_USER<span>Konto</span></a>
+  </nav>
+</div>
+<div id="layer"></div>
+
+<script type="module">
+/* ===== Symbole ===== */
+const I = {
+  garage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-6 9 6v10H3z"/><path d="M7 20v-6h10v6"/><path d="M7 17h10"/></svg>',
+  inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13l2-8h12l2 8"/><path d="M4 13v6h16v-6h-5l-1 2h-4l-1-2z"/></svg>',
+  oi: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h4v4H7zM13 16h4v4h-4z"/><path d="M9 8v4a4 4 0 0 0 4 4"/><path d="M15 4l2 2-2 2"/></svg>',
+  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+  more: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+  cam: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  car: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 15l2-6h14l2 6v3H3z"/><circle cx="7.5" cy="18" r="1.6"/><circle cx="16.5" cy="18" r="1.6"/><path d="M5 12h14"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>',
+  photo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/></svg>',
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>',
+  tl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 3v18"/><circle cx="6" cy="7" r="2"/><circle cx="6" cy="17" r="2"/><path d="M10 7h10M10 17h10"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  print: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>',
+  src: {
+    beleg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/></svg>',
+    werkstatt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5l-6 6 3 3 6-6a4 4 0 0 0 5-5l-3 3-3-3z"/></svg>',
+    nutzer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>',
+    recherche: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg>',
+    agent: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01"/></svg>'
+  }
+};
+document.body.innerHTML = document.body.innerHTML.replaceAll('ICON_GARAGE', I.garage).replaceAll('ICON_INBOX', I.inbox).replaceAll('ICON_OI', I.oi).replaceAll('ICON_USER', I.user);
+
+/* ===== Daten (aus Konzept-Bestandsaufnahme; Ergänzungen als Beispiel) ===== */
+const B = '<span class="bsp">Beispiel</span>';
+const SRC_LABEL = { beleg: 'Beleg', werkstatt: 'Werkstatt', nutzer: 'Nutzer', recherche: 'Recherche', agent: 'Agent' };
+const CONF_LABEL = { bestaetigt: 'bestätigt', wahrscheinlich: 'wahrscheinlich', unsicher: 'unsicher' };
+const D = {
+  garages: [{ id: 1, name: 'Familie', role: 'inhaber' }],
+  vehicles: {
+    golf: { id: 'golf', label: 'Golf Sportsvan', model: 'VW Golf Sportsvan 1.5 TSI DSG', plate: 'F GS 419', status: 'aktiv', photo: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=900&q=60',
+      km: 27310, kmBasis: '26.921 km am 06.10.2026, ≈ 9 km/Tag aus den letzten zwei Ständen', next: { t: 'DSG-Öl wechseln', s: 'bad', when: 'überfällig seit 04/2025' }, oi: 7, docsOpen: 1, docs: 18, ez: '04/2019' },
+    clio: { id: 'clio', label: 'Clio III', model: 'Renault Clio III 1.2 16V', plate: 'F CL 812', status: 'aktiv', photo: null,
+      km: 148200, kmBasis: '147.650 km am 04.04.2026, ≈ 2,4 km/Tag', next: { t: 'Innenraumfilter', s: 'bad', when: 'überfällig seit 01/2026' }, oi: 3, docsOpen: 0, docs: 41, ez: '09/2012' },
+    polo: { id: 'polo', label: 'Polo 6N', model: 'VW Polo 6N 1.4', plate: 'F PO 77', status: 'verkauft', photo: null, km: null, next: null, oi: 0, docs: 6, ez: '03/1998', reason: 'verkauft 2023' },
+    golf2: { id: 'golf2', label: 'Golf (doppelt)', model: 'VW Golf Sportsvan', plate: 'F GS 419', status: 'geloescht', photo: null, km: null, next: null, oi: 0, docs: 0, ez: '04/2019', reason: 'gelöscht am 12.11.2026 · doppelt angelegt · noch 24 Tage wiederherstellbar' }
+  },
+  facts: {
+    golf: [
+      ['FIN', 'WVWZZZAUZKW1•••••', 'beleg', 'bestaetigt', 'Fahrzeugschein'],
+      ['Erstzulassung', '04/2019', 'beleg', 'bestaetigt', 'Fahrzeugschein'],
+      ['Motor / Getriebe', 'DADA · DSG 7-Gang (DQ200)', 'beleg', 'bestaetigt', 'Fahrzeugschein'],
+      ['Motoröl (Spezifikation)', '5W-30', 'recherche', 'wahrscheinlich', 'Herstellerangabe', 'disputed'],
+      ['Reifengröße', '205/55 R16', 'beleg', 'bestaetigt', 'Fahrzeugschein'],
+      ['Kauf', '13.000 € bei 17.000 km', 'beleg', 'bestaetigt', 'Kaufvertrag'],
+      ['Halter', '1 (seit Kauf)', 'nutzer', 'wahrscheinlich', 'Angabe Sascha']
+    ]
+  },
+  due: {
+    golf: [
+      { t: 'DSG-Öl wechseln', rule: '60.000 km oder 72 Monate', last: 'nie belegt', next: '04/2025', km: '60.000 km', s: 'bad', label: 'überfällig', p: 100, unsure: true, src: ['recherche', 'unsicher', 'Forum-Recherche, nicht vom Hersteller'] },
+      { t: 'Bremsflüssigkeit', rule: '24 Monate', last: '01/2025', next: '01/2027', km: '–', s: 'warn', label: 'in 2 Monaten', p: 92, src: ['werkstatt', 'bestaetigt', 'Serviceplan Werkstatt'] },
+      { t: 'Hauptuntersuchung', rule: '24 Monate', last: '03/2025', next: '03/2027', km: '–', s: 'ok', label: 'in 4 Monaten', p: 83, src: ['beleg', 'bestaetigt', 'HU-Bericht 03/2025'] },
+      { t: 'Ölwechsel', rule: '15.000 km oder 12 Monate', last: '06.10.2026 · 26.921 km', next: '10/2027', km: '41.921 km', s: 'ok', label: 'in 11 Monaten', p: 8, src: ['werkstatt', 'bestaetigt', 'Serviceplan Werkstatt'] },
+      { t: 'Inspektion', rule: '30.000 km oder 24 Monate', last: '02.03.2026 · 25.880 km', next: '03/2028', km: '55.880 km', s: 'ok', label: 'in 16 Monaten', p: 35, src: ['werkstatt', 'bestaetigt', 'Serviceplan Werkstatt'] },
+      { t: 'Schiebedach-Wasserabläufe', rule: '24 Monate', last: '03/2026', next: '03/2028', km: '–', s: 'ok', label: 'in 16 Monaten', p: 35, src: ['werkstatt', 'wahrscheinlich', 'Hinweis Werkstatt'] },
+      { t: 'Zündkerzen', rule: '60.000 km oder 72 Monate', last: 'nie belegt', next: '–', km: '–', s: 'unk', label: 'unbekannt', p: 0, src: ['recherche', 'wahrscheinlich', 'Herstellerangabe'] }
+    ]
+  },
+  events: {
+    golf: [
+      { y: 2026, d: '06.10.2026', kind: 'Reparatur', t: 'Klimaservice und Ölwechsel', km: '26.921 km', ws: 'Autohaus Main GmbH', sum: '389,40 €', src: ['beleg', 'bestaetigt'], items: [['Arbeit', 'Kältemittel ablassen und auffüllen', '89,00 €'], ['Material', 'Motoröl 0W-20, 4,5 l', '72,45 €'], ['Teil', 'Ölfilter 04E 115 561 H', '18,90 €'], ['Arbeit', 'Ölwechsel', '49,00 €']], docs: ['Rechnung 4711', 'Auftrag'], warn: 'Öl 0W-20 widerspricht Spezifikation 5W-30 → Klärfall' },
+      { y: 2026, d: '02.03.2026', kind: 'Inspektion', t: 'Inspektion mit Ölwechsel', km: '25.880 km', ws: 'Autohaus Main GmbH', sum: '512,10 €', src: ['beleg', 'bestaetigt'], items: [['Arbeit', 'Inspektion nach Herstellervorgabe', '210,00 €'], ['Teil', 'Pollenfilter', '28,40 €'], ['Arbeit', 'Schiebedach-Abläufe reinigen', '32,00 €']], docs: ['Rechnung 3920'] },
+      { y: 2025, d: '18.03.2025', kind: 'HU', t: 'Hauptuntersuchung ohne Mängel', km: '23.410 km', ws: 'TÜV Süd', sum: '149,00 €', src: ['beleg', 'bestaetigt'], items: [], docs: ['HU-Bericht'] },
+      { y: 2025, d: '14.01.2025', kind: 'Inspektion', t: 'Bremsflüssigkeit gewechselt', km: '22.900 km', ws: 'Autohaus Main GmbH', sum: '119,00 €', src: ['beleg', 'bestaetigt'], items: [], docs: ['Rechnung 2214'] },
+      { gap: true, y: 2024, t: 'Lücke: Inspektion 2024 fehlt', why: 'Regel 24 Monate: nach 03/2022 fällig bis 03/2024, nächste belegte 03/2026' },
+      { y: 2022, d: '09.03.2022', kind: 'Inspektion', t: 'Inspektion', km: '19.800 km', ws: 'Autohaus Main GmbH', sum: '398,70 €', src: ['beleg', 'bestaetigt'], items: [], docs: ['Rechnung 1033'] },
+      { y: 2021, d: '21.06.2021', kind: 'Kauf', t: 'Kauf vom Händler', km: '17.000 km', ws: 'Autohaus Beispiel', sum: '13.000,00 €', src: ['beleg', 'bestaetigt'], items: [], docs: ['Kaufvertrag'] }
+    ]
+  },
+  openItems: [
+    { id: 1, v: 'golf', kind: 'konflikt', q: 'Motoröl: Rechnung nennt 0W-20, Spezifikation 5W-30', a: ['5W-30', 'recherche', 'wahrscheinlich', 'Herstellerangabe, Agent 03/2026'], b: ['0W-20', 'beleg', 'bestaetigt', 'Rechnung 4711 vom 06.10.2026'], by: 'Agent (Claude) im Auftrag von Sascha' },
+    { id: 2, v: 'golf', kind: 'konflikt', q: 'Kilometerstand 06.10.2026: Auftrag und Rechnung weichen ab', a: ['26.910 km', 'beleg', 'bestaetigt', 'Auftrag'], b: ['26.921 km', 'beleg', 'bestaetigt', 'Rechnung 4711'], by: 'Agent (ChatGPT) im Auftrag von Sascha' },
+    { id: 3, v: 'golf', kind: 'nachfragen', q: 'DSG-Regel „60.000 km oder 6 Jahre“ ist unbelegt — meldet überfällig seit 04/2025, der Text plant 2028/2029.', suggestion: 'Werkstatt nach Herstellervorgabe DQ200 fragen.', by: 'Agent (Claude)' },
+    { id: 4, v: 'golf', kind: 'nachfragen', q: 'Auftrag nennt „Kühlmittel-Service“, Rechnung „Kältemittel ablassen und auffüllen“ — zwei verschiedene Kreisläufe.', by: 'Agent (Claude)' },
+    { id: 5, v: 'golf', kind: 'beobachten', q: 'Batterie beobachten: 12,4 V Ruhespannung im Januar.', by: 'Sascha' },
+    { id: 6, v: 'clio', kind: 'nachfragen', q: 'Innenraumfilter: Regel jährlich, letzter Tausch 01/2025, Inspektion 04/2026 ohne Filter.', by: 'Agent (Claude)' },
+    { id: 7, v: 'clio', kind: 'beobachten', q: 'Kühlmittelstand auf MIN — nach 500 km erneut prüfen.', by: 'Sascha' }
+  ],
+  measurements: {
+    golf: { km: [['06/21', 17000], ['03/22', 19800], ['01/25', 22900], ['03/25', 23410], ['03/26', 25880], ['10/26', 26921]], prog: [['10/26', 26921], ['11/26', 27310], ['03/27', 28400]],
+      tread: [{ d: '02.03.2026', v: { VL: 5.1, VR: 5.0, HL: 5.8, HR: 5.9 } }, { d: '18.03.2025', v: { VL: 6.2, VR: 6.1, HL: 6.6, HR: 6.7 } }],
+      other: [['Batterie Ruhespannung', '12,4 V', '27.01.2026', 'werkstatt', 'bestaetigt'], ['Frostschutz', '−25 °C', '02.03.2026', 'werkstatt', 'bestaetigt'], ['Reifendruck vorne', '2,5 bar', '06.10.2026', 'nutzer', 'wahrscheinlich']] }
+  },
+  tires: {
+    clio: [
+      { label: 'Sommer Michelin', brand: 'Michelin Energy Saver', size: '185/60 R15', season: 'Sommer', dot: '2321', age: 5, where: 'Keller, Regal 2', on: true, since: '04.04.2026 · 147.650 km', tread: '4,8 mm' },
+      { label: 'Winter Conti', brand: 'Continental WinterContact TS 860', size: '185/60 R15', season: 'Winter', dot: '4119', age: 7, where: 'Reifenhotel Autohaus', on: false, since: 'eingelagert seit 04.04.2026', tread: '4,1 mm', warn: 'DOT-Alter 7 Jahre' }
+    ]
+  },
+  parts: {
+    golf: [
+      { c: 'Ölfilter', items: [['verbaut', 'VW', '04E 115 561 H', '04E 115 561 H', true], ['alternative', 'Bosch', 'F 026 407 183', '04E 115 561 H', true], ['alternative', 'Mann', 'HU 6013 z', '04E 115 561 H', false]] },
+      { c: 'Luftfilter', items: [['verbaut', 'VW', '04E 129 620 A', '04E 129 620 A', true], ['alternative', 'Bosch', 'F 026 400 449', '04E 129 620 A', false]] },
+      { c: 'Innenraumfilter', items: [['verbaut', 'VW', '5Q0 819 653', '5Q0 819 653', true]] },
+      { c: 'Zündkerzen', items: [['verbaut', 'NGK', 'PFR7S8EG', '04E 905 612 C', false]] },
+      { c: 'Motoröl', items: [['verbaut', 'Castrol', 'EDGE 0W-20 LL IV', 'VW 508 00', false]] }
+    ]
+  },
+  inbox: [
+    { t: 'Rechnung Reifenwechsel', v: 'clio', s: 'neu', d: 'heute, 09:14', n: '2 Seiten' },
+    { t: 'Foto Tachostand', v: 'golf', s: 'in_arbeit', d: 'gestern', n: 'Claude bearbeitet, reserviert bis 14:30' },
+    { t: 'Police KFZ 2027', v: null, s: 'klaerfall', d: '12.11.', n: 'Welches Fahrzeug?' },
+    { t: 'HU-Bericht Clio', v: 'clio', s: 'erfasst', d: '04.11.', n: 'Ereignis angelegt' }
+  ]
+};
+
+/* ===== Zustand ===== */
+const narrow = () => innerWidth < 768;
+const S = { role: 'inhaber', state: 'normal', views: { scheckheft: 'tl', wartung: narrow() ? 'cards' : 'tbl' }, deleted: new Set(), resolved: new Set(), openMenu: false, filter: 'aktiv', look: 'Dunkel' };
+const canWrite = () => S.role !== 'lesend';
+const canResolve = () => S.role !== 'lesend';
+const isOwner = () => S.role === 'inhaber';
+const tool = (t) => `<span class="tool">${t}</span>`;
+const $ = (s, r = document) => r.querySelector(s);
+const main = $('#main');
+const layer = $('#layer');
+
+function badge(src, conf, note = '') {
+  return `<button class="src ${conf}" type="button" data-src="${src}" data-conf="${conf}" data-note="${note}" aria-label="Herkunft: ${SRC_LABEL[src]}, ${CONF_LABEL[conf]}">${I.src[src]}${SRC_LABEL[src]}<span class="c" aria-hidden="true"></span></button>`;
+}
+function plate(p, lg = false) {
+  return `<span class="plate${lg ? ' lg' : ''}" aria-label="Kennzeichen ${p}"><span class="eu" aria-hidden="true">D</span><span class="num">${p.replace(' ', ' · ').replace(/ (\d)/, ' $1')}</span></span>`;
+}
+function st(s, text) { return `<span class="st ${s}">${text}</span>`; }
+function openOi(v) { return D.openItems.filter(o => (!v || o.v === v) && !S.resolved.has(o.id)); }
+
+let WHY = '';
+function why(text) { WHY = text; return ''; }
+function dd(id, label, options, value) {
+  return `<div class="dd" data-dd="${id}"><button type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="${label}: ${value}"><span>${value}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    <ul role="listbox" aria-label="${label}" hidden>${options.map(o => `<li role="option" tabindex="-1" aria-selected="${o === value}">${o}</li>`).join('')}</ul></div>`;
+}
+function stateBlock(kind, next) {
+  if (S.state === 'laden') return '<div role="status" aria-live="polite" class="sr-only">Lädt …</div><div class="skel"></div><div class="skel"></div>';
+  if (S.state === 'fehler') return `<div class="err" role="alert"><b>GARAGE ist gerade nicht erreichbar.</b><span>Deine Daten sind sicher. Prüfe die Verbindung und lade neu.</span><div><button class="btn sm" type="button" data-act="reload">Neu laden</button></div></div>`;
+  if (S.state === 'leer') return `<div class="empty">${I.car}<div class="h">${kind}</div><div class="muted small">${next}</div></div>`;
+  return null;
+}
+
+/* ===== Garage ===== */
+function viewGarage() {
+  const s = stateBlock('Noch kein Fahrzeug', 'Sag deinem Agenten im Chat: „Leg meinen Golf in GARAGE an“ und gib ihm ein Foto vom Fahrzeugschein.');
+  const all = Object.values(D.vehicles);
+  const shown = all.filter(v => S.filter === 'gelöscht' ? v.status === 'geloescht' : v.status !== 'geloescht' && (S.filter === 'alle' || v.status === S.filter));
+  const overdue = 2, oiN = openOi().length;
+  return `<h1 class="sr-only">Garage</h1>
+  ${why('Auf einen Blick sehen, welches Auto Aufmerksamkeit braucht, und hineinspringen. Häufigste Aufgabe: „Steht was an?“ — deshalb Fälligkeit und Klärfälle auf jeder Karte.')}
+  ${s ?? `
+  <div class="kpis" role="list">
+    <div class="kpi" role="listitem"><a href="#garage"><div class="v">2</div><div class="l">Fahrzeuge aktiv</div></a></div>
+    <div class="kpi bad" role="listitem"><a href="#fz/golf/wartung"><div class="v">${overdue}</div><div class="l">überfällig</div></a></div>
+    <div class="kpi warn" role="listitem"><a href="#klaerfaelle"><div class="v">${oiN}</div><div class="l">Klärfälle offen</div></a></div>
+    <div class="kpi" role="listitem"><a href="#eingang"><div class="v">1</div><div class="l">neu im Eingang</div></a></div>
+  </div>
+  <div class="sec">
+    <div class="tb" role="group" aria-label="Status filtern">
+      ${['aktiv', 'verkauft', 'stillgelegt', 'alle', ...(isOwner() ? ['gelöscht'] : [])].map(f => `<button type="button" class="chip" data-filter="${f}" aria-pressed="${S.filter === f}">${f[0].toUpperCase() + f.slice(1)}</button>`).join('')}
+    </div>
+    <div class="group">
+      <div class="group-h"><h2>Familie</h2>${B}<span class="muted small">Inhaber · 2 aktiv, 1 verkauft</span></div>
+      <div class="cars">${shown.map(carCard).join('') || `<div class="empty"><div class="h">Kein Fahrzeug mit diesem Status</div><button class="btn sm" data-filter="alle" type="button">Alle zeigen</button></div>`}</div>
+    </div>
+  </div>
+  <p class="muted small">Unterhalt pro Monat und Wertspanne erscheinen hier mit Meilenstein 5 — bis dahin keine Platzhalter.</p>`}`;
+}
+function carCard(v) {
+  const thumb = v.photo ? `<div class="thumb" style="background-image:url('${v.photo}')" role="img" aria-label="Titelbild ${v.label}"></div>` : `<div class="thumb">${I.car}</div>`;
+  const retired = v.status !== 'aktiv';
+  if (v.status === 'geloescht') return `<div class="car retired"><div class="in"><div class="top"><div class="thumb">${I.car}</div><div style="min-width:0;display:grid;gap:.35rem">${plate(v.plate)}<div class="name">${v.label}</div></div></div>
+    <div class="muted small">${v.reason}</div><div><button class="btn sm" type="button" data-act="restorecar">Wiederherstellen</button>${tool('POST /garage/api/vehicles/{id}/restore · nur Inhaber')}</div></div></div>`;
+  return `<a class="car${retired ? ' retired' : ''}" href="#fz/${v.id}/uebersicht">
+    ${v.photo ? `<div class="bg" style="background-image:url('${v.photo}')"></div>` : ''}
+    <div class="in">
+      <div class="top">${thumb}<div style="min-width:0;display:grid;gap:.35rem">${plate(v.plate)}<div class="name">${v.label}${v.photo ? B : ''}</div></div></div>
+      ${retired ? `<div class="muted small">${st('ok', v.reason)}</div>` : `
+      <dl class="meta">
+        <div><dt>km heute</dt><dd><span class="est" title="Geschätzt: ${v.kmBasis}">≈ ${v.km.toLocaleString('de-DE')}</span></dd></div>
+        <div><dt>Nächste Fälligkeit</dt><dd>${st(v.next.s, v.next.t)}<div class="muted small">${v.next.when}</div></dd></div>
+      </dl>
+      <div class="foot">${v.oi ? `<span class="st warn">${openOi(v.id).length} Klärfälle</span>` : '<span class="st ok">keine Klärfälle</span>'}<span class="muted">${v.docs} Belege</span>${tool('list_vehicles')}</div>`}
+    </div></a>`;
+}
+
+/* ===== Fahrzeug ===== */
+const TABS = [['uebersicht', 'Übersicht'], ['scheckheft', 'Scheckheft'], ['wartung', 'Wartung'], ['messwerte', 'Messwerte'], ['reifen', 'Reifen'], ['teile', 'Teile'], ['belege', 'Belege']];
+function viewVehicle(id, tab) {
+  const v = D.vehicles[id] ?? D.vehicles.golf;
+  const head = `<h1 class="sr-only">${v.label} – ${TABS.find(t => t[0] === tab)?.[1]}</h1>
+  <div class="vhead">
+    <a class="back" href="#garage">${I.back}Garage</a>
+    ${plate(v.plate)}<span class="nm">${v.label}</span>
+    ${v.status !== 'aktiv' ? st('ok', v.status) : ''}
+    <div class="vacts" role="group" aria-label="Aktionen zum Fahrzeug">
+      <button class="btn quiet" type="button" data-act="print">${I.print}Drucken</button>
+      <button class="btn quiet" type="button" data-act="md">${I.doc}Markdown</button>
+      ${isOwner() ? `<button class="btn quiet" type="button" data-act="status">${I.car}Status</button>
+      <button class="btn quiet" type="button" data-act="delcar" style="color:var(--bad)">${I.trash}Löschen</button>` : ''}
+    </div>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Bereiche des Fahrzeugs">
+    ${TABS.map(([k, l]) => `<a role="tab" href="#fz/${v.id}/${k}" aria-selected="${k === tab}">${l}${k === 'uebersicht' && openOi(v.id).length ? `<span class="count">${openOi(v.id).length}</span>` : ''}</a>`).join('')}
+  </nav>`;
+  const body = ({ uebersicht: tabOverview, scheckheft: tabBook, wartung: tabPlan, messwerte: tabMeasure, reifen: tabTires, teile: tabParts, belege: tabDocs })[tab](v);
+  const fab = v.status === 'aktiv' && canWrite() ? `<a class="fab" href="#eingang" aria-label="Beleg fotografieren">${I.cam}<span>Beleg</span></a>` : '';
+  return head + `<div class="panel" data-tab="${tab}">${body}</div>` + fab;
+}
+
+function dueList(v, n = 4) {
+  const items = (D.due[v.id] ?? D.due.golf).slice(0, n);
+  return `<div class="list">${items.map(d => `<a class="row" href="#fz/${v.id}/wartung">
+    <span class="t">${d.t}</span><span class="r">${st(d.s, d.label)}</span>
+    <span class="s">nächstes ${d.next}${d.km !== '–' ? ' · ' + d.km : ''}${d.unsure ? ' · <span style="color:var(--warn)">Regel unsicher</span>' : ''}</span></a>`).join('')}</div>`;
+}
+function tabOverview(v) {
+  const s = stateBlock('Akte ist noch leer', 'Gib deinem Agenten einen Beleg im Chat oder leg ihn über den Kamera-Knopf in den Eingang.');
+  if (s) return s;
+  const ois = openOi(v.id);
+  const facts = D.facts[v.id] ?? D.facts.golf;
+  return `${why('Was ist mit diesem Auto los? Dringendes zuerst (Fälligkeiten, Klärfälle), dann die Angaben. Jede Zeile führt in ihren Reiter.')}
+  <div class="kpis">
+    <div class="kpi"><div class="v"><span class="est" title="Geschätzt: ${v.kmBasis}">≈ ${v.km?.toLocaleString('de-DE')}</span></div><div class="l">km heute ${tool('get_vehicle.km_estimate')}</div></div>
+    <div class="kpi bad"><a href="#fz/${v.id}/wartung"><div class="v">1</div><div class="l">überfällig</div></a></div>
+    <div class="kpi warn"><a href="#fz/${v.id}/wartung"><div class="v">2</div><div class="l">bald oder unsicher</div></a></div>
+    <div class="kpi${ois.length ? ' warn' : ''}"><a href="#klaerfaelle"><div class="v">${ois.length}</div><div class="l">Klärfälle</div></a></div>
+  </div>
+  <div class="cols">
+    <div>
+      <div class="sec"><div class="sec-h"><h2>Fälligkeiten</h2><span class="muted small">nächste 36 Monate</span>${tool('get_due_items')}<a class="more" href="#fz/${v.id}/wartung">Wartungsplan</a></div>${dueList(v)}</div>
+      <div class="sec"><div class="sec-h"><h2>Letztes Ereignis</h2><a class="more" href="#fz/${v.id}/scheckheft">Scheckheft</a></div>
+        <div class="list"><a class="row" href="#fz/${v.id}/scheckheft"><span class="t">Klimaservice und Ölwechsel</span><span class="r">389,40 €</span><span class="s">06.10.2026 · 26.921 km · Autohaus Main GmbH ${B}</span></a></div></div>
+    </div>
+    <div>
+      <div class="sec"><div class="sec-h"><h2>Klärfälle</h2>${tool('list_open_items')}<a class="more" href="#klaerfaelle">Alle lösen</a></div>
+        ${ois.length ? `<div class="list">${ois.slice(0, 3).map(o => `<a class="row" href="#klaerfaelle"><span class="t">${o.q}</span><span class="r">${st(o.kind === 'konflikt' ? 'warn' : 'ok', o.kind)}</span></a>`).join('')}</div>` : '<p class="muted">Keine offenen Klärfälle.</p>'}</div>
+      <div class="sec"><div class="sec-h"><h2>Notizen</h2>${tool('upsert_note')}</div>
+        <div class="list"><details class="row" style="display:block"><summary style="cursor:pointer"><b>DSG-Langlebigkeitsstrategie</b> <span class="muted small">· Revision 3</span></summary><p class="small">Ölwechsel DSG vorziehen auf 60.000 km; Kupplung schonen: im Stau N statt D … ${B}</p></details></div></div>
+      <div class="sec"><div class="sec-h"><h2>Schäden und Rückrufe</h2></div><p class="muted small">Keine Schäden erfasst. Rückruf 24AB ${st('ok', 'erledigt')} ${B}</p></div>
+    </div>
+  </div>
+  <div class="sec"><div class="sec-h"><h2>Angaben</h2>${tool('get_vehicle')}<button class="btn quiet sm more" type="button" data-act="allfacts">Alle Angaben, Ausstattung, Zulassungen</button></div>
+    <div class="facts two">${facts.map(f => `<div class="fact${f[5] ? ' disputed' : ''}"><span class="k">${f[0]}</span><span class="v"><span>${f[1]}</span>${f[5] ? '<a class="small" href="#klaerfaelle">strittig</a>' : ''}</span><span class="b">${badge(f[2], f[3], f[4])}</span></div>`).join('')}</div></div>`;
+}
+
+function tabBook(v) {
+  const s = stateBlock('Noch keine Ereignisse', 'Gib deinem Agenten eine Werkstattrechnung — er legt das Ereignis mit allen Positionen an.');
+  if (s) return s;
+  const evs = (D.events[v.id] ?? D.events.golf).filter((e, i) => !S.deleted.has('ev' + i));
+  const view = S.views.scheckheft;
+  const toolbar = `<div class="tb"><span class="muted small">${evs.filter(e => !e.gap).length} Ereignisse · 1 Lücke ${tool('list_events')}</span>
+    <div class="seg" role="group" aria-label="Ansicht"><button type="button" data-view="scheckheft:tl" aria-pressed="${view === 'tl'}">${I.tl}Zeitstrahl</button><button type="button" data-view="scheckheft:tbl" aria-pressed="${view === 'tbl'}">${I.list}Tabelle</button></div></div>`;
+  if (view === 'tbl') {
+    return why('Für die Werkstatt oder den Verkauf: alle Ereignisse kompakt, Summen vergleichbar.') + toolbar + `<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Datum</th><th>Art</th><th>Was</th><th class="num">km</th><th class="num">Betrag</th><th>Herkunft</th></tr></thead><tbody>
+      ${evs.map(e => e.gap ? `<tr><td colspan="6" style="color:var(--bad);font-weight:600">${e.t}</td></tr>` : `<tr><td>${e.d}</td><td>${e.kind}</td><td>${e.t}</td><td class="num">${e.km}</td><td class="num">${e.sum}</td><td>${badge(e.src[0], e.src[1], e.docs[0])}</td></tr>`).join('')}
+    </tbody></table></div>`;
+  }
+  let lastY = null, html = '';
+  (D.events[v.id] ?? D.events.golf).forEach((e, i) => {
+    if (S.deleted.has('ev' + i)) return;
+    if (e.y !== lastY) { html += `<div class="year">${e.y}</div>`; lastY = e.y; }
+    if (e.gap) { html += `<div class="ev gap"><div class="gapcard"><b>${e.t}</b><div class="small">${e.why}</div></div></div>`; return; }
+    html += `<div class="ev"><div class="card"><details${i === 0 ? ' open' : ''}><summary>
+      <div><div class="kind">${e.kind}</div><div class="ttl">${e.t}</div><div class="d">${e.d} · ${e.km} · ${e.ws}</div></div>
+      <div class="sum">${e.sum}<div>${badge(e.src[0], e.src[1], e.docs[0])}</div></div></summary>
+      <div class="body">
+        ${e.warn ? `<div class="banner" style="margin:.8rem 0 0"><b>Klärfall</b><span>${e.warn}</span><a href="#klaerfaelle">Lösen</a></div>` : ''}
+        ${e.items.length ? `<table class="tbl" style="margin-top:.8rem"><tbody>${e.items.map(it => `<tr><td class="muted small">${it[0]}</td><td>${it[1]}</td><td class="num">${it[2]}</td></tr>`).join('')}</tbody></table>` : '<p class="muted small">Keine Positionen erfasst.</p>'}
+        <div class="att">${e.docs.map(d => `<button type="button" data-act="doc" aria-label="${d} öffnen">${I.doc}${d}</button>`).join('')}</div>
+        <div class="actions">${tool('get_event')}
+          ${canWrite() ? `<button class="btn sm danger" type="button" data-act="delev" data-i="${i}">Ereignis löschen</button>${tool('nur Mensch · DELETE /garage/api/events/{id}')}` : ''}
+        </div>
+      </div></details></div></div>`;
+  });
+  return why('Lückenlose Historie belegen (Verkauf, Garantie). Neueste oben, aufklappbar mit Positionen und Beleg; Lücken rot.') + toolbar + `<div class="tl">${html}</div>`;
+}
+
+function tabPlan(v) {
+  const s = stateBlock('Noch kein Wartungsplan', 'Frag deinen Agenten: „Welche Wartungsintervalle hat mein Auto?“ — er legt die Regeln mit Herkunft an.');
+  if (s) return s;
+  const items = D.due[v.id] ?? D.due.golf;
+  const view = S.views.wartung;
+  const toolbar = `<div class="tb"><span class="muted small">${items.length} Aufgaben · Gelb ab 3 Monaten oder 3.000 km ${tool('get_due_items')}</span>
+    <div class="seg" role="group" aria-label="Ansicht"><button type="button" data-view="wartung:tbl" aria-pressed="${view === 'tbl'}">${I.list}Tabelle</button><button type="button" data-view="wartung:cards" aria-pressed="${view === 'cards'}">${I.tl}Karten</button></div></div>`;
+  const bar = d => `<div class="bar ${d.s}" role="img" aria-label="${d.p} % bis zur Fälligkeit"><i style="width:${d.p}%"></i></div>`;
+  const banner = `<div class="banner"><b>1 Regel unsicher</b><span>DSG-Öl stammt aus einer Recherche ohne Herstellerbeleg.</span><a href="#klaerfaelle">Klärfall ansehen</a></div>`;
+  if (view === 'cards' || false) {
+    return why('Was muss als Nächstes gemacht werden, und wie sicher ist die Regel dahinter?') + toolbar + banner + `<div class="list">${items.map(d => `<div class="row"><span class="t">${d.t}</span><span class="r">${st(d.s, d.label)}</span>
+      <span class="s" style="display:grid;gap:.35rem;width:100%"><span>${d.rule} · zuletzt ${d.last}</span>${bar(d)}<span>nächstes ${d.next}${d.km !== '–' ? ' · ' + d.km : ''} ${badge(d.src[0], d.src[1], d.src[2])}</span></span></div>`).join('')}</div>`;
+  }
+  return why('Was muss als Nächstes gemacht werden, und wie sicher ist die Regel dahinter?') + toolbar + banner + `<div class="wrap-tbl" style="overflow-x:auto"><table class="tbl"><thead><tr><th>Aufgabe</th><th>Regel</th><th>Zuletzt</th><th>Nächstes</th><th style="min-width:7rem">Fortschritt</th><th>Status</th></tr></thead><tbody>
+    ${items.map(d => `<tr><td><b>${d.t}</b></td><td>${d.rule}<div>${badge(d.src[0], d.src[1], d.src[2])}</div></td><td class="small">${d.last}</td><td class="small">${d.next}<div class="muted">${d.km !== '–' ? d.km : ''}</div></td><td>${bar(d)}</td><td>${st(d.s, d.label)}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+function kmChart(m) {
+  const W = narrow() ? 340 : 640, H = narrow() ? 200 : 220, pl = 40, pr = 10, pt = 12, pb = 28;
+  const pts = m.km.concat(m.prog.slice(1));
+  const min = 16000, max = 29000;
+  const x = i => pl + i * (W - pl - pr) / (pts.length - 1);
+  const y = v => pt + (1 - (v - min) / (max - min)) * (H - pt - pb);
+  const real = m.km.map((p, i) => `${x(i)},${y(p[1])}`).join(' ');
+  const prog = m.prog.map((p, i) => `${x(m.km.length - 1 + i)},${y(p[1])}`).join(' ');
+  const grid = [18000, 22000, 26000].map(g => `<line x1="${pl}" x2="${W - pr}" y1="${y(g)}" y2="${y(g)}" stroke="var(--line)"/><text x="${pl - 6}" y="${y(g) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${(g / 1000)}k</text>`).join('');
+  const labels = pts.map((p, i) => (narrow() && i % 2) ? '' : `<text x="${x(i)}" y="${H - 8}" text-anchor="middle" font-size="11" fill="var(--muted)">${p[0]}</text>`).join('');
+  const dots = m.km.map((p, i) => `<circle cx="${x(i)}" cy="${y(p[1])}" r="3.5" fill="var(--primary)"><title>${p[0]}: ${p[1].toLocaleString('de-DE')} km</title></circle>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Kilometerverlauf von 17.000 km (06/2021) bis 26.921 km (10/2026), Prognose 28.400 km im März 2027">${grid}${labels}<polyline points="${real}" fill="none" stroke="var(--primary)" stroke-width="2.5"/><polyline points="${prog}" fill="none" stroke="var(--primary)" stroke-width="2" stroke-dasharray="6 5"/>${dots}</svg>`;
+}
+function tabMeasure(v) {
+  const s = stateBlock('Noch keine Messwerte', 'Profiltiefe, Batterie und Drücke stehen meist im Werkstattbericht — gib ihn deinem Agenten.');
+  if (s) return s;
+  const m = D.measurements.golf;
+  const t = m.tread[0].v, prev = m.tread[1].v;
+  const wheel = p => { const val = t[p]; const cls = val < 3 ? 'warn' : ''; return `<div class="wheel"><div class="p">${p}</div><div class="v"${cls ? ' style="color:var(--warn)"' : ''}>${val.toLocaleString('de-DE')} mm</div><div class="muted small">vorher ${prev[p].toLocaleString('de-DE')} mm</div></div>`; };
+  return why('Verlauf erkennen: Fährt das Auto mehr als gedacht? Wann sind die Reifen fällig? Hält die Batterie?') + `
+  <div class="cols"><div>
+    <div class="sec"><div class="sec-h"><h2>Kilometerstand</h2>${tool('get_measurements · Server-SVG')}</div>
+      <div class="chart">${kmChart(m)}<div class="legend"><span><i></i>belegte Stände</span><span><i class="dash"></i>Prognose ≈ 9 km/Tag</span></div></div></div>
+    <div class="sec"><div class="sec-h"><h2>Weitere Werte</h2></div>
+      <div class="list">${m.other.map(o => `<div class="row"><span class="t">${o[0]}</span><span class="r"><b>${o[1]}</b></span><span class="s">${o[2]} ${badge(o[3], o[4], 'Werkstattbericht')}</span></div>`).join('')}</div></div>
+  </div><div>
+    <div class="sec"><div class="sec-h"><h2>Profiltiefe</h2><span class="muted small">${m.tread[0].d}</span></div>
+      <div class="wheels">${['VL', 'VR', 'HL', 'HR'].map(wheel).join('')}</div>
+      <p class="muted small">Gesetzlich 1,6 mm, empfohlen 3 mm (gelb darunter). ${B}</p></div>
+  </div></div>`;
+}
+
+function tabTires(v) {
+  const sets = D.tires[v.id];
+  if (!sets) return why('Welcher Satz ist drauf, wo liegt der andere, wie alt sind sie?') + `<div class="empty">${I.car}<div class="h">Noch keine Reifensätze</div><div class="muted small">Am Golf steht nur „Ganzjahr, 205/55 R16“. Fotografier die Reifenflanke mit DOT und gib das Bild deinem Agenten.</div><a class="btn sm" href="#fz/clio/reifen">Beispiel: Clio ansehen</a></div>`;
+  return why('Welcher Satz ist drauf, wo liegt der andere, wie alt sind sie?') + `<div class="tires">${sets.map(t => `<div class="tire${t.on ? ' on' : ''}">
+    <div class="hd"><b>${t.label}</b>${t.on ? st('ok', 'montiert') : st('ok', 'eingelagert')}</div>
+    <dl><dt>Reifen</dt><dd>${t.brand}</dd><dt>Größe</dt><dd>${t.size} · ${t.season}</dd><dt>DOT</dt><dd>${t.dot} · ${t.age} Jahre ${t.warn ? st('warn', 'alt') : ''}</dd><dt>Profil</dt><dd>${t.tread}</dd><dt>${t.on ? 'Seit' : 'Lager'}</dt><dd>${t.on ? t.since : t.where}</dd></dl>
+    <div>${badge('beleg', 'bestaetigt', 'Rechnung Reifenwechsel')} ${tool('get_tires')}</div></div>`).join('')}</div>`;
+}
+
+function tabParts(v) {
+  const groups = D.parts.golf;
+  return why('Beim Bestellen oder in der Werkstatt die richtige Nummer parat haben — ein Tipp kopiert sie.') + `<div class="tb"><span class="muted small">${groups.length} Bauteile ${tool('get_parts')}</span></div>` +
+    groups.map(g => `<div class="sec"><div class="sec-h"><h2>${g.c}</h2></div><div class="list">${g.items.map(it => `<div class="row"><span class="t">${it[1]} ${it[0] === 'verbaut' ? st('ok', 'verbaut') : '<span class="muted small">Alternative</span>'}</span>
+      <span class="r"><button class="copy" type="button" data-copy="${it[2]}" aria-label="Artikelnummer ${it[2]} kopieren">${it[2]}${I.copy}</button></span>
+      <span class="s">OEM ${it[3]} ${it[4] ? '· geprüft' : '· <span style="color:var(--warn)">ungeprüft</span>'}</span></div>`).join('')}</div></div>`).join('') + `<p class="muted small">Nummern ${B}</p>`;
+}
+
+function tabDocs(v) {
+  const s = stateBlock('Noch keine Belege', 'Tipp unten rechts auf „Beleg“ oder gib die Rechnung deinem Agenten im Chat.');
+  if (s) return s;
+  const docs = ['Rechnung 4711', 'Auftrag', 'Rechnung 3920', 'HU-Bericht', 'Rechnung 2214', 'Rechnung 1033', 'Kaufvertrag', 'Fahrzeugschein', 'Foto Tacho'];
+  return why('Einen Beleg wiederfinden und zeigen. Gleiche Seite wie „Belege“ aus Meilenstein 3, auf dieses Fahrzeug gefiltert.') + `<div class="tb"><span class="muted small">18 Belege · 1 offen ${tool('GET /garage/api/documents?vehicle_id=')}</span>
+    <div class="seg" role="group" aria-label="Ansicht"><button type="button" aria-pressed="true">${I.photo}Galerie</button><button type="button" aria-pressed="false">${I.list}Liste</button></div></div>
+    <div class="docs">${docs.map(d => `<button class="doc" type="button" data-act="doc"><div class="pv">${d.startsWith('Foto') ? I.photo : I.doc}</div><div class="cap"><b>${d}</b><span class="muted">${d.includes('4711') ? 'hängt an Klimaservice' : 'zugeordnet'}</span></div></button>`).join('')}</div>`;
+}
+
+/* ===== Klärfälle ===== */
+function viewOpenItems() {
+  const s = stateBlock('Alles geklärt', 'Widersprüche, die Agenten finden, landen hier. Gerade gibt es nichts zu entscheiden.');
+  const ois = openOi();
+  return `<h1 class="sr-only">Klärfälle</h1>${why('Entscheiden, welcher Wert gilt — nur Menschen dürfen das. Zwei Werte nebeneinander mit Herkunft, eine Entscheidung pro Fall, Notiz optional.')}
+  ${s ?? (ois.length ? `<div class="tb"><span class="muted small">${ois.length} offen · neueste zuerst ${tool('GET /garage/api/open-items')}</span>
+    <div style="margin-left:auto;display:flex;gap:.4rem;flex-wrap:wrap"><button class="chip" type="button" aria-pressed="true">Alle Fahrzeuge</button><button class="chip" type="button" aria-pressed="false">Golf</button><button class="chip" type="button" aria-pressed="false">Clio</button></div></div>
+    ${ois.map(oiCard).join('')}` : `<div class="empty">${I.oi}<div class="h">Alles geklärt</div><div class="muted small">Gelöste Fälle stehen im Verlauf des Fahrzeugs.</div></div>`)}`;
+}
+function oiCard(o) {
+  const v = D.vehicles[o.v];
+  const head = `<div class="oi-h">${plate(v.plate)}<span class="kindtag">${o.kind}</span><span class="muted small">von ${o.by}</span></div><p class="q">${o.q}</p>`;
+  const ro = !canResolve() ? '<p class="muted small">Nur Inhaber und Mitglieder können Klärfälle lösen.</p>' : '';
+  if (o.kind === 'konflikt') {
+    return `<article class="oi">${head}<div class="vs">
+      <div class="opt"><span class="lab">Bisher gespeichert</span><span class="val">${o.a[0]}</span><span>${badge(o.a[1], o.a[2], o.a[3])}</span><span class="muted small">${o.a[3]}</span></div>
+      <div class="opt"><span class="lab">Neu gemeldet</span><span class="val">${o.b[0]}</span><span>${badge(o.b[1], o.b[2], o.b[3])}</span><span class="muted small">${o.b[3]}</span></div></div>
+      ${ro || `<div class="acts"><button class="btn sm primary" type="button" data-resolve="${o.id}" data-d="bestehend">${o.a[0]} gilt</button><button class="btn sm primary" type="button" data-resolve="${o.id}" data-d="neu">${o.b[0]} gilt</button><button class="btn sm" type="button" data-resolve="${o.id}" data-d="verwerfen">Beide falsch</button><button class="btn quiet sm" type="button" data-act="note">Notiz</button>${tool('POST /garage/api/open-items/{id}/resolve · nur Mensch')}</div>`}</article>`;
+  }
+  return `<article class="oi">${head}${o.suggestion ? `<p class="small"><span class="muted">Vorschlag:</span> ${o.suggestion}</p>` : ''}
+    ${ro || `<div class="acts"><button class="btn sm primary" type="button" data-resolve="${o.id}" data-d="erledigt">Erledigt</button><button class="btn sm" type="button" data-resolve="${o.id}" data-d="verwerfen">Verwerfen</button><button class="btn quiet sm" type="button" data-act="note">Notiz</button></div>`}</article>`;
+}
+
+/* ===== Eingang, Konto (Bestand aus Meilenstein 3, neu eingekleidet) ===== */
+function viewInbox() {
+  const s = stateBlock('Eingang ist leer', 'Fotografiere einen Beleg — ein Agent arbeitet ihn später ab.');
+  const lab = { neu: ['warn', 'neu'], in_arbeit: ['ok', 'in Arbeit'], klaerfall: ['bad', 'Klärfall'], erfasst: ['ok', 'erfasst'] };
+  return `<h1 class="sr-only">Eingang</h1>${why('Belege schnell loswerden; ein Agent arbeitet sie ab. Inhalt wie Meilenstein 3, nur neu eingekleidet.')}
+  ${canWrite() ? `<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem"><button class="btn primary" type="button">${I.cam}Beleg fotografieren</button><button class="btn" type="button">Datei wählen</button></div>` : ''}
+  ${s ?? `<div class="list">${D.inbox.map(i => `<div class="row"><span class="t" style="display:flex;gap:.6rem;align-items:center"><span class="thumb" style="width:2.6rem;height:3.2rem;border-radius:6px;background:var(--raised);display:grid;place-items:center;color:var(--muted);flex:none">${I.doc}</span><span>${i.t}<span class="muted small" style="display:block;font-weight:400">${i.v ? D.vehicles[i.v].label : 'kein Fahrzeug'} · ${i.d}</span></span></span><span class="r">${st(lab[i.s][0], lab[i.s][1])}</span><span class="s">${i.n}</span></div>`).join('')}</div>`}`;
+}
+function viewAccount() {
+  return `<h1 class="sr-only">Konto</h1>${why('Zugänge im Griff: Wer und was darf in meine Akte? Inhalt wie Meilenstein 1, neu eingekleidet; Mitglieder und Einladungen folgen in Meilenstein 6.')}
+  <div class="sec" style="margin-top:0"><div class="sec-h"><h2>Angemeldet</h2></div><div class="list"><div class="row"><span class="t">Sascha</span><span class="r"><button class="btn sm" type="button">Abmelden</button></span><span class="s">sascha@… ${B} · Inhaber von „Familie“</span></div></div></div>
+  <div class="sec"><div class="sec-h"><h2>Verbundene Apps</h2>${tool('GET /garage/api/oauth/grants')}</div><div class="list">
+    <div class="row"><span class="t">Claude</span><span class="r"><button class="btn sm danger" type="button">Trennen</button></span><span class="s">claude.ai · lesen, schreiben, Dateien · zuletzt heute</span></div>
+    <div class="row"><span class="t">ChatGPT</span><span class="r"><button class="btn sm danger" type="button">Trennen</button></span><span class="s">chatgpt.com · lesen, schreiben · zuletzt vor 3 Tagen</span></div></div></div>
+  <div class="sec"><div class="sec-h"><h2>Feste Tokens</h2><button class="btn quiet sm more" type="button">Token anlegen</button></div><div class="list">
+    <div class="row"><span class="t">claude-code</span><span class="r"><button class="btn sm danger" type="button">Widerrufen</button></span><span class="s">lesen, schreiben · läuft nie ab · zuletzt gestern</span></div></div></div>
+  <div class="sec"><div class="sec-h"><h2>Darstellung</h2></div><div class="list"><div class="row"><span class="t">Hell oder dunkel</span><span class="r">${dd('look', 'Darstellung', ['Wie das Gerät', 'Dunkel', 'Hell'], S.look)}</span><span class="s">Standard ist dunkel.</span></div></div></div>`;
+}
+
+/* ===== Druckansicht ===== */
+function viewPrint(id) {
+  const v = D.vehicles[id] ?? D.vehicles.golf;
+  return `<h1 class="sr-only">Akte drucken</h1>${why('Akte für Käufer oder Werkstatt als Papier/PDF. Server-Seite ohne Skript, Inhalt aus derselben Quelle wie die Markdown-Akte; der Browser druckt als PDF.')}
+  <div class="no-print" style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap"><a class="back" href="#fz/${v.id}/uebersicht">${I.back}${v.label}</a><button class="btn primary sm" type="button" data-act="doprint">${I.print}Drucken oder als PDF</button>${tool('GET /garage/akte/{id}/druck')}</div>
+  <article class="print"><h1>${v.model}</h1><div class="h">Kennzeichen ${v.plate} · EZ ${v.ez} · Stand 18.11.2026 · ≈ ${v.km.toLocaleString('de-DE')} km (geschätzt)</div>
+    <h2>Fälligkeiten</h2><table><tr><th>Aufgabe</th><th>Nächstes</th><th>Status</th></tr>${D.due.golf.slice(0, 4).map(d => `<tr><td>${d.t}</td><td>${d.next}</td><td>${d.label}${d.unsure ? ' (Regel unsicher)' : ''}</td></tr>`).join('')}</table>
+    <h2>Scheckheft</h2><table><tr><th>Datum</th><th>Was</th><th>km</th><th>Betrag</th><th>Herkunft</th></tr>${D.events.golf.filter(e => !e.gap).map(e => `<tr><td>${e.d}</td><td>${e.t}<div class="h">${e.ws}</div></td><td>${e.km}</td><td>${e.sum}</td><td class="h">Beleg, bestätigt</td></tr>`).join('')}</table>
+    <h2>Offene Klärfälle</h2><p>${openOi('golf').length} offen — in der Druckfassung mit Text gelistet.</p></article>`;
+}
+
+/* ===== Router ===== */
+function route() {
+  const h = location.hash.slice(1) || 'garage';
+  const parts = h.split('/');
+  let html, nav;
+  if (parts[0] === 'fz') { html = viewVehicle(parts[1], parts[2] || 'uebersicht'); nav = 'garage'; }
+  else if (parts[0] === 'klaerfaelle') { html = viewOpenItems(); nav = 'klaerfaelle'; }
+  else if (parts[0] === 'eingang') { html = viewInbox(); nav = 'eingang'; }
+  else if (parts[0] === 'konto') { html = viewAccount(); nav = 'konto'; }
+  else if (parts[0] === 'druck') { html = viewPrint(parts[1]); nav = 'garage'; }
+  else { html = viewGarage(); nav = 'garage'; }
+  main.innerHTML = html;
+  $('#dz-why').textContent = WHY ? 'Wofür: ' + WHY : '';
+  document.querySelectorAll('[data-nav]').forEach(a => { if (a.dataset.nav === nav) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  document.querySelectorAll('[data-c=oi]').forEach(c => { const n = openOi().length; c.textContent = n; c.hidden = !n; });
+  document.querySelectorAll('[data-c=inbox]').forEach(c => { c.textContent = 1; });
+}
+function rerender() { const y = scrollY; route(); scrollTo(0, y); }
+addEventListener('hashchange', () => { S.openMenu = false; route(); scrollTo(0, 0); });
+
+/* ===== Interaktion ===== */
+let toastTimer;
+function toast(msg, undo) {
+  clearTimeout(toastTimer);
+  layer.querySelector('.toast')?.remove();
+  const t = document.createElement('div');
+  t.className = 'toast'; t.setAttribute('role', 'status');
+  t.innerHTML = `<span>${msg}</span>${undo ? '<button type="button">Rückgängig</button>' : ''}`;
+  if (undo) t.querySelector('button').onclick = () => { undo(); t.remove(); };
+  layer.appendChild(t);
+  toastTimer = setTimeout(() => t.remove(), 6000);
+}
+function sheet(html, onOk) {
+  layer.querySelector('.scrim')?.remove();
+  const prev = document.activeElement;
+  const s = document.createElement('div');
+  s.className = 'scrim';
+  s.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-t"><div class="grab"></div>${html}</div>`;
+  const close = () => { s.remove(); prev?.focus(); };
+  s.addEventListener('click', e => { if (e.target === s || e.target.closest('[data-close]')) close(); if (e.target.closest('[data-ok]')) { onOk?.(s); close(); } });
+  s.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  layer.appendChild(s);
+  s.querySelector('input,select,textarea,button')?.focus();
+}
+function tip(btn) {
+  layer.querySelector('.tip')?.remove();
+  const r = btn.getBoundingClientRect();
+  const t = document.createElement('div');
+  t.className = 'tip'; t.setAttribute('role', 'dialog'); t.setAttribute('aria-label', 'Herkunft');
+  t.innerHTML = `<b>Herkunft</b><dl><dt>Quelle</dt><dd>${SRC_LABEL[btn.dataset.src]}</dd><dt>Sicherheit</dt><dd>${CONF_LABEL[btn.dataset.conf]}</dd><dt>Beleg</dt><dd>${btn.dataset.note || '–'}</dd><dt>Erfasst</dt><dd>Agent (Claude) für Sascha, 07.10.2026 ${B}</dd></dl>${btn.dataset.src === 'beleg' ? '<button class="btn sm" type="button" data-act="doc">Beleg öffnen</button>' : ''}`;
+  layer.appendChild(t);
+  const w = t.offsetWidth;
+  t.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left)) + 'px';
+  t.style.top = (r.bottom + 6) + 'px';
+}
+function ddClose(except) { document.querySelectorAll('.dd').forEach(d => { if (d === except) return; d.querySelector('[role=listbox]').hidden = true; d.querySelector('button').setAttribute('aria-expanded', 'false'); }); }
+function ddPick(li) {
+  const d = li.closest('.dd'); const v = li.textContent;
+  if (d.dataset.dd === 'look') { setTheme(v === 'Hell' ? 'light' : 'dark'); S.look = v; }
+  rerender(); document.querySelector(`[data-dd=${d.dataset.dd}] > button`)?.focus();
+}
+document.addEventListener('keydown', e => {
+  const d = e.target.closest?.('.dd'); if (!d) return;
+  const list = d.querySelector('[role=listbox]'); const opts = [...list.querySelectorAll('[role=option]')];
+  if (e.target.matches('.dd > button') && ['ArrowDown', 'Enter', ' '].includes(e.key)) { e.preventDefault(); e.target.click(); return; }
+  const i = opts.indexOf(document.activeElement);
+  if (e.key === 'ArrowDown') { e.preventDefault(); opts[Math.min(i + 1, opts.length - 1)].focus(); }
+  if (e.key === 'ArrowUp') { e.preventDefault(); opts[Math.max(i - 1, 0)].focus(); }
+  if ((e.key === 'Enter' || e.key === ' ') && i >= 0) { e.preventDefault(); ddPick(opts[i]); }
+  if (e.key === 'Escape') { ddClose(); d.querySelector('button').focus(); }
+});
+document.addEventListener('click', e => {
+  const opt = e.target.closest('.dd [role=option]');
+  if (opt) { ddPick(opt); return; }
+  const ddb = e.target.closest('.dd > button');
+  if (ddb) { const d = ddb.parentElement; const list = d.querySelector('[role=listbox]'); const open = list.hidden; ddClose(d); d.classList.toggle('up', ddb.getBoundingClientRect().bottom > innerHeight - 240); list.hidden = !open; ddb.setAttribute('aria-expanded', String(open)); if (open) (list.querySelector('[aria-selected=true]') || list.firstElementChild).focus(); return; }
+  ddClose();
+  const el = e.target.closest('button, a');
+  if (!e.target.closest('.tip') && !e.target.closest('.src')) layer.querySelector('.tip')?.remove();
+  if (!el) return;
+  if (el.dataset.src) { tip(el); return; }
+  if (el.dataset.filter) { S.filter = el.dataset.filter; rerender(); return; }
+  if (el.dataset.view) { const [k, v] = el.dataset.view.split(':'); S.views[k] = v; rerender(); return; }
+  if (el.dataset.copy) { navigator.clipboard?.writeText(el.dataset.copy); toast(`${el.dataset.copy} kopiert`); return; }
+  if (el.dataset.resolve) {
+    const id = +el.dataset.resolve, d = el.dataset.d;
+    S.resolved.add(id); rerender();
+    toast(d === 'verwerfen' ? 'Klärfall verworfen' : 'Entscheidung gespeichert', () => { S.resolved.delete(id); rerender(); });
+    return;
+  }
+  const act = el.dataset.act;
+  if (!act) return;
+  if (act === 'delev') {
+    const i = el.dataset.i; S.deleted.add('ev' + i); rerender();
+    toast('Ereignis gelöscht — im Verlauf sichtbar', () => { S.deleted.delete('ev' + i); rerender(); });
+    return;
+  }
+  if (act === 'status') {
+    S.openMenu = false; rerender();
+    sheet(`<h2 id="sh-t">Status des Golf ändern</h2><p class="muted small">Verkaufte und stillgelegte Fahrzeuge bleiben mit ganzer Akte erhalten, zählen aber nicht mehr bei Fälligkeiten.</p>
+      <div class="radio" role="radiogroup" aria-label="Status"><label><input type="radio" name="st" checked> Aktiv</label><label><input type="radio" name="st"> Verkauft</label><label><input type="radio" name="st"> Stillgelegt</label></div>
+      <div class="field"><label for="st-r">Grund (optional)</label><input id="st-r" placeholder="z. B. verkauft an Privat, 11/2026"></div>
+      <div class="foot"><button class="btn" type="button" data-close>Abbrechen</button><button class="btn primary" type="button" data-ok>Status speichern</button></div>${tool('PATCH /garage/api/vehicles/{id} · nur Inhaber')}`, () => toast('Status gespeichert', () => {}));
+    return;
+  }
+  if (act === 'delcar') {
+    S.openMenu = false; rerender();
+    sheet(`<h2 id="sh-t">Golf Sportsvan löschen?</h2><p class="small">Das Fahrzeug verschwindet aus Garage, Fälligkeiten und Suche. Akte und Belege bleiben gespeichert und lassen sich bis zu 30 Tage wiederherstellen.</p>
+      <div class="field"><label for="dl-r">Grund</label><input id="dl-r" placeholder="z. B. doppelt angelegt"></div>
+      <div class="foot"><button class="btn" type="button" data-close>Abbrechen</button><button class="btn danger" type="button" data-ok>Fahrzeug löschen</button></div>${tool('DELETE /garage/api/vehicles/{id} · nur Inhaber, nur Mensch')}`, () => toast('Golf Sportsvan gelöscht', () => {}));
+    return;
+  }
+  if (act === 'print' || act === 'md') { S.openMenu = false; if (act === 'print') location.hash = '#druck/golf'; else toast('Akte als Markdown heruntergeladen'); return; }
+  if (act === 'doprint') { print(); return; }
+  if (act === 'restorecar') { Object.assign(D.vehicles.golf2, { status: 'aktiv', km: 26921, kmBasis: 'ein Stand', next: { t: 'keine Regel', s: 'ok', when: 'noch kein Wartungsplan' } }); S.filter = 'aktiv'; rerender(); toast('Golf (doppelt) wiederhergestellt', () => { D.vehicles.golf2.status = 'geloescht'; rerender(); }); return; }
+  if (act === 'doc') { sheet(`<h2 id="sh-t">Rechnung 4711</h2><div class="doc" style="pointer-events:none;margin:.8rem 0"><div class="pv" style="aspect-ratio:3/4;max-height:50vh">${I.doc}</div></div><p class="muted small">Vollbild mit Wischen wie in Meilenstein 3 (belege.html#beleg/&lt;id&gt;). ${B}</p><div class="foot"><button class="btn" type="button" data-close>Schließen</button></div>`); return; }
+  if (act === 'note') { sheet(`<h2 id="sh-t">Notiz zur Entscheidung</h2><div class="field"><label for="n-t">Notiz (höchstens 500 Zeichen)</label><textarea id="n-t" maxlength="500" placeholder="z. B. Werkstatt hat 0W-20 freigegeben"></textarea></div><div class="foot"><button class="btn" type="button" data-close>Abbrechen</button><button class="btn primary" type="button" data-ok>Notiz übernehmen</button></div>`); return; }
+  if (act === 'allfacts') { toast('Klappt alle Angaben, Ausstattung und Zulassungen auf'); return; }
+  if (act === 'reload') { $('#dz-state').value = 'normal'; S.state = 'normal'; rerender(); return; }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.openMenu) { S.openMenu = false; rerender(); } });
+
+/* ===== Entwurfsleiste ===== */
+const params = new URLSearchParams(location.search);
+const setTheme = t => { document.documentElement.dataset.theme = t; $('#dz-theme').value = t; S.look = t === 'light' ? 'Hell' : 'Dunkel'; };
+setTheme(params.get('theme') || 'dark');
+$('#dz-theme').onchange = e => { setTheme(e.target.value); rerender(); };
+$('#dz-role').onchange = e => { S.role = e.target.value; rerender(); };
+$('#dz-state').onchange = e => { S.state = e.target.value; rerender(); };
+$('#dz-tools').onchange = e => document.body.classList.toggle('tools', e.target.checked);
+$('#dz-jump').onchange = e => { if (e.target.value) location.hash = e.target.value; e.target.value = ''; };
+if (params.get('tools')) { $('#dz-tools').checked = true; document.body.classList.add('tools'); }
+if (params.get('state')) { S.state = params.get('state'); $('#dz-state').value = S.state; }
+if (params.get('role')) { S.role = params.get('role'); $('#dz-role').value = S.role; }
+const bp = () => { const w = innerWidth; $('#dz-bp').textContent = (w < 576 ? 'Handy' : w < 992 ? 'Tablet' : w < 1408 ? 'Laptop' : 'Desktop') + ' · ' + w + ' px'; };
+addEventListener('resize', bp); bp();
+route();
+if (params.get('open') === 'status') document.querySelector('[data-act=status]')?.click();
+if (params.get('open') === 'src') document.querySelector('.src')?.click();
+if (params.get('open') === 'dd') document.querySelector('.dd > button')?.click();</script>
+</body>
+</html>

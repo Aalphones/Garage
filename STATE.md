@@ -1,4 +1,4 @@
 # STATE
 
-**Aktiver Plan:** (kein aktiver Plan) — Meilenstein 3 „Belege und Fotos“ ist abgeschlossen und archiviert (2026-11-18): [`docs/archive/2026-11/2026-11-17_belege-und-fotos/`](docs/archive/2026-11/2026-11-17_belege-und-fotos/README.md). Meilenstein 4 „Oberfläche“ hat noch keinen Plan.
-**Nächster Schritt:** Meilenstein 4 „Oberfläche“ planen (`/plan`; Gestaltung gemeinsam in eigener Session, siehe `docs/PROJECT.md`). Offen beim Inhaber: Handy-Test Teilen-Ziel (Phase 5), Claude-Web-Test des Widgets (Phase 6), Verprobungs-Matrix (Plan-README → Follow-ups), echte Verbindung aus claude.ai/ChatGPT mit `https://quantum-canvas.de/garage/mcp` und `claude mcp add` mit festem Token — alles in `docs/knowledge/GAPS.md`.
+**Aktiver Plan:** Meilenstein 4 „Oberfläche“ — [`docs/planning/2026-11-18_oberflaeche/`](docs/planning/2026-11-18_oberflaeche/README.md), 9 Phasen, Entwurf und Plan freigegeben (2026-11-18), Umsetzung im Verwalter angelegt.
+**Nächster Schritt:** Phase 1 „Gestaltungsgrundlage und Schale“ (Sonnet). Offen beim Inhaber (aus Meilenstein 3): Handy-Test Teilen-Ziel, Claude-Web-Test des Widgets, Verprobungs-Matrix, echte Verbindung aus claude.ai/ChatGPT — alles in `docs/knowledge/GAPS.md`.
