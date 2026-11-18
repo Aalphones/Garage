@@ -1,6 +1,6 @@
 # 015 — Weg A: Datei-Parameter und Widget
 
-**Status:** Teil „Datei-Parameter“ akzeptiert (2026-11-17, Meilenstein 3, Phase 2); Teil „Widget“ ergänzt Phase 6.
+**Status:** Teil „Datei-Parameter“ akzeptiert (2026-11-17, Meilenstein 3, Phase 2); Teil „Widget“ akzeptiert (2026-11-18, Phase 6).
 
 ## Kontext
 
@@ -16,11 +16,18 @@ Dateien dürfen nicht durch das Sprachmodell laufen (ADR-012). Programme mit Dat
 
 ## Entscheidung — Widget (Claude)
 
-Folgt in Phase 6.
+Claude hat keinen Datei-Parameter und keinen Dateizugriff im Browser. `store_document` ohne Datei legt ein Dokument im Status „wartet“ an und trägt `_meta.ui.resourceUri = ui://garage/beleg-ablegen` (MCP Apps, Spezifikation 2026-01-26). Der Host zeigt das Widget, der Mensch zieht die Datei hinein, das Widget lädt sie per `XMLHttpRequest` roh an die Upload-Adresse aus dem Ergebnis (`structuredContent.upload`) und ruft danach `confirm_document` (nur für die App sichtbar).
+
+- GARAGE meldet das Widget immer an, ohne die Client-Fähigkeit `io.modelcontextprotocol/ui` zu prüfen; ein Client ohne Widget zeigt nur den Text, die Anweisungen nennen dann den Eingang.
+- Die Resource liefert `csp.connectDomains` = eigener Ursprung (dorthin geht der Upload), `resourceDomains` leer; das Widget ist eine Datei mit eingebettetem Stil und Skript.
+- Upload aus fremdem Ursprung braucht CORS: nur `OPTIONS` und `POST /garage/upload/{slug}` antworten mit `Access-Control-Allow-Origin: *` (die Adresse ist selbst die Berechtigung, es gibt weder Cookie noch Anmeldung).
+- Abgelaufenes Ticket (410): das Widget holt mit `request_upload {document_id}` eine neue Adresse für dasselbe Dokument.
+- Ohne Antwort auf `ui/initialize` binnen 5 s zeigt das Widget „Das Widget wird hier nicht unterstützt. Leg die Datei in den Eingang.“
 
 ## Verworfen
 
 - **Datei als Base64 im Argument:** siehe ADR-012.
+- **Base64 über `tools/call` aus dem Widget:** Größe und Grenzen des Hosts für Tool-Aufrufe sind unbekannt, und die Bytes würden durch den Host statt direkt zu GARAGE laufen.
 
 ## Konsequenzen
 
