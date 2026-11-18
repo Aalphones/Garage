@@ -74,6 +74,7 @@ $router->add('DELETE', '/garage/api/oauth/grants/{slug}', static fn (array $para
 
 // Beide ohne Anmeldung: Ticket bzw. Signatur im Pfad ist die Berechtigung (ADR-012).
 $router->add('POST', '/garage/upload/{slug}', static fn (array $parameters) => (new UploadController($config))->upload($request, (string) $parameters['slug']));
+$router->add('OPTIONS', '/garage/upload/{slug}', static fn () => (new UploadController($config))->options());
 $router->add('GET', '/garage/files/{slug}', static fn (array $parameters) => (new FileController($config))->show($request, (string) $parameters['slug']));
 $router->add('HEAD', '/garage/files/{slug}', static fn (array $parameters) => (new FileController($config))->show($request, (string) $parameters['slug']));
 

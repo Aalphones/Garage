@@ -25,8 +25,22 @@ final class UploadController
     {
     }
 
+    /** Preflight für das Claude-Widget, das aus fremdem Ursprung hochlädt (E15). Nur diese Route bekommt CORS. */
+    public function options(): never
+    {
+        Response::empty(204, [
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => 'POST, OPTIONS',
+            'Access-Control-Allow-Headers' => 'Content-Type',
+            'Access-Control-Max-Age' => '600',
+        ]);
+    }
+
     public function upload(Request $request, string $slug): never
     {
+        // Vor allem anderen, damit auch Fehlerantworten für den fremden Ursprung lesbar sind.
+        header('Access-Control-Allow-Origin: *');
+
         try {
             if (preg_match(self::SLUG_PATTERN, $slug) !== 1) {
                 throw new DomainError('ticket_not_found', 'Diese Upload-Adresse kennt GARAGE nicht. request_upload liefert eine neue.');

@@ -774,8 +774,32 @@ final class DocumentService
             $document = $this->describe($documentId, $input, $actor);
             $upload = $this->insertTicket($actor, $target['garage_id'], $document['vehicle_id'], $documentId);
 
-            return $this->storeResult($document, false) + ['upload' => ['ticket_id' => $upload['ticket_id'], 'upload_url' => $upload['upload_url'], 'expires_at' => $upload['expires_at']]];
+            $label = $document['vehicle_id'] === null ? null : $this->access->readable((int) $document['vehicle_id'], $actor)['label'];
+
+            return $this->storeResult($document, false) + [
+                'widget' => true,
+                'vehicle_label' => $label,
+                'doc_type' => $document['doc_type'],
+                'title' => $document['title'],
+                'captured_on' => $document['captured_on'],
+                'upload' => ['ticket_id' => $upload['ticket_id'], 'upload_url' => $upload['upload_url'], 'expires_at' => $upload['expires_at'], 'max_bytes' => $upload['max_bytes'], 'accepted' => $upload['accepted']],
+            ];
         });
+    }
+
+    /**
+     * `confirm_document` (vom Widget nach dem Upload): bestätigt, dass die Datei angekommen ist.
+     *
+     * @return array{document_id: int, status: string, attached_to: list<array<string, mixed>>}
+     */
+    public function confirm(int $documentId, Actor $actor): array
+    {
+        $document = $this->writableDocument($documentId, $actor);
+        if ($document['status'] === DocumentRepository::STATUS_WAITING) {
+            throw Validate::invalid('document_id', 'Datei noch nicht angekommen. Erst hochladen, dann bestätigen; request_upload mit document_id liefert bei Bedarf eine neue Adresse.', '{"document_id": 5}');
+        }
+
+        return ['document_id' => $documentId, 'status' => $document['status'], 'attached_to' => $this->documents->attachmentsFor($documentId, $actor)];
     }
 
     /**

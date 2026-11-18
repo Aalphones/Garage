@@ -10,6 +10,7 @@ use Garage\Domain\DocumentService;
 use Garage\Domain\Validate;
 use Garage\Mcp\ImageBlocks;
 use Garage\Mcp\Registry;
+use Garage\Mcp\Resources;
 use Garage\Mcp\Schema;
 use Garage\Mcp\Tool;
 use Garage\Mcp\ToolResult;
@@ -30,13 +31,15 @@ final class DocumentTools
             Schema::object([
                 'vehicle_id' => Schema::integer('ID des Fahrzeugs aus list_vehicles; bestimmt auch die Garage'),
                 'garage_id' => Schema::integer('Garage, wenn kein Fahrzeug angegeben ist und der Nutzer mehrere Garagen hat'),
+                'document_id' => Schema::integer('Dokument im Status „wartet“, dessen Datei nachgereicht wird (neue Adresse nach Ablauf); die Datei füllt genau dieses Dokument'),
             ]),
             Tool::annotations('Upload-Adresse anfordern', 'W'),
             Scopes::FILES,
             static fn (array $args, Actor $actor): ToolResult => ToolResult::json($documents->issueTicket(
                 $actor,
                 isset($args['garage_id']) ? (int) $args['garage_id'] : null,
-                isset($args['vehicle_id']) ? (int) $args['vehicle_id'] : null
+                isset($args['vehicle_id']) ? (int) $args['vehicle_id'] : null,
+                isset($args['document_id']) ? (int) $args['document_id'] : null
             ))
         ));
 
@@ -62,8 +65,27 @@ final class DocumentTools
             ], ['doc_type']),
             Tool::annotations('Beleg oder Foto beschreiben', 'W'),
             Scopes::FILES,
-            static fn (array $args, Actor $actor): ToolResult => ToolResult::json($documents->store($args, $actor)),
-            ['openai/fileParams' => ['file']]
+            static function (array $args, Actor $actor) use ($documents): ToolResult {
+                $result = $documents->store($args, $actor);
+
+                // Ohne Datei zeigt der Host das Widget; es liest das Ergebnis aus structuredContent.
+                return isset($result['widget']) ? ToolResult::structured($result) : ToolResult::json($result);
+            },
+            ['openai/fileParams' => ['file'], 'ui' => ['resourceUri' => Resources::URI_WIDGET]]
+        ));
+
+        $registry->add(new Tool(
+            'confirm_document',
+            'Eingang einer Datei bestätigen',
+            'Wird vom Widget „Beleg ablegen“ nach dem Upload aufgerufen, nicht vom Modell: bestätigt, dass die Datei zum Dokument angekommen ist, und liefert document_id, status und attached_to. Ein Dokument im Status „wartet“ ist ein Fehler (Datei noch nicht angekommen). Beispiel: {"document_id": 5}.',
+            Schema::object(['document_id' => Schema::integer('ID aus dem Ergebnis von store_document')], ['document_id']),
+            Tool::annotations('Eingang einer Datei bestätigen', 'W'),
+            Scopes::FILES,
+            static fn (array $args, Actor $actor): ToolResult => ToolResult::json($documents->confirm(
+                (int) Validate::int('document_id', $args['document_id'] ?? null, '{"document_id": 5}', 1),
+                $actor
+            )),
+            ['ui' => ['visibility' => ['app']]]
         ));
 
         $registry->add(new Tool(

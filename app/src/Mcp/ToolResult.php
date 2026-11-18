@@ -9,8 +9,11 @@ final readonly class ToolResult
 {
     private const JSON_FLAGS = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR;
 
-    /** @param list<array<string, mixed>> $content */
-    private function __construct(private array $content, private bool $isError)
+    /**
+     * @param list<array<string, mixed>> $content
+     * @param array<string, mixed>|null $structuredContent
+     */
+    private function __construct(private array $content, private bool $isError, private ?array $structuredContent = null)
     {
     }
 
@@ -18,6 +21,12 @@ final readonly class ToolResult
     public static function json(mixed $data, array $images = []): self
     {
         return new self([self::text($data), ...$images], false);
+    }
+
+    /** Wie `json`, dazu dasselbe Objekt als `structuredContent` (das Widget liest es von dort). @param array<string, mixed> $data */
+    public static function structured(array $data): self
+    {
+        return new self([self::text($data)], false, $data);
     }
 
     /** Ein Textblock mit Markdown, kein JSON (die Akte). */
@@ -32,10 +41,15 @@ final readonly class ToolResult
         return new self([self::text(['error' => $code, 'message' => $message, 'details' => (object) $details])], true);
     }
 
-    /** @return array{content: list<array<string, mixed>>, isError: bool} */
+    /** @return array{content: list<array<string, mixed>>, isError: bool, structuredContent?: array<string, mixed>} */
     public function toArray(): array
     {
-        return ['content' => $this->content, 'isError' => $this->isError];
+        $result = ['content' => $this->content, 'isError' => $this->isError];
+        if ($this->structuredContent !== null) {
+            $result['structuredContent'] = $this->structuredContent;
+        }
+
+        return $result;
     }
 
     /** @return array{type: string, text: string} */

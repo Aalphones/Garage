@@ -13,6 +13,8 @@ use Garage\Domain\VehicleService;
 /** `garage://`-Resources: Fahrzeugliste, Akte und Fälligkeiten je Fahrzeug, zwei Leitfäden. Alles läuft über die Dienste und den Akteur des Tokens. */
 final class Resources
 {
+    public const URI_WIDGET = 'ui://garage/beleg-ablegen';
+    private const MIME_WIDGET = 'text/html;profile=mcp-app';
     private const URI_VEHICLES = 'garage://fahrzeuge';
     private const URI_GUIDE_RECORDING = 'garage://leitfaden/erfassung';
     private const URI_GUIDE_PROVENANCE = 'garage://leitfaden/herkunft';
@@ -39,6 +41,7 @@ final class Resources
             ['uri' => self::URI_VEHICLES, 'name' => 'fahrzeuge', 'title' => 'Fahrzeuge', 'description' => 'Alle Garagen und Fahrzeuge des Nutzers (wie list_vehicles).', 'mimeType' => self::MIME_JSON],
             ['uri' => self::URI_GUIDE_RECORDING, 'name' => 'leitfaden-erfassung', 'title' => 'Leitfaden: Belege erfassen', 'description' => 'Wie eine Rechnung in Kopf, Positionen und Aufgabenschlüssel zerlegt und erfasst wird.', 'mimeType' => self::MIME_MARKDOWN],
             ['uri' => self::URI_GUIDE_PROVENANCE, 'name' => 'leitfaden-herkunft', 'title' => 'Leitfaden: Herkunft und Konfidenz', 'description' => 'Welche Quelle mit welcher Konfidenz eingetragen wird.', 'mimeType' => self::MIME_MARKDOWN],
+            ['uri' => self::URI_WIDGET, 'name' => 'Beleg ablegen', 'title' => 'Beleg ablegen', 'description' => 'Ablagefläche für ein Foto oder PDF zu einem wartenden Beleg (Widget für store_document ohne Datei).', 'mimeType' => self::MIME_WIDGET],
         ];
     }
 
@@ -51,9 +54,12 @@ final class Resources
         ];
     }
 
-    /** @return list<array{uri: string, mimeType: string, text: string}> */
+    /** @return list<array<string, mixed>> */
     public function read(string $uri): array
     {
+        if ($uri === self::URI_WIDGET) {
+            return [$this->widget()];
+        }
         if ($uri === self::URI_VEHICLES) {
             /** @var VehicleService $vehicles */
             $vehicles = $this->services['vehicles'];
@@ -68,6 +74,20 @@ final class Resources
         }
 
         throw self::unknown($uri);
+    }
+
+    /**
+     * Das Widget „Beleg ablegen“. Die CSP erlaubt dem Rahmen nur Verbindungen zur eigenen Adresse (dorthin geht der Upload).
+     *
+     * @return array<string, mixed>
+     */
+    private function widget(): array
+    {
+        $baseUrl = rtrim((string) ((array) $this->services['config'])['base_url'], '/');
+        $origin = (string) preg_replace('#^(https?://[^/]+).*$#', '$1', $baseUrl);
+
+        return self::content(self::URI_WIDGET, self::MIME_WIDGET, (string) file_get_contents(dirname(__DIR__, 2) . '/mcp/widget/beleg-ablegen.html'))
+            + ['_meta' => ['ui' => ['csp' => ['connectDomains' => [$origin], 'resourceDomains' => []], 'prefersBorder' => true]]];
     }
 
     /** @return array{uri: string, mimeType: string, text: string} */
