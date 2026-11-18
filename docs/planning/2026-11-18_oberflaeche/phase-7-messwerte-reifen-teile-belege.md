@@ -29,7 +29,7 @@ Teile (`web/js/tab-parts.js`):
 Belege (`web/js/tab-docs.js` + Umbau `document.js`):
 - [ ] `document.js` exportiert die Galerie- und Listen-Darstellung als `renderDocuments(container, { vehicleId })`; `belege.html` nutzt dieselbe Funktion ohne Filter (Verhalten unverändert).
 - [ ] Reiter zeigt die Belege des Fahrzeugs (`GET documents?vehicle_id=`), Umschalter Galerie/Liste (`garage.view.belege`), Tippen → `belege.html#beleg/<id>`.
-- [ ] Prüfung: 360 px hell/dunkel; Diagramm in beiden Breiten lesbar (Beschriftung ≥ 11 px nach Skalierung); Kopieren im Browser geprüft.
+- [ ] Prüfung nach README → „Breakpoints und Handy“ für alle vier Reiter; Popover eines Diagrammpunkts per Tippen erreichbar; Diagramm in beiden Breiten lesbar (Beschriftung ≥ 11 px nach Skalierung); Kopieren im Browser geprüft.
 
 ## Checkliste
 

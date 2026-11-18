@@ -21,10 +21,10 @@ Scheckheft (`web/js/tab-book.js`, exportiert `renderBook(container, vehicle)`):
 Wartung (`web/js/tab-plan.js`, `renderPlan`):
 - [ ] Leiste „<n> Aufgaben · Gelb ab <thresholds.months> Monaten oder <thresholds.km> km“ + Umschalter Tabelle/Karten (`garage.view.wartung`; unter 768 px Standard Karten).
 - [ ] Hinweisleiste gelb, wenn eine Regel `rule_uncertain` ist: „<n> Regel(n) unsicher“ + erste Aufgabe + „stammt aus einer Quelle mit Sicherheit unsicher“ + Link „Klärfälle ansehen“ → `klaerfaelle.html#fz=<id>`.
-- [ ] Tabelle: Aufgabe, Regel (Text aus `rule` + Abzeichen), Zuletzt (`last_done` Datum · km oder „nie belegt“), Nächstes (`due_date`, `due_km`), Fortschritt (Balken: Anteil der verstrichenen Zeit von `last_done.date` bis `effective_date`, 0–100 %, ohne Basis leer), Status (`.st` überfällig/bald/ok/unbekannt mit Wort). Rechenweg (`explanation`) als `title` am Status.
+- [ ] Tabelle: Aufgabe, Regel (Text aus `rule` + Abzeichen), Zuletzt (`last_done` Datum · km oder „nie belegt“), Nächstes (`due_date`, `due_km`), Fortschritt (Balken: Anteil der verstrichenen Zeit von `last_done.date` bis `effective_date`, 0–100 %, ohne Basis leer), Status (`.st` überfällig/bald/ok/unbekannt mit Wort). Status als `button.stbtn`: Tippen zeigt `explanation` per `tipText` (kein `title`, am Handy nicht erreichbar).
 - [ ] Karten: dieselben Werte je Aufgabe als `.row` mit Balken.
 - [ ] Leer: „Noch kein Wartungsplan“ + „Frag deinen Agenten: „Welche Wartungsintervalle hat mein Auto?““.
-- [ ] Prüfung: 360 px ohne waagerechtes Scrollen (Tabelle im Rollbereich nur ab 768 px), hell/dunkel, Löschen + Rückgängig im Browser durchgespielt.
+- [ ] Prüfung nach README → „Breakpoints und Handy“ (beide Ansichten je Reiter, Tabelle am Handy nur innerhalb ihres Containers rollbar); Löschen + Rückgängig am Handy und mit Maus durchgespielt.
 
 ## Checkliste
 

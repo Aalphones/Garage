@@ -22,7 +22,8 @@ Gelöschte Fahrzeuge (`garage.js`):
 Druckansicht (`PrintController` + `app/templates/akte-druck.php` + `web/css/print.css`):
 - [ ] Server-HTML ohne Skript: `<h1>` Modell, Kopfzeile Kennzeichen · EZ · Stand · ≈ km (geschätzt); Abschnitte in der Reihenfolge von `DossierService` (Stammdaten, Zulassung, Ausstattung, Spezifikationen, Kilometerstand, Fälligkeiten, Wartungsplan, Scheckheft, Messwerte, Reifen, Teile, Schäden, Rückrufe, Notizen, Offene Klärfälle, Belege) als Tabellen; Herkunft je Wert als kleiner Text „Beleg, bestätigt“. Daten aus denselben Services wie `DossierService` (keine Markdown-Umwandlung): `DossierService` bekommt dafür `sections(int $vehicleId, Actor $actor): list<array{title: string, rows: list<…>}>`, `render()` baut sein Markdown daraus — eine Quelle für beide.
 - [ ] `print.css`: weißes Papier, schwarze Schrift, Systemschrift 11 pt, Tabellen mit Linien, `@page { margin: 15mm }`, Abschnittsüberschriften nicht am Seitenende (`break-after: avoid`); oben ein Hinweis „Mit Strg+P / Teilen → Drucken als PDF speichern“, der im Druck verschwindet (`@media print`). Eingebunden über `<link>` (CSP `style-src 'self'`), keine Bilder außer optional dem Titelbild über einen signierten Datei-Link.
-- [ ] Prüfung: Druckvorschau im Browser (Chrome) zeigt alle Abschnitte ohne abgeschnittene Tabellen; Seite funktioniert mit abgeschaltetem JavaScript; abgelaufener Link → Hinweisseite.
+- [ ] Druckseite am Handy (360 px) lesbar: Innenabstand 1 rem, jede Tabelle in einem eigenen Container mit `overflow-x: auto` — die Seite selbst rollt nie seitlich.
+- [ ] Prüfung nach README → „Breakpoints und Handy“ für Kopf mit Aktionen, beide Blätter, Gelöscht-Filter; Druckvorschau im Browser (Chrome) zeigt alle Abschnitte ohne abgeschnittene Tabellen; Seite funktioniert mit abgeschaltetem JavaScript; abgelaufener Link → Hinweisseite.
 
 ## Checkliste
 

@@ -20,6 +20,20 @@ Reihenfolge: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9. Phase 1 und 2 si
 
 Entscheidungen: [ADR-017](../../decisions/017-gestaltung-dark-botanical.md) Gestaltung · [ADR-018](../../decisions/018-oberflaeche-seiten-und-lese-api.md) Seiten, Lese-API, Diagramme, Druck · [ADR-019](../../decisions/019-loeschen-und-status-durch-menschen.md) Löschen und Status · [ADR-020](../../decisions/020-scheckheft-luecken.md) Scheckheft-Lücken.
 
+## Breakpoints und Handy (gilt für jede Oberflächen-Phase)
+
+Jede Ansicht wird in allen Stufen gebaut und ist am Handy voll bedienbar — kein Nachrüsten am Ende.
+
+| Stufe | Breite | Schale | Inhalt |
+|---|---|---|---|
+| Handy | unter 576 px (Prüfbreiten 360 und 390) | Kopfzeile mit Signet, untere Leiste (4 Ziele), Kamera-Knopf über der Leiste; das Dokument scrollt | eine Spalte; Tabellen als Karten bzw. Zeitstrahl (Umschalter bleibt erreichbar); Blätter von unten; Fahrzeug-Aktionen in einer Zeile unter dem Kopf; Reiter seitlich rollbar mit Ausblendung am rechten Rand, aktiver Reiter immer im Bild |
+| Klein | 576–767 px | wie Handy | Klärfall-Optionen nebeneinander ab 560 px, Kennzahlen 4 in einer Reihe ab 600 px |
+| Tablet | 768–991 px | wie Handy (untere Leiste) | Tabellen als Standard, Dialoge mittig statt Blatt, Aktionen rechts im Kopf |
+| Laptop | 992–1407 px | Seitenleiste links **fest**, nur der Inhaltsbereich rechts scrollt (eigener Scroll-Container) | Übersicht zweispaltig, Angaben zweispaltig in voller Breite |
+| Desktop | ab 1408 px | wie Laptop | Inhalt höchstens 72 rem breit |
+
+Handy-Regeln: jedes Bedienziel mindestens 44 × 44 px (kleine Abzeichen über eine unsichtbare Trefferfläche); nichts nur per Überfahren — Rechenwege und Herkunft öffnen per Tippen ein Popover; kein Bedienelement in einem Link verschachtelt; kein waagerechtes Scrollen der Seite (Tabellen nur innerhalb ihres Containers). Prüfung je Oberflächen-Phase: 360 px hell und dunkel jede berührte Ansicht, 768 px und 1366 px je einmal, Überlauf per `document.documentElement.scrollWidth > innerWidth` (bzw. `.content` ab 992 px) gemessen.
+
 ## Kontrakt (Browser-API ↔ Oberfläche)
 
 Alle Routen unter `/garage/api/`, Schutz JWT über `ApiAuth::user` (nur Mensch; `gmcp_`-Token → 401). Fremdes oder unbekanntes Fahrzeug/Datensatz → 404 `not_found` (nie 403). Fehler wie bisher `{"error","message"}` über `ApiErrors::respond`. Jede Lese-Route ruft **denselben Service** wie das gleichnamige MCP-Tool und liefert dessen Ausgabe unverändert (Spalte „wie“).
@@ -64,7 +78,7 @@ Agenten bekommen keins dieser Schreibrechte; kein neues MCP-Tool (ADR-010, Proje
 - [ ] 4. Klärfälle lassen sich auf `klaerfaelle.html` mit „A gilt / B gilt / Beide falsch“ bzw. „Erledigt / Verwerfen“ lösen, mit optionaler Notiz und Rückgängig-Leiste nur bis zur Entscheidung (Entscheidung selbst ist endgültig, ADR-010).
 - [ ] 5. Menschen können Ereignisse, Messwerte, Reifensätze, Teile, Schäden, Rückrufe und Notizen löschen (Rückgängig in der Leiste) und als Inhaber Fahrzeugstatus ändern, Fahrzeuge löschen und binnen 30 Tagen wiederherstellen; Rolle `lesend` sieht keine dieser Aktionen und bekommt von der API 403.
 - [ ] 6. „Drucken“ öffnet eine Druckansicht ohne Skript (signierter Link), „Markdown“ lädt die Akte als Datei.
-- [ ] 7. Alle Seiten in der Gestaltung des Entwurfs (Tokens aus `web/css/tokens.css`), dunkel als Standard, hell umschaltbar unter Konto → Darstellung; 360 px ohne waagerechtes Scrollen; Kontrast der Tokens AA.
+- [ ] 7. Alle Seiten in der Gestaltung des Entwurfs (Tokens aus `web/css/tokens.css`), dunkel als Standard, hell umschaltbar unter Konto → Darstellung; jede Ansicht in allen Stufen aus „Breakpoints und Handy“ gebaut, am Handy (360 px) ohne waagerechtes Scrollen und mit allen Aktionen bedienbar; ab 992 px steht die Seitenleiste, nur der Inhalt scrollt; Kontrast der Tokens AA.
 - [ ] 8. Nutzer B sieht und ändert über keine neue Route ein Fahrzeug oder einen Datensatz von Nutzer A (404).
 - [ ] 9. `routes.md`, `code-map.md`, `conventions/frontend.md`, `PROJECT.md`, `GAPS.md` nachgezogen; der Kilometer-Randfall aus `GAPS.md` ist behoben und dort gestrichen.
 

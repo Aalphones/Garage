@@ -11,6 +11,6 @@
 
 **Platzhalter:** alle Werte mit „Beispiel“-Marke und alles, was nicht in der Bestandsaufnahme des Konzepts steht (Kennzeichen, Beträge, Werkstatt, Teilenummern, Profiltiefen, Polo, „Golf (doppelt)“); das Unsplash-Foto (VW Polo) steht für ein Titelbild. Nicht Teil der App: Entwurfsleiste, „Beispiel“-Marken, Werkzeug-Einblendungen, die Simulation von Löschen/Lösen ohne Server.
 
-Geprüft 2026-11-18 per Headless-Chrome: 390 px hell und dunkel (Garage, Übersicht, Scheckheft, Wartung, Klärfälle, Messwerte, Reifen, Teile, Konto mit offener Auswahl, Blatt Status, leerer Zustand), 860 px Wartung, 1366 px Übersicht und Scheckheft, 1440 px Übersicht. Kein waagerechtes Scrollen bei 390 px.
+Geprüft 2026-11-18 per Headless-Chrome: alle zwölf Ansichten bei 360 px mit gemessenem Überlauf 0 (Garage, sieben Reiter, Klärfälle, Eingang, Konto, Druck), 390 px hell und dunkel (dazu Konto mit offener Auswahl, Blatt Status, leerer Zustand), 768 px Übersicht und Scheckheft, 860 px Wartung, 1366 px Übersicht und Scheckheft mit stehender Seitenleiste, 1440 px Übersicht.
 
 **Neu erzeugen:** keine Erzeugung — die HTML-Datei ist die Quelle. Das Bild: aus dem Original (4096 × 2306 PNG des Inhabers) auf 1920 px Breite, JPEG Qualität 72.
