@@ -59,7 +59,7 @@ Grob; Detail-Phasen macht der jeweilige Plan. Jeder Meilenstein endet mit einer 
 0. **Gerüst und Deploy (erledigt beim Aufsetzen):** Brücke `/garage/`, gesperrter Code-Ordner, Health- und Deploy-Endpunkt, Migrator, `deploy.cmd` mit Rauchtest; in DISPATCH die Ausnahmen der Wurzel-`.htaccess`, die Discovery-Umleitung und die Nachbarprüfung.
 1. **Konten, MCP und OAuth (erledigt 2026-11-17, Server-Ablauf auf Strato per curl belegt; die echte Verbindung aus claude.ai und ChatGPT steht aus, siehe `knowledge/GAPS.md`):** `users`, `garages`, `garage_members`, `invitations`, `tokens`, OAuth-Tabellen; Passwort-Login, Zustimmungsseite mit Anmeldung als Nutzer, Token mit `user_id`; MCP-Schicht aus DISPATCH; Tools `list_vehicles`, `get_vehicle`, `create_vehicle`, `set_vehicle_facts`.
 2. **Fahrzeugakte (erledigt 2026-11-17, 28 Tools, Server-Ablauf auf Strato per curl und im Browser belegt; offen: die echte Verbindung aus claude.ai/ChatGPT aus Meilenstein 1, Klärfall-Seite nur als Platzhalter bis Meilenstein 4, Löschen und Statuswechsel durch Menschen bis Meilenstein 4, Belege bis Meilenstein 3, siehe `knowledge/GAPS.md`):** Fahrzeug, Zulassung, Ausstattung, Spezifikationen, Ereignisse mit Positionen, Kilometerstände, Wartungsaufgaben und Regeln mit Fälligkeitsrechnung, Messwerte, Reifen, Teile, Klärfälle, Notizen, Audit-Log; `get_dossier`.
-3. **Belege und Fotos:** Dokumente, Anhänge, Upload-Tickets, Eingang; Weg A (Chat) und Weg B (Eingang) an echten Clients verproben.
+3. **Belege und Fotos (erledigt 2026-11-18, 38 Tools, Server-Ablauf auf Strato per curl und im Browser belegt, Mandanten-Liste mit 86 Prüfungen grün; offen beim Inhaber: Handy-Test Teilen-Ziel, Claude-Web-Test des Widgets, Verprobungs-Matrix, siehe `knowledge/GAPS.md`):** Dokumente, Anhänge, Upload-Tickets, Eingang; Weg A (Chat) und Weg B (Eingang) an echten Clients verproben.
 4. **Oberfläche:** Gestaltung gemeinsam in eigener Session (Design-Tokens, Komponenten, Entwurf der Hauptansichten), dann Garage, Cockpit, Scheckheft, Wartungsplan, Belege, Klärfälle.
 5. **Kosten, Verträge, Wert:** Verträge mit Beitragsperioden, Umlage, Tankbuch, Ausgaben, Zubehör, Plaketten, Bewertungen und Vergleichsinserate, Kosten- und Wert-Ansicht, iCal-Feed.
 6. **Einladungen in der Oberfläche, Migration der beiden bestehenden Akten.**
@@ -69,6 +69,6 @@ Aus dem Konzept (→ „Offene Entscheidungen"), Empfehlung jeweils dort:
 
 - Belege und Datenschutz bei fremden Nutzern: Impressum, Datenschutzerklärung, Löschkonzept; eigene Domain, sobald Fremde Konten bekommen.
 - PDFs für Agenten: Original plus erkannter Text (empfohlen) oder Seitenbilder.
-- Belegweg auf dem Handy: welcher Weg Standard wird, entscheidet die Verprobung in Meilenstein 3.
+- Belegweg auf dem Handy: welcher Weg Standard wird, entscheidet die Verprobungs-Matrix des Inhabers ([Plan Meilenstein 3, Follow-ups](archive/2026-11/2026-11-17_belege-und-fotos/README.md)).
 - Gemeinsamer Kern mit DISPATCH nach Meilenstein 3 ([ADR-005](decisions/005-kern-aus-dispatch-kopiert.md)).
 - Die Meilenstein-Grafik des Konzepts (M0–M7) liegt nur als eingebettete Grafik vor und fehlt im Markdown; die Liste oben ist daraus abgeleitet.

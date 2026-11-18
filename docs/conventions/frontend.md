@@ -28,7 +28,7 @@
 
 ## Seiten
 
-`index.html` (Anmeldung, Konto, Klärfälle), `eingang.html` (Fotos und PDFs in den Eingang legen, Eingang ansehen), `belege.html` (Belege als Liste oder Galerie, Detail unter `#beleg/<id>`), `einladung.html`, `zustimmung.html`. Die Navigation „Konto · Eingang · Belege“ steht unter der `h1` der drei Hauptseiten. Der Entwurf liegt in `docs/planning/2026-11-17_belege-und-fotos/artifacts/entwurf-belege.html`.
+`index.html` (Anmeldung, Konto, Klärfälle), `eingang.html` (Fotos und PDFs in den Eingang legen, Eingang ansehen), `belege.html` (Belege als Liste oder Galerie, Detail unter `#beleg/<id>`), `einladung.html`, `zustimmung.html`. Die Navigation „Konto · Eingang · Belege“ steht unter der `h1` der drei Hauptseiten. Der Entwurf liegt in `docs/archive/2026-11/2026-11-17_belege-und-fotos/artifacts/entwurf-belege.html`.
 
 ## Regeln
 

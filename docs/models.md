@@ -14,6 +14,8 @@ Quelle der Wahrheit sind die Migrationen in `app/migrations/`. Geplantes Modell 
 
 `016_testkonten_m2_sperren.sql` legt keine Tabelle an: sie setzt Nutzer mit Adresse `test-m2-…@example.com` oder `p2r…@example.com` auf `gesperrt` und widerruft deren Tokens (Aufräumen der Prüfungen aus Meilenstein 2).
 
+`017_document.sql` legt `documents`, `attachments` und `upload_tickets` an, `018_inbox.sql` `inbox_items` und `inbox_documents` (Spalten: Abschnitte „Belege“ und „Eingang“ unten). `019_testkonten_m3_sperren.sql` legt keine Tabelle an: sie setzt Nutzer mit Adresse `test-m3-…@example.com` oder `…@example.invalid` (so nannten die Phasen 1 bis 6 ihre Testkonten) auf `gesperrt` und widerruft deren Tokens (Aufräumen der Prüfungen aus Meilenstein 3).
+
 ## Bestehende Tabellen
 
 | Tabelle | Spalten | Angelegt von |

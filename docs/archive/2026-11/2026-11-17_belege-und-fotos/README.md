@@ -2,7 +2,7 @@
 
 Ziel: Belege und Fotos kommen auf zwei Wegen in denselben Speicher und hängen danach an den Datensätzen der Akte. **Weg A (Chat):** Upload-Ticket für Programme mit Dateizugriff, Datei-Parameter für ChatGPT, Widget mit Ablagefläche für Claude. **Weg B (Eingang):** Hochladen im Browser (Kamera, Datei, Android „Teilen → GARAGE“), ein Agent arbeitet den Eingang ab. Menschen sehen Belege auf einer schlichten Seite; Auslieferung nur über signierte Links mit kurzer Laufzeit.
 
-Quelle des Umfangs: [`../../PROJECT.md`](../../PROJECT.md) → Meilenstein 3, Fachkonzept [`../../design/konzept-garage.md`](../../design/konzept-garage.md) → „Fotos und Belege“, „MCP-Oberfläche“. Vorbild für allen neuen Code: Meilenstein 2 (Plan im Archiv [`../../archive/2026-11/2026-11-17_fahrzeugakte/`](../../archive/2026-11/2026-11-17_fahrzeugakte/README.md)), für die Dateiablage DISPATCH (`C:\Users\sasch\develop\Blog\app\src\Domain\MediaService.php`, `Util\ImageProcessor.php`, `Mcp\ImageBlocks.php`, ADR-011 dort). Entwurf der Oberfläche: [`artifacts/`](artifacts/README.md).
+Quelle des Umfangs: [`../../PROJECT.md`](../../../PROJECT.md) → Meilenstein 3, Fachkonzept [`../../design/konzept-garage.md`](../../../design/konzept-garage.md) → „Fotos und Belege“, „MCP-Oberfläche“. Vorbild für allen neuen Code: Meilenstein 2 (Plan im Archiv [`../../archive/2026-11/2026-11-17_fahrzeugakte/`](../../../archive/2026-11/2026-11-17_fahrzeugakte/README.md)), für die Dateiablage DISPATCH (`C:\Users\sasch\develop\Blog\app\src\Domain\MediaService.php`, `Util\ImageProcessor.php`, `Mcp\ImageBlocks.php`, ADR-011 dort). Entwurf der Oberfläche: [`artifacts/`](artifacts/README.md).
 
 ## Phasen
 
@@ -13,8 +13,8 @@ Quelle des Umfangs: [`../../PROJECT.md`](../../PROJECT.md) → Meilenstein 3, Fa
 | 3 | [Eingang auf dem Server](phase-3-eingang-server.md) — Eingangs-Tabellen, `list_inbox`/`claim_inbox_item`/`release_inbox_item`, Web-API für Belege und Eingang, Prompt `eingang_abarbeiten` | heikel | complete |
 | 4 | [Oberfläche Eingang und Belege](phase-4-oberflaeche.md) — Seiten nach Entwurf, Fotos im Browser verkleinern, PDF-Seiten per pdf.js | standard | complete |
 | 5 | [Teilen-Ziel Android](phase-5-teilen-ziel.md) — Manifest, Service Worker, Übernahme geteilter Dateien | standard | complete |
-| 6 | [Claude-Widget](phase-6-widget.md) — MCP App `ui://garage/beleg-ablegen`, wartende Belege, `confirm_document`, CORS am Upload | heikel | pending |
-| 7 | [Abschluss auf Strato](phase-7-abschluss.md) — Mandanten-Liste, Testkonten sperren, Doku, Archiv, Verprobungs-Matrix für den Inhaber | mechanisch | pending |
+| 6 | [Claude-Widget](phase-6-widget.md) — MCP App `ui://garage/beleg-ablegen`, wartende Belege, `confirm_document`, CORS am Upload | heikel | complete |
+| 7 | [Abschluss auf Strato](phase-7-abschluss.md) — Mandanten-Liste, Testkonten sperren, Doku, Archiv, Verprobungs-Matrix für den Inhaber | mechanisch | complete |
 
 Reihenfolge ist Pflicht: jede Phase baut auf den Klassen der vorigen. Jede Phase endet mit `deploy.cmd` und Prüfung per `curl` (Phase 4–6 zusätzlich im Browser) auf Strato — lokal gibt es kein MySQL (Stand M2). Nach einem Deploy kurz warten (OPcache), bevor geprüft wird.
 
@@ -102,17 +102,17 @@ Herkunft wie M2. Fehler wie M2: `not_found` (auch fremde IDs), `forbidden` (Roll
 
 ## Finale Abnahmekriterien
 
-- [ ] Ein Programm mit Dateizugriff (curl mit festem Token) holt per `request_upload` ein Ticket, lädt ein Foto und ein PDF hoch und beschreibt sie per `store_document`; ein zweites Hochladen derselben Datei ergibt `duplicate: true` und kein zweites Dokument. (Phase 1)
-- [ ] Das gespeicherte Foto hat keine EXIF-/GPS-Daten mehr, `captured_on` steht am Dokument; das PDF ist byte-gleich (SHA-256 vor und nach). (Phase 1)
-- [ ] Ein signierter Link liefert die Datei, nach 10 Minuten oder mit geänderter Signatur 404; `/garage-app/storage/…` ist von außen 403. (Phase 1)
-- [ ] Ein Agent hängt einen Beleg an ein Ereignis; `get_event`, `get_dossier` (Abschnitt „Belege“) und `search` (Text aus dem Beleg) zeigen ihn. (Phase 2)
-- [ ] `store_document` mit ChatGPT-Dateiobjekt (`download_url`) holt die Datei ab; private Adressen werden abgewiesen. (Phase 2)
-- [ ] Ein Mensch legt im Browser drei Fotos und ein PDF in den Eingang; ein Agent reserviert den Eintrag per `claim_inbox_item`, bekommt die Seiten als Bilder und schließt ihn per `release_inbox_item`; eine abgelaufene Reservierung erscheint wieder als `neu`. (Phase 3, 4)
+- [x] Ein Programm mit Dateizugriff (curl mit festem Token) holt per `request_upload` ein Ticket, lädt ein Foto und ein PDF hoch und beschreibt sie per `store_document`; ein zweites Hochladen derselben Datei ergibt `duplicate: true` und kein zweites Dokument. (Phase 1)
+- [x] Das gespeicherte Foto hat keine EXIF-/GPS-Daten mehr, `captured_on` steht am Dokument; das PDF ist byte-gleich (SHA-256 vor und nach). (Phase 1)
+- [x] Ein signierter Link liefert die Datei, nach 10 Minuten oder mit geänderter Signatur 404; `/garage-app/storage/…` ist von außen 403. (Phase 1)
+- [x] Ein Agent hängt einen Beleg an ein Ereignis; `get_event`, `get_dossier` (Abschnitt „Belege“) und `search` (Text aus dem Beleg) zeigen ihn. (Phase 2)
+- [x] `store_document` mit ChatGPT-Dateiobjekt (`download_url`) holt die Datei ab; private Adressen werden abgewiesen. (Phase 2)
+- [x] Ein Mensch legt im Browser drei Fotos und ein PDF in den Eingang; ein Agent reserviert den Eintrag per `claim_inbox_item`, bekommt die Seiten als Bilder und schließt ihn per `release_inbox_item`; eine abgelaufene Reservierung erscheint wieder als `neu`. (Phase 3, 4)
 - [x] Die Seiten Eingang und Belege entsprechen dem Entwurf (Prüfpunkte in Phase 4), 360 px ohne waagerechtes Scrollen, hell und dunkel. (Phase 4)
 - [ ] Auf einem Android-Handy mit installierter Web-App landet „Teilen → GARAGE“ aus einer anderen App im Formular „Neuer Eintrag“. (Phase 5, Inhaber)
 - [ ] In Claude Web erscheint nach `store_document` ohne Datei das Widget; eine hineingezogene Datei wird abgelegt und das Dokument wechselt von `wartet` auf `zugeordnet`/`unzugeordnet`. (Phase 6, Inhaber)
-- [ ] Nutzer B sieht über keinen Weg (MCP, API, signierter Link mit fremder ID, Ticket) Belege oder Eingang von Nutzer A; Rolle `lesend` und Token ohne `garage:files` legen nichts ab. (Phase 7)
-- [ ] `/garage-app/.env` antwortet nach jedem Deploy mit 403; Rauchtest grün. (Phase 7)
+- [x] Nutzer B sieht über keinen Weg (MCP, API, signierter Link mit fremder ID, Ticket) Belege oder Eingang von Nutzer A; Rolle `lesend` und Token ohne `garage:files` legen nichts ab. (Phase 7)
+- [x] `/garage-app/.env` antwortet nach jedem Deploy mit 403; Rauchtest grün. (Phase 7)
 
 Braucht Inhaber (nicht stellvertretend abgehakt): Verprobungs-Matrix aus Phase 7 (Claude Web, Claude Android, ChatGPT Web, ChatGPT Android, Claude Code; Weg A und B) — sie entscheidet, welcher Weg Standard wird.
 
@@ -127,10 +127,38 @@ Braucht Inhaber (nicht stellvertretend abgehakt): Verprobungs-Matrix aus Phase 7
 
 ## Summary
 
+Belege und Fotos laufen auf Strato über beide Wege in einen gemeinsamen Speicher: Weg A (Upload-Ticket, ChatGPT-Datei-Parameter, URL-Import, Claude-Widget) und Weg B (Eingang im Browser, Teilen-Ziel Android, Abarbeiten per `claim_inbox_item`). Dokumente hängen über Anhänge an den Datensätzen der Akte und erscheinen in `get_event`, `get_vehicle`, `get_dossier` und `search`; ausgeliefert wird nur über signierte Links. 38 MCP-Tools insgesamt (10 neu), Migrationen 017 bis 019, ADR-012 bis ADR-016. Die Mandanten-Liste (86 Prüfungen gegen Strato) ist grün; Handy-Test von Phase 5, Claude-Web-Test des Widgets und die Verprobungs-Matrix liegen beim Inhaber.
+
 ## Files touched
+
+- Neu in `app/`: `Domain/DocumentService`, `DocumentRepository`, `InboxService`, `InboxRepository`, `Auth/FileLink`, `Util/ImageProcessor`, `Mcp/ImageBlocks`, `Mcp/Tools/DocumentTools`, `InboxTools`, `Api/DocumentController`, `InboxController`, `UploadController`, `FileController`, `mcp/widget/beleg-ablegen.html`, Migrationen `017_document.sql`, `018_inbox.sql`, `019_testkonten_m3_sperren.sql`.
+- Geändert in `app/`: `index.php`, `config.php`, `Mcp/` (`McpController`, `Prompts`, `Resources`, `Tool`, `ToolResult`), `Domain/DossierService`, `SearchService`/`SearchRepository`, `Tools/EventTools`, `VehicleTools`, `SearchTools`, `Api/VehicleController`, Leitfäden und Server-Anweisungen.
+- `web/`: Seiten `eingang.html`, `belege.html`, Skripte (`capture`, `document`, `inbox`, `image`, `pdfpages`, `session`, `share`, `undo`, `dom`, `api`), `css/base.css`, `manifest.webmanifest`, `sw.js`, `icons/`, `vendor/pdfjs/` (lokal, ADR-014), `.user.ini`, `.htaccess`.
+- Doku: ADR-012 bis ADR-016, `PROJECT.md`, `code-map.md`, `models.md`, `routes.md`, `glossary.md`, `knowledge/GAPS.md`.
 
 ## Commits
 
+`91a0fa4` Tabellen · `1d258bb` Ablage-Kern · `3137994` Anhänge und Datei-Parameter · `ebf739a`, `93575ed` Doku Phase 2 · `2763659` Eingang · `3a3cc58` Doku Phase 3 · `1762a5a` Oberfläche · `0a68104` Doku Phase 4 · `8e416b6` Teilen-Ziel · `104b42a` Doku Phase 5 · `955183e` Widget · `7ae8d3c` Doku Phase 6 · Phase 7 siehe `git log` (Migration 019, Doku, Archiv). Nicht gepusht.
+
 ## Deviations from plan
 
+- CSP `sandbox` an `/garage/files/…` wird von Apache überschrieben (Phase 1); `nosniff` und Signatur schützen weiter. Offen, kein Blocker.
+- Migration 019 sperrt zusätzlich alle Adressen `…@example.invalid`, weil die Testkonten der Phasen 1 bis 6 diese Form trugen und nicht `test-m3-…@example.com`.
+- Mandanten-Liste in zwei Läufen: Lauf 1 hatte einen Prüffehler beim Anlegen des Ereignisses (falsche Art und Quelle), Ablaufprüfungen (Ticket 15 Minuten, Link 10 Minuten) liefen nur dort mit Wartezeit; Lauf 2 ohne Wartezeit lieferte die Ereignisprüfungen.
+
 ## Follow-ups
+
+- Offen beim Inhaber: Handy-Test Teilen-Ziel (Phase 5), Claude-Web-Test des Widgets (Phase 6), Verprobungs-Matrix unten, echte Verbindung aus claude.ai/ChatGPT und `claude mcp add` (Meilenstein 1). Alles in `docs/knowledge/GAPS.md`.
+- Sperre der Testkonten durch Migration 019 an keinem Konto gesehen (kein Datenbankzugriff von außen); Prüfung: `SELECT email, status FROM users WHERE email LIKE 'test-m3-%' OR email LIKE '%@example.invalid';` im Strato-Kundenbereich.
+- Testdaten bleiben stehen (Garagen „M3 Test Garage A/B“, „M3P2…“ bis „M3P4…“, „M3P7 Garage A/B“, Fahrzeuge, Dokumente, Eingangseinträge, eine ungenutzte Einladung); die Konten sind gesperrt, Löschen gehört zum Löschkonzept (Meilenstein 4).
+- CSP-`sandbox` an Dateilinks: Apache-Konfiguration prüfen oder Kopfzeile anders setzen.
+
+### Verprobungs-Matrix (Inhaber)
+
+| Client | Weg A: Widget / Datei-Parameter / Ticket | Weg B: `claim_inbox_item` mit Bildern | Teilen-Ziel (nur Android) |
+|---|---|---|---|
+| Claude Web | Widget: offen – Inhaber · Ticket: offen – Inhaber | offen – Inhaber | — |
+| Claude Android | Widget: offen – Inhaber · Ticket: offen – Inhaber | offen – Inhaber | offen – Inhaber |
+| ChatGPT Web | Datei-Parameter: offen – Inhaber | offen – Inhaber | — |
+| ChatGPT Android | Datei-Parameter: offen – Inhaber | offen – Inhaber | offen – Inhaber |
+| Claude Code | Ticket: belegt per curl (Phase 1, 2026-11-17) | belegt per curl (Phase 3, 2026-11-17) | — |

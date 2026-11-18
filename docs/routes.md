@@ -60,7 +60,7 @@ Fehler immer als JSON `{"error": "…", "message": "…"}`; unbekannter Pfad 404
 
 | Methode | Pfad | Controller | Schutz | Antwort |
 |---|---|---|---|---|
-| POST | `/garage/mcp` | `McpMcpController::handle` | `gmcp_`- oder `goa_`-Token als Bearer; Nutzer muss `aktiv` sein | JSON-RPC 2.0, eine Nachricht je Anfrage (kein Batch); ohne `id` → 202; ohne Token 401 mit `WWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource/garage/mcp", scope="…"` (bei ungültigem Token zusätzlich `error="invalid_token"`); fremder `Origin` → 403; Token ohne Scope für ein Tool → 403, Fehler `-32003`, `insufficient_scope` |
+| POST | `/garage/mcp` | `Mcp\McpController::handle` | `gmcp_`- oder `goa_`-Token als Bearer; Nutzer muss `aktiv` sein | JSON-RPC 2.0, eine Nachricht je Anfrage (kein Batch); ohne `id` → 202; ohne Token 401 mit `WWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource/garage/mcp", scope="…"` (bei ungültigem Token zusätzlich `error="invalid_token"`); fremder `Origin` → 403; Token ohne Scope für ein Tool → 403, Fehler `-32003`, `insufficient_scope` |
 
 Methoden: `initialize` (ältere Clients), `server/discover` (2026-07-28), `ping`, `tools/list` (nur Tools der Scopes des Tokens), `tools/call`, `resources/list`/`templates/list`/`read` und `prompts/list`/`get` (brauchen `garage:read`; Katalog unten). Server-Version `0.2.0`.
 

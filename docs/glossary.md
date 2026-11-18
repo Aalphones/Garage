@@ -67,6 +67,9 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 | Eingang (`inbox_items`) | In der App hochgeladene Belege, die ein Agent später abarbeitet (Weg B). |
 | Reservierung (`claimed_until`) | Ein Agent hält einen Eingangs-Eintrag mit Frist (Standard 180 Minuten); danach gilt er wieder als `neu`. Berechnet beim Lesen, kein Cron (ADR-016). |
 | Weg A / Weg B | Beleg kommt im Chat (A) oder über den Eingang der App (B) herein. |
+| Widget (MCP App) | Kleine Oberfläche im Claude-Chat (`ui://garage/beleg-ablegen`): zeigt bei einem Dokument im Status `wartet` eine Ablagefläche, lädt per Upload-Ticket hoch und ruft `confirm_document`. |
+| Teilen-Ziel (`share_target`) | Eintrag „GARAGE“ in der Android-Teilen-Liste; der Service Worker nimmt die Dateien an und übergibt sie dem Eingangsformular. |
+| Verprobungs-Matrix | Tabelle Client × Weg (A/B/Teilen-Ziel); der Inhaber trägt ein, was in echten Clients funktioniert; sie entscheidet, welcher Weg Standard wird. |
 
 ## Kosten und Wert
 
