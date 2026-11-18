@@ -10,15 +10,19 @@ Die Akte wird im Browser sichtbar und bedienbar: Garage, Fahrzeug mit sieben Rei
 | 2 | Lese-API der Akte | standard | sonnet | pending |
 | 3 | Scheckheft-Lücken | heikel | opus | pending |
 | 4 | Schreib-API: Status, Löschen, Wiederherstellen, Druck-Link, Kilometer-Randfall | heikel | opus | pending |
+| 4b | Schreib-API: kleine Eingaben durch Menschen (km-Stand, Wert korrigieren, Notiz, Titelbild) | heikel | opus | pending |
 | 5 | Seiten Garage, Fahrzeug-Übersicht, Klärfälle | standard | sonnet | pending |
 | 6 | Reiter Scheckheft und Wartung | standard | sonnet | pending |
 | 7 | Reiter Messwerte, Reifen, Teile, Belege | standard | sonnet | pending |
 | 8 | Fahrzeug-Aktionen, Druckansicht, gelöschte Fahrzeuge | standard | sonnet | pending |
+| 8b | Kleine Eingaben in der Oberfläche | standard | sonnet | pending |
 | 9 | Doku-Abgleich und Abschluss | mechanisch | sonnet | pending |
 
-Reihenfolge: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9. Phase 1 und 2 sind unabhängig voneinander; 5–8 brauchen 1 und 2, 6 braucht 3, 8 braucht 4.
+Reihenfolge: 1 → 2 → 3 → 4 → 4b → 5 → 6 → 7 → 8 → 8b → 9. Phase 1 und 2 sind unabhängig voneinander; 5–8b brauchen 1 und 2, 6 braucht 3, 8 braucht 4, 8b braucht 4b.
 
-Entscheidungen: [ADR-017](../../decisions/017-gestaltung-dark-botanical.md) Gestaltung · [ADR-018](../../decisions/018-oberflaeche-seiten-und-lese-api.md) Seiten, Lese-API, Diagramme, Druck · [ADR-019](../../decisions/019-loeschen-und-status-durch-menschen.md) Löschen und Status · [ADR-020](../../decisions/020-scheckheft-luecken.md) Scheckheft-Lücken.
+Wünsche des Inhabers (2026-11-18): Menschen dürfen kleine Eingaben machen (ADR-021); der Kamera-Knopf öffnet sofort die Kamera und legt das Foto ohne Seitenwechsel in den Eingang des Fahrzeugs; Klärfälle lassen sich direkt in der Fahrzeug-Übersicht lösen; Handy und Desktop sind gleich wichtig.
+
+Entscheidungen: [ADR-017](../../decisions/017-gestaltung-dark-botanical.md) Gestaltung · [ADR-018](../../decisions/018-oberflaeche-seiten-und-lese-api.md) Seiten, Lese-API, Diagramme, Druck · [ADR-019](../../decisions/019-loeschen-und-status-durch-menschen.md) Löschen und Status · [ADR-020](../../decisions/020-scheckheft-luecken.md) Scheckheft-Lücken · [ADR-021](../../decisions/021-kleine-eingaben-durch-menschen.md) kleine Eingaben.
 
 ## Breakpoints und Handy (gilt für jede Oberflächen-Phase)
 
@@ -70,6 +74,17 @@ Alle Routen unter `/garage/api/`, Schutz JWT über `ApiAuth::user` (nur Mensch; 
 
 Agenten bekommen keins dieser Schreibrechte; kein neues MCP-Tool (ADR-010, Projektregel 5).
 
+**Kleine Eingaben (Phase 4b, ADR-021)** — Rolle `inhaber`\|`mitglied` (`lesend` → 403), Audit wie beim gleichnamigen Tool.
+
+| Methode | Pfad | Body | Antwort / Fehler |
+|---|---|---|---|
+| POST | `vehicles/{id}/odometer` | `read_on` (Datum, nicht in der Zukunft), `km` (0–2.000.000), `note?` (0–200) | wie `record_odometer` (`result` auch `klaerfall`); Herkunft `nutzer`/`bestaetigt` |
+| PATCH | `vehicles/{id}/facts` | `field` (aus `VehicleService::FIELDS`), `value` | 200 `{field,value,result:"aktualisiert"\|"angelegt"\|"unveraendert"}`; ersetzt auch bestätigte Werte; offener Klärfall am Feld → 409 `open_item_pending`; ungültig → 422 |
+| PUT | `vehicles/{id}/notes` | `topic` (1–120), `body` (1–20.000) | wie `upsert_note` |
+| POST | `vehicles/{id}/cover` | `document_id` | wie `attach_document` mit Ziel `fahrzeug`, Rolle `titelbild`; kein Foto → 422 |
+
+Kamera-Knopf (Phase 5): nutzt die bestehenden Routen `POST documents` (multipart, `vehicle_id`) und `POST inbox` (`document_ids`, `vehicle_id`, `note?`) — keine neue Route.
+
 ## Finale AK
 
 - [ ] 1. Nach der Anmeldung landet man auf `garage.html`: Fahrzeugkarten je Garage mit Kennzeichen, Modell, „≈ km heute“, nächster Fälligkeit, Klärfällen, Belegzahl; Filter Aktiv/Verkauft/Stillgelegt/Alle, für Inhaber zusätzlich Gelöscht mit „Wiederherstellen“.
@@ -77,6 +92,8 @@ Agenten bekommen keins dieser Schreibrechte; kein neues MCP-Tool (ADR-010, Proje
 - [ ] 3. Scheckheft zeigt Lücken rot im Zeitstrahl und in der Tabelle; der Rechenweg steht an der Lücke.
 - [ ] 4. Klärfälle lassen sich auf `klaerfaelle.html` mit „A gilt / B gilt / Beide falsch“ bzw. „Erledigt / Verwerfen“ lösen, mit optionaler Notiz und Rückgängig-Leiste nur bis zur Entscheidung (Entscheidung selbst ist endgültig, ADR-010).
 - [ ] 5. Menschen können Ereignisse, Messwerte, Reifensätze, Teile, Schäden, Rückrufe und Notizen löschen (Rückgängig in der Leiste) und als Inhaber Fahrzeugstatus ändern, Fahrzeuge löschen und binnen 30 Tagen wiederherstellen; Rolle `lesend` sieht keine dieser Aktionen und bekommt von der API 403.
+- [ ] 5b. Inhaber und Mitglieder tragen im Browser einen Kilometerstand ein, korrigieren einen Stammdaten-Wert (ersetzt sofort, alter Wert im Verlauf), legen Notizen an bzw. bearbeiten sie und setzen ein Foto als Titelbild.
+- [ ] 5c. Der Kamera-Knopf öffnet am Handy direkt die Kamera; das Foto liegt danach ohne Seitenwechsel im Eingang dieses Fahrzeugs (Leiste mit „Notiz“). Klärfälle lassen sich in der Fahrzeug-Übersicht aufklappen und dort lösen.
 - [ ] 6. „Drucken“ öffnet eine Druckansicht ohne Skript (signierter Link), „Markdown“ lädt die Akte als Datei.
 - [ ] 7. Alle Seiten in der Gestaltung des Entwurfs (Tokens aus `web/css/tokens.css`), dunkel als Standard, hell umschaltbar unter Konto → Darstellung; jede Ansicht in allen Stufen aus „Breakpoints und Handy“ gebaut, am Handy (360 px) ohne waagerechtes Scrollen und mit allen Aktionen bedienbar; ab 992 px steht die Seitenleiste, nur der Inhalt scrollt; Kontrast der Tokens AA.
 - [ ] 8. Nutzer B sieht und ändert über keine neue Route ein Fahrzeug oder einen Datensatz von Nutzer A (404).

@@ -302,6 +302,7 @@ body.has-dz .tabs { top: 0; }
 /* Schwebender Kamera-Knopf */
 .fab { position: fixed; right: 1rem; bottom: calc(var(--nav-h) + 1rem); z-index: 25; height: 3.5rem; min-width: 3.5rem; border-radius: 999px; border: 0; background: var(--grad-primary); color: var(--on-primary); display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: 0 1.1rem; font-weight: 700; box-shadow: var(--shadow); cursor: pointer; text-decoration: none; }
 .fab svg { width: 22px; height: 22px; }
+.fab:focus-within { outline: 2px solid var(--focus); outline-offset: 3px; }
 @media (min-width: 992px) { .fab { bottom: 1.5rem; right: 1.5rem; } }
 
 /* Toast mit Rückgängig */
@@ -363,7 +364,7 @@ body.has-dz .tabs { top: 0; }
 
 /* Stammdaten */
 .facts { display: grid; grid-template-columns: 1fr; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
-.fact { display: grid; grid-template-columns: minmax(6.5rem, 11rem) 1fr 6.8rem; gap: .6rem; padding: .55rem .9rem; border-top: 1px solid var(--line); align-items: center; font-size: 14px; }
+.fact { display: grid; grid-template-columns: minmax(6.5rem, 11rem) 1fr 6.8rem 2rem; gap: .6rem; padding: .55rem .9rem; border-top: 1px solid var(--line); align-items: center; font-size: 14px; }
 .fact:first-child { border-top: 0; }
 .fact .k { color: var(--muted); font-size: 13px; }
 .fact .v { display: flex; flex-wrap: wrap; gap: .1rem .5rem; align-items: baseline; min-width: 0; overflow-wrap: anywhere; }
@@ -397,6 +398,27 @@ body.has-dz .tabs { top: 0; }
 @media (max-width: 767px) { .vacts { margin-left: -.45rem; width: calc(100% + .45rem); gap: 0; flex-wrap: nowrap; } .vacts .btn { padding: 0 .45rem; } }
 .facts.two { display: grid; }
 @media (min-width: 992px) { .facts.two { grid-template-columns: 1fr 1fr; } .facts.two .fact:nth-child(2) { border-top: 0; } .facts.two .fact:nth-child(even) { border-left: 1px solid var(--line); } }
+
+/* Aufklappbare Zeilen (Klärfälle, Notizen in der Übersicht) */
+.xrow { border-top: 1px solid var(--line); }
+.xrow:first-child { border-top: 0; }
+.xrow > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: .2rem .8rem; align-items: center; padding: .7rem .9rem; min-height: var(--touch); }
+.xrow > summary::-webkit-details-marker { display: none; }
+.xrow > summary:hover { background: var(--raised); }
+.xrow > summary .t { font-weight: 600; overflow-wrap: anywhere; }
+.xrow[open] > summary { background: var(--grad-hi); }
+.xbody { padding: .2rem .9rem .9rem; }
+.xbody .acts { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .7rem; }
+.linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--primary); text-decoration: underline; cursor: pointer; position: relative; }
+.linkbtn::after { content: ''; position: absolute; inset: -12px -6px; }
+.iconsm { width: 2rem; height: 2rem; display: grid; place-items: center; border: 0; border-radius: 8px; background: none; color: var(--muted); cursor: pointer; position: relative; }
+.iconsm svg { width: 16px; height: 16px; }
+.iconsm:hover { color: var(--primary); background: var(--raised); }
+.iconsm::after { content: ''; position: absolute; inset: -6px; }
+@media (max-width: 575px) {
+  .fact { grid-template-columns: 1fr 6.8rem 2rem; row-gap: .1rem; }
+  .fact .k { grid-column: 1 / -1; }
+}
 
 /* Handy: alles mit dem Daumen bedienbar — Trefferflächen mindestens 44 px */
 .src, .est, .stbtn { position: relative; }
@@ -494,6 +516,7 @@ const I = {
   copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/></svg>',
   list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>',
   tl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 3v18"/><circle cx="6" cy="7" r="2"/><circle cx="6" cy="17" r="2"/><path d="M10 7h10M10 17h10"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>',
   trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
   print: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>',
   src: {
@@ -689,7 +712,8 @@ function viewVehicle(id, tab) {
     ${TABS.map(([k, l]) => `<a role="tab" href="#fz/${v.id}/${k}" aria-selected="${k === tab}">${l}${k === 'uebersicht' && openOi(v.id).length ? `<span class="count">${openOi(v.id).length}</span>` : ''}</a>`).join('')}
   </nav>`;
   const body = ({ uebersicht: tabOverview, scheckheft: tabBook, wartung: tabPlan, messwerte: tabMeasure, reifen: tabTires, teile: tabParts, belege: tabDocs })[tab](v);
-  const fab = v.status === 'aktiv' && canWrite() ? `<a class="fab" href="#eingang" aria-label="Beleg fotografieren">${I.cam}<span>Beleg</span></a>` : '';
+  /* Kamera sofort: Datei-Feld mit capture öffnet am Handy direkt die Kamera, am Rechner die Dateiauswahl */
+  const fab = v.status === 'aktiv' && canWrite() ? `<label class="fab" aria-label="Beleg für ${v.label} fotografieren">${I.cam}<span>Beleg</span><input class="sr-only" type="file" accept="image/*" capture="environment" data-cam="${v.id}"></label>${tool('POST /garage/api/documents + POST /garage/api/inbox (vehicle_id)')}` : '';
   return head + `<div class="panel" data-tab="${tab}">${body}</div>` + fab;
 }
 
@@ -706,7 +730,7 @@ function tabOverview(v) {
   const facts = D.facts[v.id] ?? D.facts.golf;
   return `${why('Was ist mit diesem Auto los? Dringendes zuerst (Fälligkeiten, Klärfälle), dann die Angaben. Jede Zeile führt in ihren Reiter.')}
   <div class="kpis">
-    <div class="kpi"><div class="v"><button type="button" class="est" data-why="Geschätzt aus ${v.kmBasis}">≈ ${v.km?.toLocaleString('de-DE')}</button></div><div class="l">km heute ${tool('get_vehicle.km_estimate')}</div></div>
+    <div class="kpi"><div class="v"><button type="button" class="est" data-why="Geschätzt aus ${v.kmBasis}">≈ ${v.km?.toLocaleString('de-DE')}</button></div><div class="l">km heute ${canWrite() ? '· <button class="linkbtn" type="button" data-act="addkm">Stand eintragen</button>' : ''}${tool('POST /garage/api/vehicles/{id}/odometer')}</div></div>
     <div class="kpi bad"><a href="#fz/${v.id}/wartung"><div class="v">1</div><div class="l">überfällig</div></a></div>
     <div class="kpi warn"><a href="#fz/${v.id}/wartung"><div class="v">2</div><div class="l">bald oder unsicher</div></a></div>
     <div class="kpi${ois.length ? ' warn' : ''}"><a href="#klaerfaelle"><div class="v">${ois.length}</div><div class="l">Klärfälle</div></a></div>
@@ -718,15 +742,15 @@ function tabOverview(v) {
         <div class="list"><a class="row" href="#fz/${v.id}/scheckheft"><span class="t">Klimaservice und Ölwechsel</span><span class="r">389,40 €</span><span class="s">06.10.2026 · 26.921 km · Autohaus Main GmbH ${B}</span></a></div></div>
     </div>
     <div>
-      <div class="sec"><div class="sec-h"><h2>Klärfälle</h2>${tool('list_open_items')}<a class="more" href="#klaerfaelle">Alle lösen</a></div>
-        ${ois.length ? `<div class="list">${ois.slice(0, 3).map(o => `<a class="row" href="#klaerfaelle"><span class="t">${o.q}</span><span class="r">${st(o.kind === 'konflikt' ? 'warn' : 'ok', o.kind)}</span></a>`).join('')}</div>` : '<p class="muted">Keine offenen Klärfälle.</p>'}</div>
-      <div class="sec"><div class="sec-h"><h2>Notizen</h2>${tool('upsert_note')}</div>
-        <div class="list"><details class="row" style="display:block"><summary style="cursor:pointer"><b>DSG-Langlebigkeitsstrategie</b> <span class="muted small">· Revision 3</span></summary><p class="small">Ölwechsel DSG vorziehen auf 60.000 km; Kupplung schonen: im Stau N statt D … ${B}</p></details></div></div>
+      <div class="sec"><div class="sec-h"><h2>Klärfälle</h2>${tool('list_open_items')}<a class="more" href="#klaerfaelle">Alle Fahrzeuge</a></div>
+        ${ois.length ? `<div class="list">${ois.map(o => `<details class="xrow"><summary><span class="t">${o.q}</span><span class="r">${st(o.kind === 'konflikt' ? 'warn' : 'ok', o.kind)}</span></summary><div class="xbody">${oiBody(o)}</div></details>`).join('')}</div>` : '<p class="muted">Keine offenen Klärfälle.</p>'}</div>
+      <div class="sec"><div class="sec-h"><h2>Notizen</h2>${tool('upsert_note')}${canWrite() ? '<button class="btn quiet sm more" type="button" data-act="note-new">Notiz anlegen</button>' : ''}</div>
+        <div class="list"><details class="xrow"><summary><span class="t">DSG-Langlebigkeitsstrategie <span class="muted small" style="font-weight:400">· Revision 3</span></span><span class="r"></span></summary><div class="xbody"><p class="small" style="margin-top:0">Ölwechsel DSG vorziehen auf 60.000 km; Kupplung schonen: im Stau N statt D … ${B}</p>${canWrite() ? '<button class="btn sm" type="button" data-act="note-edit">' + I.edit + 'Bearbeiten</button>' : ''}</div></details></div></div>
       <div class="sec"><div class="sec-h"><h2>Schäden und Rückrufe</h2></div><p class="muted small">Keine Schäden erfasst. Rückruf 24AB ${st('ok', 'erledigt')} ${B}</p></div>
     </div>
   </div>
   <div class="sec"><div class="sec-h"><h2>Angaben</h2>${tool('get_vehicle')}<button class="btn quiet sm more" type="button" data-act="allfacts">Alle Angaben, Ausstattung, Zulassungen</button></div>
-    <div class="facts two">${facts.map(f => `<div class="fact${f[5] ? ' disputed' : ''}"><span class="k">${f[0]}</span><span class="v"><span>${f[1]}</span>${f[5] ? '<a class="small" href="#klaerfaelle">strittig</a>' : ''}</span><span class="b">${badge(f[2], f[3], f[4])}</span></div>`).join('')}</div></div>`;
+    <div class="facts two">${facts.map(f => `<div class="fact${f[5] ? ' disputed' : ''}"><span class="k">${f[0]}</span><span class="v"><span>${f[1]}</span>${f[5] ? '<a class="small" href="#klaerfaelle">strittig</a>' : ''}</span><span class="b">${badge(f[2], f[3], f[4])}</span>${canWrite() ? `<button class="iconsm" type="button" data-act="editfact" data-k="${f[0]}" data-v="${f[1]}" aria-label="${f[0]} korrigieren">${I.edit}</button>` : '<span></span>'}</div>`).join('')}</div></div>`;
 }
 
 function tabBook(v) {
@@ -834,7 +858,7 @@ function tabDocs(v) {
   const docs = ['Rechnung 4711', 'Auftrag', 'Rechnung 3920', 'HU-Bericht', 'Rechnung 2214', 'Rechnung 1033', 'Kaufvertrag', 'Fahrzeugschein', 'Foto Tacho'];
   return why('Einen Beleg wiederfinden und zeigen. Gleiche Seite wie „Belege“ aus Meilenstein 3, auf dieses Fahrzeug gefiltert.') + `<div class="tb"><span class="muted small">18 Belege · 1 offen ${tool('GET /garage/api/documents?vehicle_id=')}</span>
     <div class="seg" role="group" aria-label="Ansicht"><button type="button" aria-pressed="true">${I.photo}Galerie</button><button type="button" aria-pressed="false">${I.list}Liste</button></div></div>
-    <div class="docs">${docs.map(d => `<button class="doc" type="button" data-act="doc"><div class="pv">${d.startsWith('Foto') ? I.photo : I.doc}</div><div class="cap"><b>${d}</b><span class="muted">${d.includes('4711') ? 'hängt an Klimaservice' : 'zugeordnet'}</span></div></button>`).join('')}</div>`;
+    <div class="docs">${docs.map(d => `<button class="doc" type="button" data-act="doc" ${d.startsWith('Foto') ? 'data-photo="1"' : ''}><div class="pv">${d.startsWith('Foto') ? I.photo : I.doc}</div><div class="cap"><b>${d}</b><span class="muted">${d.includes('4711') ? 'hängt an Klimaservice' : 'zugeordnet'}</span></div></button>`).join('')}</div>`;
 }
 
 /* ===== Klärfälle ===== */
@@ -849,15 +873,19 @@ function viewOpenItems() {
 function oiCard(o) {
   const v = D.vehicles[o.v];
   const head = `<div class="oi-h">${plate(v.plate)}<span class="kindtag">${o.kind}</span><span class="muted small">von ${o.by}</span></div><p class="q">${o.q}</p>`;
+  return `<article class="oi">${head}${oiBody(o)}</article>`;
+}
+/* Inhalt eines Klärfalls: gleich auf der Seite Klärfälle und aufgeklappt in der Fahrzeug-Übersicht */
+function oiBody(o) {
   const ro = !canResolve() ? '<p class="muted small">Nur Inhaber und Mitglieder können Klärfälle lösen.</p>' : '';
   if (o.kind === 'konflikt') {
-    return `<article class="oi">${head}<div class="vs">
+    return `<div class="vs">
       <div class="opt"><span class="lab">Bisher gespeichert</span><span class="val">${o.a[0]}</span><span>${badge(o.a[1], o.a[2], o.a[3])}</span><span class="muted small">${o.a[3]}</span></div>
       <div class="opt"><span class="lab">Neu gemeldet</span><span class="val">${o.b[0]}</span><span>${badge(o.b[1], o.b[2], o.b[3])}</span><span class="muted small">${o.b[3]}</span></div></div>
-      ${ro || `<div class="acts"><button class="btn sm primary" type="button" data-resolve="${o.id}" data-d="bestehend">${o.a[0]} gilt</button><button class="btn sm primary" type="button" data-resolve="${o.id}" data-d="neu">${o.b[0]} gilt</button><button class="btn sm" type="button" data-resolve="${o.id}" data-d="verwerfen">Beide falsch</button><button class="btn quiet sm" type="button" data-act="note">Notiz</button>${tool('POST /garage/api/open-items/{id}/resolve · nur Mensch')}</div>`}</article>`;
+      ${ro || `<div class="acts"><button class="btn sm primary" type="button" data-resolve="${o.id}" data-d="bestehend">${o.a[0]} gilt</button><button class="btn sm primary" type="button" data-resolve="${o.id}" data-d="neu">${o.b[0]} gilt</button><button class="btn sm" type="button" data-resolve="${o.id}" data-d="verwerfen">Beide falsch</button><button class="btn quiet sm" type="button" data-act="note">Notiz</button>${tool('POST /garage/api/open-items/{id}/resolve · nur Mensch')}</div>`}`;
   }
-  return `<article class="oi">${head}${o.suggestion ? `<p class="small"><span class="muted">Vorschlag:</span> ${o.suggestion}</p>` : ''}
-    ${ro || `<div class="acts"><button class="btn sm primary" type="button" data-resolve="${o.id}" data-d="erledigt">Erledigt</button><button class="btn sm" type="button" data-resolve="${o.id}" data-d="verwerfen">Verwerfen</button><button class="btn quiet sm" type="button" data-act="note">Notiz</button></div>`}</article>`;
+  return `${o.suggestion ? `<p class="small"><span class="muted">Vorschlag:</span> ${o.suggestion}</p>` : ''}
+    ${ro || `<div class="acts"><button class="btn sm primary" type="button" data-resolve="${o.id}" data-d="erledigt">Erledigt</button><button class="btn sm" type="button" data-resolve="${o.id}" data-d="verwerfen">Verwerfen</button><button class="btn quiet sm" type="button" data-act="note">Notiz</button></div>`}`;
 }
 
 /* ===== Eingang, Konto (Bestand aus Meilenstein 3, neu eingekleidet) ===== */
@@ -910,6 +938,13 @@ function route() {
   document.querySelectorAll('[data-c=oi]').forEach(c => { const n = openOi().length; c.textContent = n; c.hidden = !n; });
   document.querySelectorAll('[data-c=inbox]').forEach(c => { c.textContent = 1; });
 }
+/* Kamera-Knopf: Foto gewählt → hochladen und in den Eingang des Fahrzeugs legen, ohne Seitenwechsel */
+document.addEventListener('change', e => {
+  const inp = e.target.closest('[data-cam]'); if (!inp || !inp.files?.length) return;
+  const v = D.vehicles[inp.dataset.cam];
+  toast(`Foto liegt im Eingang des ${v.label}`, null, { label: 'Notiz', run: () => sheet(`<h2 id="sh-t">Notiz zum Foto</h2><div class="field"><label for="cn">Notiz für den Agenten (optional)</label><input id="cn" maxlength="200" placeholder="z. B. Rechnung Reifenwechsel"></div><div class="foot"><button class="btn" type="button" data-close>Abbrechen</button><button class="btn primary" type="button" data-ok>Notiz speichern</button></div>`, () => toast('Notiz gespeichert')) });
+  inp.value = '';
+});
 /* Desktop scrollt der Inhaltsbereich, darunter das Dokument */
 const scroller = () => innerWidth >= 992 ? document.querySelector('.content') : document.scrollingElement;
 function rerender() { const s = scroller(), y = s.scrollTop; route(); s.scrollTop = y; }
@@ -917,13 +952,14 @@ addEventListener('hashchange', () => { S.openMenu = false; route(); scroller().s
 
 /* ===== Interaktion ===== */
 let toastTimer;
-function toast(msg, undo) {
+function toast(msg, undo, action) {
   clearTimeout(toastTimer);
   layer.querySelector('.toast')?.remove();
   const t = document.createElement('div');
   t.className = 'toast'; t.setAttribute('role', 'status');
-  t.innerHTML = `<span>${msg}</span>${undo ? '<button type="button">Rückgängig</button>' : ''}`;
-  if (undo) t.querySelector('button').onclick = () => { undo(); t.remove(); };
+  t.innerHTML = `<span>${msg}</span>${action ? `<button type="button" data-t="a">${action.label}</button>` : ''}${undo ? '<button type="button" data-t="u">Rückgängig</button>' : ''}`;
+  if (undo) t.querySelector('[data-t=u]').onclick = () => { undo(); t.remove(); };
+  if (action) t.querySelector('[data-t=a]').onclick = () => { t.remove(); action.run(); };
   layer.appendChild(t);
   toastTimer = setTimeout(() => t.remove(), 6000);
 }
@@ -1021,7 +1057,37 @@ document.addEventListener('click', e => {
   if (act === 'print' || act === 'md') { S.openMenu = false; if (act === 'print') location.hash = '#druck/golf'; else toast('Akte als Markdown heruntergeladen'); return; }
   if (act === 'doprint') { print(); return; }
   if (act === 'restorecar') { Object.assign(D.vehicles.golf2, { status: 'aktiv', km: 26921, kmBasis: 'ein Stand', next: { t: 'keine Regel', s: 'ok', when: 'noch kein Wartungsplan' } }); S.filter = 'aktiv'; rerender(); toast('Golf (doppelt) wiederhergestellt', () => { D.vehicles.golf2.status = 'geloescht'; rerender(); }); return; }
-  if (act === 'doc') { sheet(`<h2 id="sh-t">Rechnung 4711</h2><div class="doc" style="pointer-events:none;margin:.8rem 0"><div class="pv" style="aspect-ratio:3/4;max-height:50vh">${I.doc}</div></div><p class="muted small">Vollbild mit Wischen wie in Meilenstein 3 (belege.html#beleg/&lt;id&gt;). ${B}</p><div class="foot"><button class="btn" type="button" data-close>Schließen</button></div>`); return; }
+  if (act === 'doc') {
+    const photo = !!el.dataset.photo;
+    sheet(`<h2 id="sh-t">${photo ? 'Foto Tacho' : 'Rechnung 4711'}</h2><div class="doc" style="pointer-events:none;margin:.8rem 0"><div class="pv" style="aspect-ratio:3/4;max-height:45vh">${photo ? I.photo : I.doc}</div></div><p class="muted small">Vollbild mit Wischen wie in Meilenstein 3 (belege.html#beleg/&lt;id&gt;). ${B}</p>
+      <div class="foot">${photo && canWrite() ? `<button class="btn" type="button" data-ok>${I.photo}Als Titelbild setzen</button>${tool('POST /garage/api/vehicles/{id}/cover')}` : ''}<button class="btn" type="button" data-close>Schließen</button></div>`, () => toast('Titelbild gesetzt', () => {}));
+    return;
+  }
+  if (act === 'addkm') {
+    sheet(`<h2 id="sh-t">Kilometerstand eintragen</h2>
+      <div class="field"><label for="km-v">Kilometer laut Tacho</label><input id="km-v" inputmode="numeric" pattern="[0-9]*" placeholder="z. B. 27350"></div>
+      <div class="field"><label for="km-d">Abgelesen am</label><input id="km-d" type="date" value="2026-11-18"></div>
+      <div class="field"><label for="km-n">Notiz (optional)</label><input id="km-n" placeholder="z. B. vor dem Urlaub"></div>
+      <p class="muted small">Gilt als deine Angabe. Ist der Stand kleiner als ein früherer, entsteht ein Klärfall statt eines Fehlers.</p>
+      <div class="foot"><button class="btn" type="button" data-close>Abbrechen</button><button class="btn primary" type="button" data-ok>Stand speichern</button></div>`, () => toast('Kilometerstand gespeichert'));
+    return;
+  }
+  if (act === 'editfact') {
+    sheet(`<h2 id="sh-t">${el.dataset.k} korrigieren</h2>
+      <div class="field"><label for="f-v">${el.dataset.k}</label><input id="f-v" value="${el.dataset.v}"></div>
+      <p class="muted small">Dein Wert ersetzt den bisherigen sofort (Herkunft: Nutzer, bestätigt). Der alte Wert bleibt im Verlauf.</p>
+      <div class="foot"><button class="btn" type="button" data-close>Abbrechen</button><button class="btn primary" type="button" data-ok>Wert speichern</button></div>${tool('PATCH /garage/api/vehicles/{id}/facts · nur Mensch')}`, () => toast(`${el.dataset.k} gespeichert`, () => {}));
+    return;
+  }
+  if (act === 'note-new' || act === 'note-edit') {
+    const edit = act === 'note-edit';
+    sheet(`<h2 id="sh-t">${edit ? 'Notiz bearbeiten' : 'Notiz anlegen'}</h2>
+      <div class="field"><label for="no-t">Thema</label><input id="no-t" value="${edit ? 'DSG-Langlebigkeitsstrategie' : ''}" placeholder="z. B. Reifendruck"></div>
+      <div class="field"><label for="no-b">Text</label><textarea id="no-b" rows="6">${edit ? 'Ölwechsel DSG vorziehen auf 60.000 km; Kupplung schonen: im Stau N statt D …' : ''}</textarea></div>
+      <p class="muted small">${edit ? 'Speichern legt Revision 4 an; frühere bleiben erhalten.' : 'Gleiches Thema wie eine vorhandene Notiz ergänzt diese als neue Revision.'}</p>
+      <div class="foot"><button class="btn" type="button" data-close>Abbrechen</button><button class="btn primary" type="button" data-ok>Notiz speichern</button></div>${tool('PUT /garage/api/vehicles/{id}/notes')}`, () => toast('Notiz gespeichert'));
+    return;
+  }
   if (act === 'note') { sheet(`<h2 id="sh-t">Notiz zur Entscheidung</h2><div class="field"><label for="n-t">Notiz (höchstens 500 Zeichen)</label><textarea id="n-t" maxlength="500" placeholder="z. B. Werkstatt hat 0W-20 freigegeben"></textarea></div><div class="foot"><button class="btn" type="button" data-close>Abbrechen</button><button class="btn primary" type="button" data-ok>Notiz übernehmen</button></div>`); return; }
   if (act === 'allfacts') { toast('Klappt alle Angaben, Ausstattung und Zulassungen auf'); return; }
   if (act === 'reload') { $('#dz-state').value = 'normal'; S.state = 'normal'; rerender(); return; }
@@ -1045,6 +1111,9 @@ addEventListener('resize', bp); bp();
 route();
 if (params.get('open') === 'status') document.querySelector('[data-act=status]')?.click();
 if (params.get('open') === 'src') document.querySelector('.src')?.click();
-if (params.get('open') === 'dd') document.querySelector('.dd > button')?.click();</script>
+if (params.get('open') === 'dd') document.querySelector('.dd > button')?.click();
+if (params.get('open') === 'oi') { const d = document.querySelector('.xrow'); if (d) { d.open = true; d.scrollIntoView(); } }
+if (params.get('open') === 'km') document.querySelector('[data-act=addkm]')?.click();
+if (params.get('open') === 'fact') document.querySelector('[data-act=editfact]')?.click();</script>
 </body>
 </html>
