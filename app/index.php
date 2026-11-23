@@ -83,6 +83,7 @@ $router->add('POST', '/garage/api/documents/{id}/discard', static fn (array $par
 $router->add('POST', '/garage/api/documents/{id}/restore', static fn (array $parameters) => (new DocumentController($config))->restore($request, (int) $parameters['id']));
 $router->add('GET', '/garage/api/inbox', static fn () => (new InboxController($config))->list($request));
 $router->add('POST', '/garage/api/inbox', static fn () => (new InboxController($config))->create($request));
+$router->add('PATCH', '/garage/api/inbox/{id}', static fn (array $parameters) => (new InboxController($config))->updateNote($request, (int) $parameters['id']));
 $router->add('POST', '/garage/api/inbox/{id}/discard', static fn (array $parameters) => (new InboxController($config))->discard($request, (int) $parameters['id']));
 $router->add('POST', '/garage/api/inbox/{id}/restore', static fn (array $parameters) => (new InboxController($config))->restore($request, (int) $parameters['id']));
 

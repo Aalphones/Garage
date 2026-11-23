@@ -1,118 +1,131 @@
-// Klärfälle im Konto: auflisten und entscheiden. Die Entscheidung trifft immer ein Mensch; Agenten haben dafür keinen Zugang.
+// Einstieg für klaerfaelle.html: offene Klärfälle aller Fahrzeuge, nach Fahrzeug filterbar (`#fz=<id>`).
 import { request } from './api.js';
-import { clearChildren, element, formatDate, hideError, showError } from './dom.js';
+import { actionButton, clearChildren, element, formatDate, link } from './dom.js';
+import * as icons from './icons.js';
+import { KIND_LABELS, openItemBody } from './openitem-view.js';
+import { requireSession } from './session.js';
+import { mountShell } from './shell.js';
+import { emptyBlock, errorBlock, skeletons } from './widgets.js';
 
-const KIND_LABELS = { konflikt: 'Widerspruch', nachfragen: 'Nachfrage', beobachten: 'Beobachtung' };
+mountShell({ active: 'klaerfaelle' });
 
-const DECISION_LABELS = {
-    bestehend: 'Bisheriger Wert gilt',
-    neu: 'Neuer Wert gilt',
-    verwerfen: 'Verwerfen',
-    erledigt: 'Erledigt',
-};
+const statusLine = document.getElementById('status');
+const content = document.getElementById('content');
+const FILTER_HASH = /^#fz=(\d+)$/;
 
-const DECISION_EFFECTS = {
-    bestehend: 'Der gespeicherte Wert bleibt, der gemeldete wird verworfen.',
-    neu: 'Der gemeldete Wert ersetzt den gespeicherten.',
-    verwerfen: 'Der Klärfall wird ohne Änderung an den Daten geschlossen.',
-    erledigt: 'Der Klärfall gilt als erledigt.',
-};
+let openItems = [];
+let filterVehicleId = null;
 
-const CONFIDENCE_LABELS = { bestaetigt: 'bestätigt', wahrscheinlich: 'wahrscheinlich', unsicher: 'unsicher' };
+function filterFromHash() {
+    const match = FILTER_HASH.exec(location.hash);
 
-/** „Herkunft, Konfidenz“ in Klammern, soweit bekannt. */
-function origin(entry) {
-    const parts = [];
-    if (entry.source !== null) {
-        parts.push(entry.source);
-    }
-    if (entry.confidence !== null) {
-        parts.push(CONFIDENCE_LABELS[entry.confidence] ?? entry.confidence);
-    }
-
-    return parts.length === 0 ? '' : ' (' + parts.join(', ') + ')';
+    return match === null ? null : Number(match[1]);
 }
 
-function comparison(label, entry) {
-    return element('p', label + ': ' + entry.value + origin(entry), 'compare');
+function vehiclesWithOpenItems() {
+    const known = new Map();
+    for (const item of openItems) {
+        if (item.vehicle_id !== null && !known.has(item.vehicle_id)) {
+            known.set(item.vehicle_id, item.vehicle_label);
+        }
+    }
+
+    return known;
 }
 
-function describeItem(item) {
-    const listItem = element('li');
-    listItem.appendChild(element('strong', item.vehicle_label ?? 'Ohne Fahrzeug'));
-    listItem.appendChild(element('small', (KIND_LABELS[item.kind] ?? item.kind) + ' · ' + formatDate(item.created_at) + ' · gemeldet von ' + item.created_by));
-    listItem.appendChild(element('p', item.text));
-    if (item.current !== null) {
-        listItem.appendChild(comparison('Bisher', item.current));
-    }
-    if (item.proposed !== null) {
-        listItem.appendChild(comparison(item.kind === 'konflikt' ? 'Neu' : 'Vorschlag', item.proposed));
-    }
-
-    return listItem;
+function setFilter(vehicleId) {
+    filterVehicleId = vehicleId;
+    history.replaceState(null, '', vehicleId === null ? location.pathname : '#fz=' + vehicleId);
+    render();
 }
 
-export function setupOpenItems() {
-    const list = document.getElementById('open-item-list');
-    const empty = document.getElementById('open-item-empty');
-    const listError = document.getElementById('open-item-error');
+function chip(label, isPressed, onClick) {
+    const button = actionButton(label, 'chip', onClick);
+    button.setAttribute('aria-pressed', String(isPressed));
 
-    async function decide(item, decision) {
-        const vehicle = item.vehicle_label ?? 'Ohne Fahrzeug';
-        if (!window.confirm(vehicle + ': „' + DECISION_LABELS[decision] + '“? ' + DECISION_EFFECTS[decision])) {
-            return;
-        }
-        hideError(listError);
-        try {
-            await request('POST', 'open-items/' + item.id + '/resolve', { decision });
-        } catch (error) {
-            showError(listError, error.message);
-            await load(false);
-            return;
-        }
-        await load();
+    return button;
+}
+
+function filterBar() {
+    const bar = element('div', undefined, 'tb');
+    bar.setAttribute('role', 'group');
+    bar.setAttribute('aria-label', 'Nach Fahrzeug filtern');
+    bar.appendChild(chip('Alle Fahrzeuge', filterVehicleId === null, () => setFilter(null)));
+    for (const [vehicleId, label] of vehiclesWithOpenItems()) {
+        bar.appendChild(chip(label, filterVehicleId === vehicleId, () => setFilter(vehicleId)));
     }
 
-    function render(items) {
-        clearChildren(list);
-        empty.hidden = items.length > 0;
-        for (const item of items) {
-            const listItem = describeItem(item);
-            if (item.can_resolve) {
-                const row = element('div', undefined, 'button-row');
-                for (const decision of item.decisions) {
-                    const button = element('button', DECISION_LABELS[decision]);
-                    button.type = 'button';
-                    button.setAttribute('aria-label', DECISION_LABELS[decision] + ' — ' + (item.vehicle_label ?? 'Ohne Fahrzeug'));
-                    button.addEventListener('click', () => decide(item, decision));
-                    row.appendChild(button);
-                }
-                listItem.appendChild(row);
-            } else {
-                listItem.appendChild(element('small', 'Nur lesend — lösen kann ein Inhaber oder Mitglied.'));
-            }
-            list.appendChild(listItem);
-        }
-    }
+    return bar;
+}
 
-    /** `resetError: false` lässt eine eben gezeigte Fehlermeldung stehen, während die Liste neu geladen wird. */
-    async function load(resetError = true) {
-        if (resetError) {
-            hideError(listError);
-        }
-        try {
-            render((await request('GET', 'open-items')).open_items);
-        } catch (error) {
-            showError(listError, error.message);
-        }
+function card(item) {
+    const article = element('article', undefined, 'oi');
+    const head = element('div', undefined, 'oi-h');
+    if (item.vehicle_id === null) {
+        head.appendChild(element('strong', 'Ohne Fahrzeug'));
+    } else {
+        head.appendChild(link(item.vehicle_label, '/garage/fahrzeug.html#' + item.vehicle_id + '/uebersicht', 'nm'));
     }
-
-    return {
-        load,
-        clear() {
-            hideError(listError);
-            clearChildren(list);
-            empty.hidden = true;
+    head.appendChild(element('span', KIND_LABELS[item.kind] ?? item.kind, 'kindtag'));
+    head.appendChild(element('span', formatDate(item.created_at) + ' · gemeldet von ' + item.created_by, 'muted small'));
+    article.appendChild(head);
+    article.appendChild(element('p', item.text, 'q'));
+    article.appendChild(openItemBody(item, {
+        hide: () => {
+            article.hidden = true;
         },
-    };
+        show: () => {
+            article.hidden = false;
+        },
+        done: () => {
+            openItems = openItems.filter((entry) => entry.id !== item.id);
+            render();
+        },
+    }));
+
+    return article;
 }
+
+function render() {
+    clearChildren(content);
+    if (openItems.length === 0) {
+        content.appendChild(emptyBlock(icons.oi, 'Alles geklärt', 'Widersprüche, die Agenten finden, landen hier. Gerade gibt es nichts zu entscheiden.'));
+
+        return;
+    }
+    const shown = filterVehicleId === null ? openItems : openItems.filter((item) => item.vehicle_id === filterVehicleId);
+    content.appendChild(filterBar());
+    content.appendChild(element('p', shown.length + ' offen · neueste zuerst', 'muted small'));
+    for (const item of shown) {
+        content.appendChild(card(item));
+    }
+    if (shown.length === 0) {
+        content.appendChild(emptyBlock(icons.oi, 'Für dieses Fahrzeug ist alles geklärt', 'Wähle „Alle Fahrzeuge“, um die übrigen Klärfälle zu sehen.'));
+    }
+}
+
+async function load() {
+    clearChildren(content);
+    content.appendChild(skeletons());
+    try {
+        openItems = (await request('GET', 'open-items')).open_items;
+    } catch (error) {
+        clearChildren(content);
+        content.appendChild(errorBlock(error.message, load));
+
+        return;
+    }
+    filterVehicleId = filterFromHash();
+    render();
+}
+
+async function start() {
+    const user = await requireSession(statusLine);
+    if (user === null) {
+        return;
+    }
+    content.hidden = false;
+    await load();
+}
+
+start();

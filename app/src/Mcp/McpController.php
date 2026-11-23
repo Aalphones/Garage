@@ -76,9 +76,11 @@ final class McpController
      */
     public static function services(PDO $pdo, array $config): array
     {
+        $documents = new DocumentService($pdo, $config);
+
         return [
             'tokens' => new TokenService($pdo),
-            'vehicles' => new VehicleService($pdo),
+            'vehicles' => new VehicleService($pdo, $documents),
             'registrations' => new RegistrationService($pdo),
             'equipment' => new EquipmentService($pdo),
             'events' => new EventService($pdo),
@@ -94,7 +96,7 @@ final class McpController
             'changes' => new ChangeService($pdo),
             'search' => new SearchService($pdo),
             'dossier' => new DossierService($pdo),
-            'documents' => new DocumentService($pdo, $config),
+            'documents' => $documents,
             'inbox' => new InboxService($pdo, $config),
             'pdo' => $pdo,
             'config' => $config,

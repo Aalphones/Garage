@@ -4,7 +4,6 @@ import { clearChildren, element } from './dom.js';
 import { dropdown } from './dropdown.js';
 import { setupGrants } from './grant.js';
 import { setupLogin } from './login.js';
-import { setupOpenItems } from './openitem.js';
 import { mountShell } from './shell.js';
 import { registerShareWorker } from './share.js';
 import { setMode, storedMode } from './theme.js';
@@ -35,7 +34,7 @@ const garageEmpty = document.getElementById('garage-empty');
 const logoutButton = document.getElementById('logout');
 const tokens = setupTokens();
 const grants = setupGrants();
-const openItems = setupOpenItems();
+const HOME = '/garage/garage.html';
 
 function showLogin(message) {
     accountSection.hidden = true;
@@ -61,14 +60,13 @@ async function showAccount() {
     loginSection.hidden = true;
     accountSection.hidden = false;
     statusLine.textContent = '';
-    await Promise.all([tokens.load(), grants.load(), openItems.load()]);
-    // Der Abschnitt entsteht erst nach der Anmeldung; der Sprung aus dem Eingang („Ansehen“) muss deshalb hier nachgeholt werden.
-    if (location.hash === '#klaerfaelle') {
-        document.getElementById('klaerfaelle').scrollIntoView();
-    }
+    await Promise.all([tokens.load(), grants.load()]);
 }
 
-setupLogin(loginForm, loginError, showAccount);
+// Nach der Anmeldung beginnt die Arbeit in der Garage; das Konto erreicht man über die Navigation.
+setupLogin(loginForm, loginError, () => {
+    location.assign(HOME);
+});
 
 logoutButton.addEventListener('click', async () => {
     try {
@@ -77,12 +75,10 @@ logoutButton.addEventListener('click', async () => {
         showLogin('Die Abmeldung auf dem Server ist fehlgeschlagen: ' + error.message);
         tokens.clear();
         grants.clear();
-        openItems.clear();
         return;
     }
     tokens.clear();
     grants.clear();
-    openItems.clear();
     showLogin('Abgemeldet.');
 });
 

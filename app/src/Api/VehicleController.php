@@ -53,13 +53,15 @@ final class VehicleController
             Response::json(['vehicles' => (new VehicleRepository($pdo))->listDeleted($actor, LifecycleService::RESTORE_DAYS)]);
         }
 
-        Response::json(['garages' => (new VehicleService($pdo))->list($actor)]);
+        Response::json(['garages' => (new VehicleService($pdo, new DocumentService($pdo, $this->config)))->list($actor)]);
     }
 
     public function show(Request $request, int $vehicleId): never
     {
         $this->respondJson($request, function (Actor $actor, PDO $pdo) use ($vehicleId): array {
-            $result = (new VehicleService($pdo))->get($vehicleId, $actor);
+            $vehicles = new VehicleService($pdo);
+            $result = $vehicles->get($vehicleId, $actor);
+            $result['plate'] = $vehicles->currentPlate($vehicleId, $actor);
             $result['documents'] = (new DocumentService($pdo, $this->config))->forVehicle($vehicleId, $actor);
             // Ein leeres PHP-Array würde als JSON-Liste statt als Objekt ausgegeben.
             $result['facts'] = (object) $result['facts'];

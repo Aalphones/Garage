@@ -175,6 +175,12 @@ final class InboxRepository
         $statement->execute([$status, $id]);
     }
 
+    public function setNote(int $id, string $note): void
+    {
+        $statement = $this->pdo->prepare('UPDATE inbox_items SET note = ?, updated_at = UTC_TIMESTAMP() WHERE id = ?');
+        $statement->execute([$note, $id]);
+    }
+
     /**
      * @param array<string, mixed> $row
      * @return array<string, mixed>

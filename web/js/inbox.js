@@ -49,7 +49,7 @@ function describeState(item) {
     } else if (item.status === 'klaerfall') {
         wrapper.appendChild(element('span', 'Klärfall: ' + item.result, 'state warn'));
         wrapper.appendChild(document.createTextNode(' '));
-        wrapper.appendChild(link('Ansehen', '/garage/index.html#klaerfaelle'));
+        wrapper.appendChild(link('Ansehen', '/garage/klaerfaelle.html'));
     } else if (item.status === 'verworfen') {
         wrapper.appendChild(element('span', 'Verworfen: ' + (item.result ?? 'ohne Angabe'), 'state'));
     } else {

@@ -40,6 +40,20 @@ final class InboxController
         Response::json($result, 201);
     }
 
+    public function updateNote(Request $request, int $id): never
+    {
+        $actor = ApiAuth::user($request);
+
+        try {
+            $body = $request->json();
+            $this->service()->updateNote($id, $body['note'] ?? null, $actor);
+        } catch (DomainError $error) {
+            ApiErrors::respond($error);
+        }
+
+        Response::json(['id' => $id]);
+    }
+
     public function discard(Request $request, int $id): never
     {
         $actor = ApiAuth::user($request);

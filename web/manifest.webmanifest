@@ -1,7 +1,7 @@
 {
     "name": "GARAGE",
     "short_name": "GARAGE",
-    "start_url": "/garage/eingang.html",
+    "start_url": "/garage/garage.html",
     "scope": "/garage/",
     "display": "standalone",
     "background_color": "#090C0C",

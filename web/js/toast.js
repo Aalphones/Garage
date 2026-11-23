@@ -1,7 +1,8 @@
 // Eine Leiste unten für Rückmeldung und „Rückgängig“. Sie trägt role="status", damit Screenreader den Text vorlesen.
 import { actionButton, element } from './dom.js';
 
-const TOAST_MS = 6000;
+/** So lange läuft die Rückgängig-Leiste; eine verzögerte Entscheidung wird erst danach gesendet. */
+export const UNDO_WINDOW_MS = 6000;
 
 let current = null;
 let timer = null;
@@ -28,5 +29,5 @@ export function toast(text, { undo } = {}) {
     }
     document.body.appendChild(bar);
     current = bar;
-    timer = setTimeout(hideToast, TOAST_MS);
+    timer = setTimeout(hideToast, UNDO_WINDOW_MS);
 }

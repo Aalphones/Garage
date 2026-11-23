@@ -238,6 +238,21 @@ final class InboxService
         });
     }
 
+    /** Ein Mensch ändert die Notiz eines Eintrags, solange ihn kein Agent bearbeitet; leer löscht die Notiz. */
+    public function updateNote(int $id, mixed $note, Actor $actor): void
+    {
+        $this->assertHuman($actor);
+        $noteText = Validate::optionalText('note', $note, 1, self::MAX_NOTE, self::CREATE_EXAMPLE) ?? '';
+        Transaction::run($this->pdo, function () use ($id, $noteText, $actor): void {
+            $item = $this->writableItem($id, $actor);
+            if (self::effectiveStatus($item) !== InboxRepository::STATUS_NEW) {
+                throw new DomainError('invalid_value', sprintf('Die Notiz lässt sich nur an einem neuen Eintrag ändern; dieser ist „%s“.', self::effectiveStatus($item)), ['id' => $id]);
+            }
+            $this->inbox->setNote($id, $noteText);
+            $this->audit->record($actor, 'inbox.note', sprintf('inbox_items:%d', $id), $item['garage_id'], ['note' => $item['note']], ['note' => $noteText], $item['vehicle_id']);
+        });
+    }
+
     /** Ein Mensch holt einen verworfenen Eintrag zurück nach `neu`. */
     public function restore(int $id, Actor $actor): void
     {

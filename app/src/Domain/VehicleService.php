@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace Garage\Domain;
 
 use Garage\Auth\Scopes;
+use DateTimeImmutable;
+use DateTimeZone;
 use Garage\Db\Transaction;
+use LogicException;
 use PDO;
 
 /**
@@ -68,7 +71,8 @@ final class VehicleService
     private EquipmentService $equipment;
     private DueService $due;
 
-    public function __construct(private readonly PDO $pdo)
+    /** `$documents` braucht nur `list` (Titelbild und Belegzahl je Fahrzeug). */
+    public function __construct(private readonly PDO $pdo, private readonly ?DocumentService $documents = null)
     {
         $this->registrations = new RegistrationService($pdo);
         $this->equipment = new EquipmentService($pdo);
@@ -90,6 +94,9 @@ final class VehicleService
         if ($actor->userId === null) {
             return [];
         }
+        if ($this->documents === null) {
+            throw new LogicException('VehicleService::list braucht den DocumentService.');
+        }
 
         $vehicles = $this->vehicles->listForActor($actor);
         $vehicleIds = array_map(static fn (array $vehicle): int => $vehicle['id'], $vehicles);
@@ -99,10 +106,14 @@ final class VehicleService
 
         $byGarage = [];
         foreach ($vehicles as $vehicle) {
+            $documents = $this->documents->forVehicle($vehicle['id'], $actor);
             $byGarage[$vehicle['garage_id']][] = [
                 'id' => $vehicle['id'],
                 'label' => $vehicle['label'],
                 'status' => $vehicle['status'],
+                'plate' => $this->currentPlate($vehicle['id'], $actor),
+                'cover_url' => $documents['cover']['preview_url'] ?? null,
+                'document_count' => $documents['count'],
                 'marke' => $values[$vehicle['id']]['marke'] ?? null,
                 'modell' => $values[$vehicle['id']]['modell'] ?? null,
                 'fin' => $values[$vehicle['id']]['fin'] ?? null,
@@ -169,6 +180,23 @@ final class VehicleService
             'equipment' => $this->equipment->list($vehicleId, $actor),
             'km_estimate' => $this->due->forecastFor($vehicleId, $actor),
         ];
+    }
+
+    /** Kennzeichen der aktuellen Zulassung: `valid_to` leer oder nicht vor heute (deutsche Zeit), die mit dem jüngsten `valid_from`. */
+    public function currentPlate(int $vehicleId, Actor $actor): ?string
+    {
+        $today = (new DateTimeImmutable('now', new DateTimeZone('Europe/Berlin')))->format('Y-m-d');
+        $plate = null;
+        $newestStart = '';
+        foreach ($this->registrations->list($vehicleId, $actor) as $registration) {
+            $isCurrent = $registration['valid_to'] === null || $registration['valid_to'] >= $today;
+            if ($isCurrent && $registration['valid_from'] <= $today && $registration['valid_from'] > $newestStart) {
+                $plate = $registration['plate'];
+                $newestStart = $registration['valid_from'];
+            }
+        }
+
+        return $plate;
     }
 
     /**
