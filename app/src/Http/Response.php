@@ -17,6 +17,25 @@ final class Response
         self::raw(json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), $status, $headers);
     }
 
+    /**
+     * Textantwort (Markdown-Akte); der Aufrufer nennt den Medientyp samt Zeichensatz.
+     *
+     * @param array<string, string> $headers
+     */
+    public static function text(string $body, string $contentType, array $headers = []): never
+    {
+        header('Content-Type: ' . $contentType);
+        header('Cache-Control: no-store');
+        header('X-Content-Type-Options: nosniff');
+        foreach ($headers as $name => $value) {
+            header($name . ': ' . $value);
+        }
+        http_response_code(200);
+
+        echo $body;
+        exit;
+    }
+
     /** Vor jeder Ausgabe aufrufen (Response::json/empty beenden die Anfrage). `maxAge` 0 löscht den Cookie. */
     public static function cookie(string $name, string $value, int $maxAge, string $path): void
     {

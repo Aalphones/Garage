@@ -45,7 +45,7 @@ final class DueService
     public function dueItems(?int $vehicleId, int $horizonMonths, Actor $actor): array
     {
         $months = (int) Validate::int('horizon_months', $horizonMonths, '{"horizon_months": 36}', 1, self::MAX_HORIZON_MONTHS);
-        $vehicles = $vehicleId === null ? $this->vehicles->listForActor($actor) : [$this->access->readable($vehicleId, $actor)];
+        $vehicles = $vehicleId === null ? $this->activeVehicles($actor) : [$this->access->readable($vehicleId, $actor)];
         $today = $this->tasks->utcToday();
         $horizon = DueCalculator::addMonths($today, $months);
 
@@ -109,6 +109,19 @@ final class DueService
         $forecast['per_day'] = $forecast['per_day'] === null ? null : round($forecast['per_day'], 1);
 
         return $forecast;
+    }
+
+    /**
+     * Ohne Fahrzeug-ID zählen nur aktive Fahrzeuge: verkaufte und stillgelegte haben nichts mehr zu warten.
+     *
+     * @return list<array{id: int, garage_id: int, label: string, status: string}>
+     */
+    private function activeVehicles(Actor $actor): array
+    {
+        return array_values(array_filter(
+            $this->vehicles->listForActor($actor),
+            static fn (array $vehicle): bool => $vehicle['status'] === VehicleRepository::STATUS_ACTIVE
+        ));
     }
 
     /**

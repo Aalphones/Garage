@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Garage\Domain;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use LogicException;
 use PDO;
 
@@ -15,6 +17,7 @@ final class VehicleRepository
 {
     public const STATUS_ACTIVE = 'aktiv';
     public const STATUS_DELETED = 'geloescht';
+    public const RESTORE_DAYS = 30;
     public const FACT_CURRENT = 'aktuell';
     public const FACT_SUPERSEDED = 'abgeloest';
     public const FACT_DISPUTED = 'strittig';
@@ -40,6 +43,47 @@ final class VehicleRepository
         $statement->execute([...$garageIds, self::STATUS_DELETED]);
 
         return array_map(static fn (array $row): array => self::vehicle($row), $statement->fetchAll());
+    }
+
+    /**
+     * Gelöschte Fahrzeuge der Garagen, in denen der Akteur Inhaber ist, gelöscht vor höchstens `$days` Tagen.
+     * Der Löschzeitpunkt ist `updated_at` (Löschen ist die letzte Änderung am Fahrzeug).
+     *
+     * @return list<array{id: int, garage_id: int, label: string, status_reason: string|null, deleted_at: string, restorable_until: string}>
+     */
+    public function listDeleted(Actor $actor, int $days): array
+    {
+        $ownerGarageIds = array_keys(array_filter(
+            $actor->roles,
+            static fn (string $role): bool => $role === Actor::ROLE_OWNER
+        ));
+        if ($ownerGarageIds === []) {
+            return [];
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf(
+                'SELECT id, garage_id, label, status_reason, updated_at FROM vehicles
+                 WHERE garage_id IN (%s) AND status = ? AND updated_at >= UTC_TIMESTAMP() - INTERVAL %d DAY
+                 ORDER BY updated_at DESC, id DESC',
+                self::placeholders($ownerGarageIds),
+                $days
+            )
+        );
+        $statement->execute([...$ownerGarageIds, self::STATUS_DELETED]);
+
+        return array_map(static function (array $row) use ($days): array {
+            $deletedAt = new DateTimeImmutable((string) $row['updated_at'], new DateTimeZone('UTC'));
+
+            return [
+                'id' => (int) $row['id'],
+                'garage_id' => (int) $row['garage_id'],
+                'label' => (string) $row['label'],
+                'status_reason' => $row['status_reason'] === null ? null : (string) $row['status_reason'],
+                'deleted_at' => $deletedAt->format('Y-m-d\TH:i:s\Z'),
+                'restorable_until' => $deletedAt->modify('+' . $days . ' days')->format('Y-m-d\TH:i:s\Z'),
+            ];
+        }, $statement->fetchAll());
     }
 
     /**

@@ -85,6 +85,18 @@ final class OdometerService
         return $this->readings->listValid($vehicleId, $actor);
     }
 
+    /**
+     * Gültige Stände mit Notiz und Herkunft, älteste zuerst.
+     *
+     * @return list<array{id: int, read_on: string, km: int, note: string|null, source: string, confidence: string}>
+     */
+    public function validReadingsDetailed(int $vehicleId, Actor $actor): array
+    {
+        $this->access->readable($vehicleId, $actor);
+
+        return $this->readings->listValidDetailed($vehicleId, $actor);
+    }
+
     /** @return array{read_on: string, km: int, source: string, source_url: string|null, confidence: string}|null */
     public function latestValid(int $vehicleId, Actor $actor): ?array
     {

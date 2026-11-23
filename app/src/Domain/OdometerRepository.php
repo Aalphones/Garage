@@ -99,6 +99,38 @@ final class OdometerRepository
     }
 
     /**
+     * Alle gültigen Stände mit Notiz und Herkunft, älteste zuerst (Anzeige in der Oberfläche).
+     *
+     * @return list<array{id: int, read_on: string, km: int, note: string|null, source: string, confidence: string}>
+     */
+    public function listValidDetailed(int $vehicleId, Actor $actor): array
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return [];
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf(
+                "SELECT id, read_on, km, note, source, confidence FROM odometer_readings
+                 WHERE vehicle_id = ? AND status = 'aktiv' AND reading_status = 'gueltig' AND garage_id IN (%s)
+                 ORDER BY read_on, km, id",
+                implode(', ', array_fill(0, count($garageIds), '?'))
+            )
+        );
+        $statement->execute([$vehicleId, ...$garageIds]);
+
+        return array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'],
+            'read_on' => (string) $row['read_on'],
+            'km' => (int) $row['km'],
+            'note' => $row['note'] === null ? null : (string) $row['note'],
+            'source' => (string) $row['source'],
+            'confidence' => (string) $row['confidence'],
+        ], $statement->fetchAll());
+    }
+
+    /**
      * Jüngster gültiger Stand mit Herkunft (Akte); bei gleichem Datum gewinnt der höhere.
      *
      * @return array{read_on: string, km: int, source: string, source_url: string|null, confidence: string}|null
