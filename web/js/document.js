@@ -1,7 +1,8 @@
 // Einstieg für belege.html: Liste, Galerie und Detail (`#beleg/<id>`) der Belege.
 import { request, upload } from './api.js';
 import { buildUploadForm, prepareFile } from './capture.js';
-import { actionButton, clearChildren, element, formatDay, hideError, link, showError } from './dom.js';
+import { actionButton, clearChildren, element, hideError, link, showError } from './dom.js';
+import { attachedWords, documentDate, documentTitle, renderDocuments, TYPE_LABELS } from './document-list.js';
 import { loadContext, requireSession } from './session.js';
 import { registerShareWorker } from './share.js';
 import { mountShell } from './shell.js';
@@ -9,34 +10,8 @@ import { hideToast, toast } from './toast.js';
 
 registerShareWorker();
 
-const VIEW_STORAGE_KEY = 'garage.belege.ansicht';
-const DETAIL_HASH = /^#beleg\/(\d+)$/;
+const DETAIL_HASH = /^#beleg/(d+)$/;
 const DISCARD_REASON = 'In der Oberfläche verworfen';
-
-const TYPE_LABELS = {
-    foto: 'Foto',
-    rechnung: 'Rechnung',
-    hu_bericht: 'HU-Bericht',
-    police: 'Police',
-    bescheid: 'Bescheid',
-    fahrzeugschein: 'Fahrzeugschein',
-    kaufvertrag: 'Kaufvertrag',
-    sonstiges: 'Sonstiges',
-};
-
-const TAG_LABELS = { aussen: 'Außen', innen: 'Innen', motorraum: 'Motorraum', tacho: 'Tacho', reifen: 'Reifen', schaden: 'Schaden' };
-
-const TARGET_LABELS = {
-    vehicles: 'Fahrzeug',
-    events: 'Ereignis',
-    damages: 'Schaden',
-    recalls: 'Rückruf',
-    tire_sets: 'Reifensatz',
-    parts: 'Teil',
-    measurements: 'Messwert',
-    odometer_readings: 'Kilometerstand',
-    registrations: 'Zulassung',
-};
 
 const CHANNEL_LABELS = {
     web: 'Browser',
@@ -52,40 +27,14 @@ const pageTitle = document.getElementById('page-title');
 const listView = document.getElementById('list-view');
 const detailView = document.getElementById('detail-view');
 const listBody = document.getElementById('list-body');
-const listError = document.getElementById('list-error');
 const detailBody = document.getElementById('detail-body');
 const detailError = document.getElementById('detail-error');
 const chipsGroup = document.getElementById('vehicle-chips');
-const viewListButton = document.getElementById('view-list');
-const viewGalleryButton = document.getElementById('view-gallery');
 
 let context = null;
-let documents = [];
 let vehicleFilter = null;
-let viewMode = readViewMode();
 let current = null;
 let pageIndex = 0;
-
-function readViewMode() {
-    try {
-        if (localStorage.getItem(VIEW_STORAGE_KEY) === 'galerie') {
-            return 'galerie';
-        }
-    } catch {
-        // Ohne Speicher bleibt es bei der Liste; die Wahl ist nur eine Anzeige-Einstellung.
-    }
-
-    return 'liste';
-}
-
-/** Ohne Titel (Eingang liefert keinen) nennen Typ und Eingangsdatum den Beleg, sonst hießen alle gleich. */
-function documentTitle(entry) {
-    if (entry.title !== '') {
-        return entry.title;
-    }
-
-    return (TYPE_LABELS[entry.doc_type] ?? 'Beleg') + ' vom ' + formatDay(entry.created_at);
-}
 
 function vehicleName(vehicleId) {
     const vehicle = context.vehicles.find((candidate) => candidate.id === vehicleId);
@@ -96,126 +45,8 @@ function vehicleName(vehicleId) {
     return vehicle.label;
 }
 
-function documentDate(entry) {
-    if (entry.captured_on !== null) {
-        return formatDay(entry.captured_on);
-    }
-
-    return formatDay(entry.created_at);
-}
-
-function attachedWords(targets) {
-    const words = [];
-    for (const target of targets) {
-        const word = TARGET_LABELS[target.target_table] ?? 'Datensatz';
-        if (!words.includes(word)) {
-            words.push(word);
-        }
-    }
-
-    return words.join(', ');
-}
-
-function describeThumb(entry) {
-    const thumb = element('div', undefined, 'thumb');
-    thumb.setAttribute('aria-hidden', 'true');
-    if (entry.preview_url !== null && entry.preview_url !== undefined) {
-        const image = element('img');
-        image.alt = '';
-        image.loading = 'lazy';
-        image.src = entry.preview_url;
-        thumb.appendChild(image);
-    } else if (entry.status === 'wartet') {
-        thumb.textContent = '–';
-    } else {
-        thumb.textContent = 'PDF';
-    }
-
-    return thumb;
-}
-
-function describeState(entry) {
-    if (entry.status === 'wartet') {
-        return element('span', 'Original fehlt', 'state warn');
-    }
-    if (entry.status === 'zugeordnet') {
-        return element('span', 'Hängt an ' + attachedWords(entry.attached_to), 'state done');
-    }
-
-    return element('span', 'Nicht zugeordnet', 'state');
-}
-
-function describeRow(entry) {
-    const listItem = element('li');
-    const row = link('', '#beleg/' + entry.id, 'entry');
-    row.appendChild(describeThumb(entry));
-
-    const text = element('div');
-    text.appendChild(element('strong', documentTitle(entry), 'title'));
-    const meta = [TYPE_LABELS[entry.doc_type] ?? entry.doc_type];
-    if (entry.photo_tag !== null) {
-        meta.push(TAG_LABELS[entry.photo_tag] ?? entry.photo_tag);
-    }
-    meta.push(documentDate(entry), vehicleName(entry.vehicle_id));
-    text.appendChild(element('small', meta.join(' · ')));
-    text.appendChild(describeState(entry));
-    row.appendChild(text);
-    listItem.appendChild(row);
-
-    return listItem;
-}
-
-function describeGroup(heading, group) {
-    const fragment = document.createDocumentFragment();
-    fragment.appendChild(element('h3', heading));
-    const list = element('ul', undefined, 'plain-list');
-    group.forEach((entry) => list.appendChild(describeRow(entry)));
-    fragment.appendChild(list);
-
-    return fragment;
-}
-
-function renderGallery(visible) {
-    const gallery = element('div', undefined, 'gallery');
-    for (const entry of visible) {
-        const tile = link('', '#beleg/' + entry.id);
-        tile.appendChild(describeThumb(entry));
-        tile.appendChild(element('small', documentTitle(entry)));
-        gallery.appendChild(tile);
-    }
-
-    return gallery;
-}
-
-function renderList() {
-    clearChildren(listBody);
-    viewListButton.setAttribute('aria-pressed', String(viewMode === 'liste'));
-    viewGalleryButton.setAttribute('aria-pressed', String(viewMode === 'galerie'));
-
-    const visible = documents.filter((entry) => vehicleFilter === null || entry.vehicle_id === vehicleFilter);
-    if (visible.length === 0) {
-        const empty = element('p', 'Noch keine Belege. Lege im ');
-        empty.appendChild(link('Eingang', '/garage/eingang.html'));
-        empty.appendChild(document.createTextNode(' ein Foto oder ein PDF ab.'));
-        listBody.appendChild(empty);
-        return;
-    }
-    if (viewMode === 'galerie') {
-        listBody.appendChild(renderGallery(visible));
-        return;
-    }
-
-    const open = visible.filter((entry) => entry.status !== 'zugeordnet');
-    const assigned = visible.filter((entry) => entry.status === 'zugeordnet');
-    if (open.length > 0) {
-        listBody.appendChild(describeGroup('Offen', open));
-    }
-    if (assigned.length > 0) {
-        listBody.appendChild(describeGroup('Zugeordnet', assigned));
-    } else {
-        const none = element('p', 'Noch keine zugeordneten Belege. Ein Agent ordnet sie zu, sobald er sie erfasst hat.');
-        listBody.appendChild(none);
-    }
+function showDocuments() {
+    return renderDocuments(listBody, { vehicleId: vehicleFilter, vehicles: context.vehicles });
 }
 
 function renderChips() {
@@ -225,38 +56,21 @@ function renderChips() {
         const chip = actionButton(choice.label, '', () => {
             vehicleFilter = choice.id;
             chipsGroup.querySelectorAll('button').forEach((other) => other.setAttribute('aria-pressed', String(other === chip)));
-            renderList();
+            showDocuments();
         });
         chip.setAttribute('aria-pressed', String(choice.id === vehicleFilter));
         chipsGroup.appendChild(chip);
     }
 }
 
-function setViewMode(mode) {
-    viewMode = mode;
-    try {
-        localStorage.setItem(VIEW_STORAGE_KEY, mode);
-    } catch {
-        // Nicht speicherbar: die Ansicht gilt dann nur für diesen Besuch.
-    }
-    renderList();
-}
-
-async function showList() {
+function showList() {
     detailView.hidden = true;
     backLink.hidden = true;
     pageTitle.textContent = 'GARAGE';
     window.document.title = 'Belege – GARAGE';
     listView.hidden = false;
-    hideError(listError);
-    try {
-        documents = (await request('GET', 'documents')).documents;
-    } catch (error) {
-        showError(listError, error.message);
-        return;
-    }
     renderChips();
-    renderList();
+    showDocuments();
 }
 
 // --- Detail ---------------------------------------------------------------------------------------------------
