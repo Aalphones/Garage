@@ -1,13 +1,28 @@
 // Einstieg für index.html: Sitzung wiederherstellen, dann Anmeldeformular oder Konto zeigen.
 import { logout, request, restore } from './api.js';
 import { clearChildren, element } from './dom.js';
+import { dropdown } from './dropdown.js';
 import { setupGrants } from './grant.js';
 import { setupLogin } from './login.js';
 import { setupOpenItems } from './openitem.js';
+import { mountShell } from './shell.js';
 import { registerShareWorker } from './share.js';
+import { setMode, storedMode } from './theme.js';
 import { setupTokens } from './token.js';
 
 registerShareWorker();
+mountShell({ active: 'konto' });
+
+dropdown(document.getElementById('theme-select'), {
+    label: 'Darstellung',
+    options: [
+        { value: 'system', label: 'Wie das Gerät' },
+        { value: 'dark', label: 'Dunkel' },
+        { value: 'light', label: 'Hell' },
+    ],
+    value: storedMode(),
+    onChange: setMode,
+});
 
 const statusLine = document.getElementById('status');
 const loginSection = document.getElementById('login');

@@ -32,7 +32,7 @@
 
 ## Regeln
 
-- Gestaltung: noch offen. Sie wird im Oberflächen-Meilenstein gemeinsam erarbeitet; bis dahin keine Farben, Schriften oder Layouts festlegen, die über einen funktionalen Platzhalter hinausgehen.
+- Gestaltung: „GARAGE Dark Botanical“, Entscheidung in ADR-017. Alle Farben, Radien und Zeiten kommen als Tokens aus `web/css/tokens.css` (dunkel Standard, hell über `data-theme`); keine harten Farbwerte in `base.css` außer dem Kennzeichen. Das Thema setzt `js/theme.js` aus `localStorage['garage.theme']`. Jede Seite bindet `tokens.css` vor `base.css` ein und lädt `theme.js` als Modul im `<head>`.
 - Mobil zuerst: 360 px Breite ohne waagerechtes Scrollen, Hauptaktion in Daumenreichweite, hell und dunkel.
 - Herkunft sichtbar: jeder Wert mit Herkunfts-Abzeichen; geschätzte Werte mit „≈" und Rechenweg.
 - Leere Zustände nennen den nächsten Schritt statt einer leeren Tabelle.

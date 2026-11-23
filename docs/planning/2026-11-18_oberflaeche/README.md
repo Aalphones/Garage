@@ -6,7 +6,7 @@ Die Akte wird im Browser sichtbar und bedienbar: Garage, Fahrzeug mit sieben Rei
 
 | Phase | Inhalt | Rating | Modell | Status |
 |---|---|---|---|---|
-| 1 | Gestaltungsgrundlage und Schale | standard | sonnet | pending |
+| 1 | Gestaltungsgrundlage und Schale | standard | sonnet | complete |
 | 2 | Lese-API der Akte | standard | sonnet | complete |
 | 3 | Scheckheft-Lücken | heikel | opus | pending |
 | 4 | Schreib-API: Status, Löschen, Wiederherstellen, Druck-Link, Kilometer-Randfall | heikel | opus | pending |

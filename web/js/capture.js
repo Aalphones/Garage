@@ -3,6 +3,7 @@ import { request, upload } from './api.js';
 import { actionButton, clearChildren, element, formatBytes, hideError, showError } from './dom.js';
 import { shrinkPhoto } from './image.js';
 import { renderPages } from './pdfpages.js';
+import { toast } from './toast.js';
 
 const MAX_FILE_BYTES = 30 * 1024 * 1024;
 const MAX_PHOTO_EDGE = 2560;
@@ -73,7 +74,7 @@ export function uploadBytes(prepared) {
  * Verdrahtet den Bereich „Neuer Eintrag“ von eingang.html. `context` stammt aus `loadContext()`, `onCreated` lädt die Liste neu.
  * Gibt `addFiles(fileList)` zurück: der Einstieg für Dateien aus „Teilen“.
  */
-export function setupCapture(context, undoBar, onCreated) {
+export function setupCapture(context, onCreated) {
     const startSection = document.getElementById('capture-start');
     const newSection = document.getElementById('capture-new');
     const cameraInput = document.getElementById('input-camera');
@@ -131,9 +132,11 @@ export function setupCapture(context, undoBar, onCreated) {
     function removeEntry(index) {
         const [removed] = entries.splice(index, 1);
         renderPageList();
-        undoBar.show('Seite entfernt.', () => {
-            entries.splice(index, 0, removed);
-            renderPageList();
+        toast('Seite entfernt.', {
+            undo: () => {
+                entries.splice(index, 0, removed);
+                renderPageList();
+            },
         });
         const nextRemove = pageList.querySelectorAll('[data-remove]')[Math.min(index, entries.length - 1)];
         if (nextRemove !== undefined) {
@@ -313,13 +316,15 @@ export function setupCapture(context, undoBar, onCreated) {
         clearProgress();
         reset();
         onCreated();
-        undoBar.show('Liegt im Eingang. Ein Agent erfasst ihn.', async () => {
-            try {
-                await request('POST', 'inbox/' + inboxId + '/discard');
-            } catch (error) {
-                showError(errorNode, 'Rückgängig machen ging nicht: ' + error.message);
-            }
-            onCreated();
+        toast('Liegt im Eingang. Ein Agent erfasst ihn.', {
+            undo: async () => {
+                try {
+                    await request('POST', 'inbox/' + inboxId + '/discard');
+                } catch (error) {
+                    showError(errorNode, 'Rückgängig machen ging nicht: ' + error.message);
+                }
+                onCreated();
+            },
         });
         cameraButton.focus();
     }

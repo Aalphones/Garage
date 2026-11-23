@@ -1,0 +1,41 @@
+/* Gestaltungs-Tokens GARAGE Dark Botanical (ADR-017). Dunkel ist Standard; hell über data-theme='light' (theme.js). */
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #090C0C; --bg-deep: #0C2421; --surface: #131918; --raised: #1B2322; --border: #56746E; --line: #232D2B;
+  --text: #EEF2EC; --muted: #9DADA8;
+  --primary: #43D6C5; --primary-hover: #62E0D0; --on-primary: #04201D;
+  --leaf: #78C850;
+  --bad: #F08A80; --bad-soft: #2E1715; --warn: #EDC961; --warn-soft: #2B2612;
+  --focus: #43D6C5;
+  --shadow: 0 10px 28px rgba(0,0,0,.55);
+  /* Verläufe: Schwarz auf Dunkelgrün für Flächen, Teal-Schimmer für Hervorhebungen */
+  --grad-page: radial-gradient(120% 70% at 100% 0%, #0E2C28 0%, transparent 60%), linear-gradient(180deg, #090C0C 0%, #0A1513 100%);
+  --grad-surface: linear-gradient(160deg, #161E1D 0%, #111615 100%);
+  --grad-head: linear-gradient(90deg, #0C2421 0%, #090C0C 85%);
+  --grad-hi: linear-gradient(90deg, color-mix(in oklab, #43D6C5 22%, transparent) 0%, transparent 100%);
+  --grad-primary: linear-gradient(135deg, #43D6C5 0%, #6FD39A 100%);
+}
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #F3F6F2; --surface: #FFFFFF; --raised: #E6EEEA; --border: #6B8A81; --line: #D5E3DE;
+  --text: #10231F; --muted: #4C625C;
+  --primary: #0A6E65; --primary-hover: #075C54; --on-primary: #FFFFFF;
+  --leaf: #3F7F22;
+  --bad: #B42318; --bad-soft: #FDECEA; --warn: #7A5200; --warn-soft: #FFF3CF;
+  --focus: #0A6E65;
+  --shadow: 0 10px 28px rgba(16,35,31,.16);
+  --bg-deep: #E3EEEA;
+  --grad-page: linear-gradient(180deg, #F3F6F2 0%, #EAF2EE 100%);
+  --grad-surface: linear-gradient(160deg, #FFFFFF 0%, #FAFCFB 100%);
+  --grad-head: linear-gradient(90deg, #E3EEEA 0%, #F3F6F2 85%);
+  --grad-hi: linear-gradient(90deg, color-mix(in oklab, #0A6E65 14%, transparent) 0%, transparent 100%);
+  --grad-primary: linear-gradient(135deg, #0A6E65 0%, #0B7D5E 100%);
+}
+:root {
+  --radius-card: 14px; --radius-control: 999px; --radius-field: 10px;
+  --t-fast: 150ms; --t-mid: 220ms; --ease-out: cubic-bezier(.2,.7,.2,1);
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --touch: 2.75rem;
+  --nav-h: 4rem; --side-w: 15rem;
+}

@@ -7,22 +7,19 @@
     <title>Eingang – GARAGE</title>
     <link rel="icon" href="data:,">
     <link rel="manifest" href="/garage/manifest.webmanifest">
+    <link rel="stylesheet" href="/garage/css/tokens.css">
     <link rel="stylesheet" href="/garage/css/base.css">
+    <script type="module" src="/garage/js/theme.js"></script>
 </head>
 <body>
     <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
     <main id="inhalt">
-        <h1>GARAGE</h1>
-        <nav class="appnav" aria-label="GARAGE">
-            <a href="/garage/index.html">Konto</a>
-            <a href="/garage/eingang.html" aria-current="page">Eingang</a>
-            <a href="/garage/belege.html">Belege</a>
-        </nav>
+        <h1 class="sr-only">GARAGE</h1>
         <p id="status" role="status">Lädt …</p>
 
         <div id="content" hidden>
             <h2>Eingang <button type="button" class="info" id="tip-button" aria-expanded="false" aria-controls="tip-eingang" aria-label="Wie geht es weiter?">?</button></h2>
-            <p id="tip-eingang" class="tip" hidden>Was hier liegt, erfasst ein Agent: sag in Claude oder ChatGPT „arbeite den Eingang ab“. Er legt Ereignis, Kilometerstand und Beleg an und meldet Unklares als Klärfall.</p>
+            <p id="tip-eingang" class="note" hidden>Was hier liegt, erfasst ein Agent: sag in Claude oder ChatGPT „arbeite den Eingang ab“. Er legt Ereignis, Kilometerstand und Beleg an und meldet Unklares als Klärfall.</p>
 
             <section id="capture-start">
                 <div class="capture-row">
@@ -65,7 +62,6 @@
             <ul id="inbox-list" class="plain-list"></ul>
             <p id="inbox-empty" hidden>Der Eingang ist leer. Fotografiere eine Rechnung oder wähle ein PDF – ein Agent erfasst es danach.</p>
         </div>
-        <div id="undo-slot" role="status"></div>
     </main>
     <script type="module" src="/garage/js/inbox.js"></script>
 </body>

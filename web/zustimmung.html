@@ -7,11 +7,14 @@
     <meta name="referrer" content="no-referrer">
     <title>Verbindung erlauben – GARAGE</title>
     <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/garage/css/tokens.css">
     <link rel="stylesheet" href="/garage/css/base.css">
+    <script type="module" src="/garage/js/theme.js"></script>
 </head>
-<body>
+<body class="noshell">
     <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
-    <main id="inhalt">
+    <div class="content">
+    <main id="inhalt" class="narrow">
         <h1>GARAGE</h1>
         <p id="status" role="status">Lädt …</p>
 
@@ -31,7 +34,7 @@
             <h2 id="consent-heading">Verbindung anfragen</h2>
             <p>Angemeldet als <strong id="consent-user"></strong>. <button id="switch-account" type="button" class="link-button">Anderes Konto</button></p>
 
-            <dl class="facts">
+            <dl class="details">
                 <dt>App</dt>
                 <dd id="consent-app"></dd>
                 <dt>Ausgewiesen von</dt>
@@ -55,6 +58,7 @@
             </form>
         </section>
     </main>
+    </div>
     <script type="module" src="/garage/js/consent.js"></script>
 </body>
 </html>

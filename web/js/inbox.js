@@ -4,7 +4,8 @@ import { setupCapture } from './capture.js';
 import { actionButton, clearChildren, element, formatClock, formatMoment, hideError, link, showError } from './dom.js';
 import { loadContext, requireSession } from './session.js';
 import { registerShareWorker, takeSharedFiles } from './share.js';
-import { createUndoBar } from './undo.js';
+import { mountShell } from './shell.js';
+import { toast } from './toast.js';
 
 registerShareWorker();
 
@@ -18,7 +19,6 @@ const readonlyNote =document.getElementById('readonly-note');
 const inboxList = document.getElementById('inbox-list');
 const inboxEmpty = document.getElementById('inbox-empty');
 const inboxError = document.getElementById('inbox-error');
-const undoBar = createUndoBar(document.getElementById('undo-slot'));
 
 let context = null;
 
@@ -84,19 +84,21 @@ async function discardItem(item) {
         return;
     }
     await loadInbox();
-    undoBar.show('Eintrag verworfen.', async () => {
-        try {
-            await request('POST', 'inbox/' + item.id + '/restore');
-        } catch (error) {
-            showError(inboxError, error.message);
-        }
-        await loadInbox(false);
+    toast('Eintrag verworfen.', {
+        undo: async () => {
+            try {
+                await request('POST', 'inbox/' + item.id + '/restore');
+            } catch (error) {
+                showError(inboxError, error.message);
+            }
+            await loadInbox(false);
+        },
     });
 }
 
 function describeItem(item) {
     const listItem = element('li');
-    const row = element('div', undefined, 'row');
+    const row = element('div', undefined, 'entry');
     row.appendChild(describeThumb(item));
 
     const text = element('div');
@@ -174,7 +176,7 @@ async function start() {
     }
     content.hidden = false;
     if (context.writableGarages.length > 0) {
-        const capture = setupCapture(context, undoBar, loadInbox);
+        const capture = setupCapture(context, loadInbox);
         await adoptSharedFiles(capture);
     } else {
         captureStart.hidden = true;
@@ -183,4 +185,5 @@ async function start() {
     await loadInbox();
 }
 
+mountShell({ active: 'eingang' });
 start();

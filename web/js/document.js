@@ -4,7 +4,8 @@ import { buildUploadForm, prepareFile } from './capture.js';
 import { actionButton, clearChildren, element, formatDay, hideError, link, showError } from './dom.js';
 import { loadContext, requireSession } from './session.js';
 import { registerShareWorker } from './share.js';
-import { createUndoBar } from './undo.js';
+import { mountShell } from './shell.js';
+import { hideToast, toast } from './toast.js';
 
 registerShareWorker();
 
@@ -48,7 +49,6 @@ const CHANNEL_LABELS = {
 const statusLine = document.getElementById('status');
 const backLink = document.getElementById('back-link');
 const pageTitle = document.getElementById('page-title');
-const appNav = document.getElementById('app-nav');
 const listView = document.getElementById('list-view');
 const detailView = document.getElementById('detail-view');
 const listBody = document.getElementById('list-body');
@@ -58,7 +58,6 @@ const detailError = document.getElementById('detail-error');
 const chipsGroup = document.getElementById('vehicle-chips');
 const viewListButton = document.getElementById('view-list');
 const viewGalleryButton = document.getElementById('view-gallery');
-const undoBar = createUndoBar(document.getElementById('undo-slot'));
 
 let context = null;
 let documents = [];
@@ -148,7 +147,7 @@ function describeState(entry) {
 
 function describeRow(entry) {
     const listItem = element('li');
-    const row = link('', '#beleg/' + entry.id, 'row');
+    const row = link('', '#beleg/' + entry.id, 'entry');
     row.appendChild(describeThumb(entry));
 
     const text = element('div');
@@ -246,7 +245,6 @@ function setViewMode(mode) {
 async function showList() {
     detailView.hidden = true;
     backLink.hidden = true;
-    appNav.hidden = false;
     pageTitle.textContent = 'GARAGE';
     window.document.title = 'Belege – GARAGE';
     listView.hidden = false;
@@ -287,7 +285,7 @@ function plainField(labelText, value) {
 function describePreview(entry) {
     const fragment = document.createDocumentFragment();
     if (entry.pages.length === 0) {
-        fragment.appendChild(element('p', 'Zu diesem PDF gibt es keine Seitenbilder. Öffne das Original, um es zu lesen.', 'tip'));
+        fragment.appendChild(element('p', 'Zu diesem PDF gibt es keine Seitenbilder. Öffne das Original, um es zu lesen.', 'note'));
         return fragment;
     }
 
@@ -382,7 +380,7 @@ async function submitLateFile(file) {
     }
     pageIndex = 0;
     renderDetail(current);
-    undoBar.show('Original abgelegt.');
+    toast('Original abgelegt.');
 }
 
 function typeControl(entry) {
@@ -437,13 +435,15 @@ async function saveField(field, select, previous) {
         return;
     }
     const savedId = current.id;
-    undoBar.show('Gespeichert.', async () => {
-        try {
-            current = await request('PATCH', 'documents/' + savedId, { [field]: previous });
-            renderDetail(current);
-        } catch (error) {
-            showError(detailError, error.message);
-        }
+    toast('Gespeichert.', {
+        undo: async () => {
+            try {
+                current = await request('PATCH', 'documents/' + savedId, { [field]: previous });
+                renderDetail(current);
+            } catch (error) {
+                showError(detailError, error.message);
+            }
+        },
     });
 }
 
@@ -457,7 +457,7 @@ async function discardCurrent() {
         return;
     }
     renderDetail(current);
-    undoBar.show('Beleg verworfen.', () => restoreDocument(discardedId));
+    toast('Beleg verworfen.', { undo: () => restoreDocument(discardedId) });
 }
 
 async function restoreDocument(documentId) {
@@ -472,7 +472,7 @@ async function restoreDocument(documentId) {
 }
 
 function describeFacts(entry) {
-    const facts = element('dl', undefined, 'facts');
+    const facts = element('dl', undefined, 'details');
     if (entry.can_edit) {
         facts.appendChild(labeledField('Typ', 'field-type', typeControl(entry)));
         facts.appendChild(labeledField('Fahrzeug', 'field-vehicle', vehicleControl(entry)));
@@ -512,11 +512,12 @@ function renderDetail(entry) {
     const title = documentTitle(entry);
     pageTitle.textContent = title;
     pageTitle.classList.add('detail-title');
+    pageTitle.classList.remove('sr-only');
     window.document.title = title + ' – GARAGE';
 
     if (entry.status === 'verworfen') {
         const reason = entry.status_reason ?? 'ohne Angabe';
-        detailBody.appendChild(element('p', 'Dieser Beleg ist verworfen: ' + reason, 'tip'));
+        detailBody.appendChild(element('p', 'Dieser Beleg ist verworfen: ' + reason, 'note'));
     }
     if (entry.status === 'wartet') {
         detailBody.appendChild(describeMissingOriginal(entry));
@@ -538,7 +539,6 @@ function renderDetail(entry) {
 
 async function showDetail(documentId) {
     listView.hidden = true;
-    appNav.hidden = true;
     backLink.hidden = false;
     backLink.href = '#belege';
     detailView.hidden = false;
@@ -556,8 +556,9 @@ async function showDetail(documentId) {
 }
 
 function route() {
-    undoBar.hide();
+    hideToast();
     pageTitle.classList.remove('detail-title');
+    pageTitle.classList.add('sr-only');
     const match = DETAIL_HASH.exec(location.hash);
     if (match === null) {
         showList();
@@ -584,4 +585,5 @@ async function start() {
     route();
 }
 
+mountShell({ active: '' });
 start();
