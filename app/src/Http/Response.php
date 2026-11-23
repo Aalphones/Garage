@@ -36,6 +36,24 @@ final class Response
         exit;
     }
 
+    /**
+     * HTML-Seite ohne Skript (Druckansicht); der Aufrufer setzt Zwischenspeicher- und Robots-Regel.
+     *
+     * @param array<string, string> $headers
+     */
+    public static function html(string $body, int $status, array $headers = []): never
+    {
+        header('Content-Type: text/html; charset=utf-8');
+        header('X-Content-Type-Options: nosniff');
+        foreach ($headers as $name => $value) {
+            header($name . ': ' . $value);
+        }
+        http_response_code($status);
+
+        echo $body;
+        exit;
+    }
+
     /** Vor jeder Ausgabe aufrufen (Response::json/empty beenden die Anfrage). `maxAge` 0 löscht den Cookie. */
     public static function cookie(string $name, string $value, int $maxAge, string $path): void
     {

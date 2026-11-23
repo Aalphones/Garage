@@ -14,6 +14,8 @@ use Garage\Api\HealthController;
 use Garage\Api\InvitationController;
 use Garage\Api\MeController;
 use Garage\Api\OpenItemController;
+use Garage\Api\PrintController;
+use Garage\Api\RecordController;
 use Garage\Api\TokenController;
 use Garage\Api\VehicleController;
 use Garage\Api\OAuthController;
@@ -53,6 +55,12 @@ $router->add('GET', '/garage/api/vehicles/{id}/parts', static fn (array $paramet
 $router->add('GET', '/garage/api/vehicles/{id}/notes', static fn (array $parameters) => (new VehicleController($config))->notes($request, (int) $parameters['id']));
 $router->add('GET', '/garage/api/vehicles/{id}/damages', static fn (array $parameters) => (new VehicleController($config))->damages($request, (int) $parameters['id']));
 $router->add('GET', '/garage/api/vehicles/{id}/dossier', static fn (array $parameters) => (new VehicleController($config))->dossier($request, (int) $parameters['id']));
+$router->add('PATCH', '/garage/api/vehicles/{id}', static fn (array $parameters) => (new VehicleController($config))->updateStatus($request, (int) $parameters['id']));
+$router->add('POST', '/garage/api/vehicles/{id}/delete', static fn (array $parameters) => (new VehicleController($config))->delete($request, (int) $parameters['id']));
+$router->add('POST', '/garage/api/vehicles/{id}/restore', static fn (array $parameters) => (new VehicleController($config))->restore($request, (int) $parameters['id']));
+$router->add('POST', '/garage/api/vehicles/{id}/print-link', static fn (array $parameters) => (new VehicleController($config))->printLink($request, (int) $parameters['id']));
+$router->add('POST', '/garage/api/records/{type}/{id}/delete', static fn (array $parameters) => (new RecordController())->delete($request, (string) $parameters['type'], (int) $parameters['id']));
+$router->add('POST', '/garage/api/records/{type}/{id}/restore', static fn (array $parameters) => (new RecordController())->restore($request, (string) $parameters['type'], (int) $parameters['id']));
 $router->add('GET', '/garage/api/events/{id}', static fn (array $parameters) => (new EventController($config))->show($request, (int) $parameters['id']));
 $router->add('GET', '/garage/api/due', static fn () => (new DueController())->list($request));
 $router->add('GET', '/garage/api/tokens',static fn () => (new TokenController())->list($request));
@@ -91,6 +99,9 @@ $router->add('POST', '/garage/upload/{slug}', static fn (array $parameters) => (
 $router->add('OPTIONS', '/garage/upload/{slug}', static fn () => (new UploadController($config))->options());
 $router->add('GET', '/garage/files/{slug}', static fn (array $parameters) => (new FileController($config))->show($request, (string) $parameters['slug']));
 $router->add('HEAD', '/garage/files/{slug}', static fn (array $parameters) => (new FileController($config))->show($request, (string) $parameters['slug']));
+
+// Ohne Anmeldung: die Signatur im Pfad ist die Berechtigung (ADR-018).
+$router->add('GET', '/garage/akte/{slug}', static fn (array $parameters) => (new PrintController())->show($request, (string) $parameters['slug']));
 
 $router->add('POST', '/garage/mcp', static fn () => (new McpController($config))->handle($request));
 

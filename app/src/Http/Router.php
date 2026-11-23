@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Garage\Http;
 
-/** Pfad-Router mit den Platzhaltern `{id}` (Ziffern, kommt als int) und `{slug}` (Buchstaben, Ziffern, Punkt, Unterstrich, Bindestrich — signierte Links sind base64url mit Punkt). */
+/**
+ * Pfad-Router mit den Platzhaltern `{id}` (Ziffern, kommt als int), `{slug}` (Buchstaben, Ziffern, Punkt, Unterstrich,
+ * Bindestrich — signierte Links sind base64url mit Punkt) und `{type}` (Kleinbuchstaben und Unterstrich, Art eines Datensatzes).
+ */
 final class Router
 {
     private const PLACEHOLDERS = [
         '{id}' => '(?P<id>[0-9]+)',
         '{slug}' => '(?P<slug>[A-Za-z0-9._-]+)',
+        '{type}' => '(?P<type>[a-z_]{1,20})',
     ];
 
     /** @var list<array{method: string, regex: string, handler: callable}> */

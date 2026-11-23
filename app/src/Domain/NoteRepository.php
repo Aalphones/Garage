@@ -59,6 +59,41 @@ final class NoteRepository
         $statement->execute([$garageId, $noteId, $revision, $body, $actor->name, $actor->userId]);
     }
 
+    /**
+     * Eine Notiz in jedem Status, für Löschen und Wiederherstellen; mit `$lock` bis zum Ende der Transaktion gesperrt.
+     *
+     * @return array{id: int, garage_id: int, vehicle_id: int, topic: string, status: string}|null
+     */
+    public function findAnyStatus(int $noteId, Actor $actor, bool $lock = false): ?array
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return null;
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf(
+                'SELECT id, garage_id, vehicle_id, topic, status FROM notes WHERE id = ? AND garage_id IN (%s)%s',
+                implode(', ', array_fill(0, count($garageIds), '?')),
+                $lock ? ' FOR UPDATE' : ''
+            )
+        );
+        $statement->execute([$noteId, ...$garageIds]);
+        $row = $statement->fetch();
+        if ($row === false) {
+            return null;
+        }
+
+        return ['id' => (int) $row['id'], 'garage_id' => (int) $row['garage_id'], 'vehicle_id' => (int) $row['vehicle_id'], 'topic' => (string) $row['topic'], 'status' => (string) $row['status']];
+    }
+
+    /** `notes` hat keine Spalte für den Grund; er steht nur im Audit-Log. */
+    public function setStatus(int $noteId, int $garageId, string $status): void
+    {
+        $statement = $this->pdo->prepare('UPDATE notes SET status = ?, updated_at = UTC_TIMESTAMP() WHERE id = ? AND garage_id = ?');
+        $statement->execute([$status, $noteId, $garageId]);
+    }
+
     public function touch(int $noteId, int $garageId): void
     {
         $statement = $this->pdo->prepare("UPDATE notes SET status = 'aktiv', updated_at = UTC_TIMESTAMP() WHERE id = ? AND garage_id = ?");

@@ -19,10 +19,12 @@ final class OpenItemEffect
     private EventService $events;
     private OdometerRepository $readings;
     private TaskRepository $tasks;
+    private OdometerService $odometer;
 
     public function __construct(PDO $pdo)
     {
         $this->vehicles = new VehicleRepository($pdo);
+        $this->odometer = new OdometerService($pdo);
         $this->merger = new RecordMerger($pdo);
         $this->events = new EventService($pdo);
         $this->readings = new OdometerRepository($pdo);
@@ -32,7 +34,7 @@ final class OpenItemEffect
     /**
      * Ohne `ref_table` (nachfragen, beobachten) gibt es nichts zu ändern; der Klärfall wird nur geschlossen.
      *
-     * @param array{ref_table: string|null, ref_id: int|null, proposal: array<string, mixed>|null} $item
+     * @param array{vehicle_id: int|null, ref_table: string|null, ref_id: int|null, proposal: array<string, mixed>|null} $item
      * @return array{before: array<string, mixed>, after: array<string, mixed>} was sich an den Daten geändert hat, für den Audit-Eintrag
      */
     public function apply(array $item, string $decision, Actor $actor): array
@@ -47,7 +49,7 @@ final class OpenItemEffect
 
         return match ($refTable) {
             'vehicle_facts' => $this->resolveFact($refId, $isAccepted, $actor),
-            'odometer_readings' => $this->resolveReading($refId, $proposal, $isAccepted, $actor),
+            'odometer_readings' => $this->resolveReading($item['vehicle_id'], $refId, $proposal, $isAccepted, $actor),
             'task_rules' => $isAccepted ? $this->acceptRule($refId, $proposal, $actor) : self::unchanged(),
             'events' => $isAccepted ? $this->acceptEvent($refId, $proposal, $actor) : self::unchanged(),
             default => $isAccepted ? $this->acceptColumn($refTable, $refId, $proposal, $actor) : self::unchanged(),
@@ -102,11 +104,12 @@ final class OpenItemEffect
 
     /**
      * Der strittige Stand wird gültig und die widersprechenden werden verworfen („neu“), oder er wird verworfen.
+     * Gültige Stände, die erst nach dem Klärfall dazukamen und dem neuen widersprechen, werden ihrerseits strittig.
      *
      * @param array<string, mixed> $proposal
      * @return array{before: array<string, mixed>, after: array<string, mixed>}
      */
-    private function resolveReading(int $readingId, array $proposal, bool $isAccepted, Actor $actor): array
+    private function resolveReading(?int $vehicleId, int $readingId, array $proposal, bool $isAccepted, Actor $actor): array
     {
         $disputed = $this->readings->findByIds([$readingId], $actor)[0] ?? null;
         if ($disputed === null) {
@@ -133,11 +136,35 @@ final class OpenItemEffect
         foreach ($conflicts as $conflict) {
             $this->readings->setStatus($conflict['id'], OdometerRepository::STATUS_DISCARDED, $actor);
         }
+        $newlyDisputed = $this->disputeContradicting($vehicleId, $disputed, $actor);
 
         return [
             'before' => ['reading' => $summary + ['reading_status' => OdometerRepository::STATUS_DISPUTED], 'conflicts' => array_map(self::readingSummary(...), $conflicts)],
-            'after' => ['reading' => $summary + ['reading_status' => OdometerRepository::STATUS_VALID], 'discarded' => array_column($conflicts, 'id')],
+            'after' => ['reading' => $summary + ['reading_status' => OdometerRepository::STATUS_VALID], 'discarded' => array_column($conflicts, 'id'), 'disputed' => $newlyDisputed],
         ];
+    }
+
+    /**
+     * Kilometer laufen nur vorwärts (ADR-011): jeder noch gültige Stand, der dem gerade gültig gewordenen widerspricht
+     * (später und kleiner, früher und größer), wird strittig und bekommt einen Klärfall gegen ihn.
+     *
+     * @param array{id: int, read_on: string, km: int} $accepted
+     * @return list<array{reading_id: int, open_item_id: int}>
+     */
+    private function disputeContradicting(?int $vehicleId, array $accepted, Actor $actor): array
+    {
+        $vehicle = $vehicleId === null ? null : $this->vehicles->find($vehicleId, $actor);
+        if ($vehicle === null) {
+            throw new LogicException('Kilometerstand-Klärfall ohne Fahrzeug.');
+        }
+
+        $disputed = [];
+        foreach ($this->readings->findConflicts($vehicle['id'], $accepted['read_on'], (string) $accepted['km'], $actor) as $contradicting) {
+            $openItemId = $this->odometer->disputeExisting($vehicle, $contradicting, $accepted, $actor);
+            $disputed[] = ['reading_id' => $contradicting['id'], 'open_item_id' => $openItemId];
+        }
+
+        return $disputed;
     }
 
     /**

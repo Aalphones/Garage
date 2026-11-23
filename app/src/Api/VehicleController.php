@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Garage\Api;
 
 use Garage\Auth\ApiAuth;
+use Garage\Auth\PrintLink;
 use Garage\Db\Connection;
 use Garage\Domain\Actor;
 use Garage\Domain\DamageService;
@@ -12,11 +13,13 @@ use Garage\Domain\DocumentService;
 use Garage\Domain\DomainError;
 use Garage\Domain\DossierService;
 use Garage\Domain\DueService;
+use Garage\Domain\LifecycleService;
 use Garage\Domain\MeasurementService;
 use Garage\Domain\NoteService;
 use Garage\Domain\OdometerService;
 use Garage\Domain\PartService;
 use Garage\Domain\TireService;
+use Garage\Domain\VehicleAccess;
 use Garage\Domain\VehicleRepository;
 use Garage\Domain\VehicleService;
 use Garage\Http\Request;
@@ -24,8 +27,9 @@ use Garage\Http\Response;
 use PDO;
 
 /**
- * Lese-Routen der Oberfläche für Garagen und Fahrzeuge. Jede ruft denselben Service wie das gleichnamige MCP-Tool
- * und gibt dessen Ausgabe unverändert zurück (Kontrakt in ADR-018).
+ * Routen der Oberfläche für Garagen und Fahrzeuge. Jede Lese-Route ruft denselben Service wie das gleichnamige MCP-Tool
+ * und gibt dessen Ausgabe unverändert zurück (Kontrakt in ADR-018); Status, Löschen und Wiederherstellen nur für
+ * Menschen (ADR-019).
  */
 final class VehicleController
 {
@@ -42,7 +46,7 @@ final class VehicleController
         $pdo = Connection::open();
 
         if ($request->query('deleted') === '1') {
-            Response::json(['vehicles' => (new VehicleRepository($pdo))->listDeleted($actor, VehicleRepository::RESTORE_DAYS)]);
+            Response::json(['vehicles' => (new VehicleRepository($pdo))->listDeleted($actor, LifecycleService::RESTORE_DAYS)]);
         }
 
         Response::json(['garages' => (new VehicleService($pdo))->list($actor)]);
@@ -117,6 +121,40 @@ final class VehicleController
 
         $filename = sprintf('akte-%d-%s.md', $vehicleId, gmdate('Y-m-d'));
         Response::text($markdown, self::MARKDOWN_TYPE, ['Content-Disposition' => 'attachment; filename="' . $filename . '"']);
+    }
+
+    public function updateStatus(Request $request, int $vehicleId): never
+    {
+        $this->respondJson($request, static function (Actor $actor, PDO $pdo) use ($request, $vehicleId): array {
+            $body = $request->json();
+
+            return (new LifecycleService($pdo))->setVehicleStatus($vehicleId, $body['status'] ?? null, $body['reason'] ?? null, $actor);
+        });
+    }
+
+    public function delete(Request $request, int $vehicleId): never
+    {
+        $this->respondJson($request, static function (Actor $actor, PDO $pdo) use ($request, $vehicleId): array {
+            $body = $request->json();
+
+            return (new LifecycleService($pdo))->deleteVehicle($vehicleId, $body['reason'] ?? null, $actor);
+        });
+    }
+
+    public function restore(Request $request, int $vehicleId): never
+    {
+        $this->respondJson($request, static fn (Actor $actor, PDO $pdo): array => (new LifecycleService($pdo))->restoreVehicle($vehicleId, $actor));
+    }
+
+    /** Lesezugriff genügt; der Link trägt den Nutzer, die Druckansicht prüft dessen Rollen beim Öffnen erneut. */
+    public function printLink(Request $request, int $vehicleId): never
+    {
+        $this->respondJson($request, static function (Actor $actor, PDO $pdo) use ($vehicleId): array {
+            (new VehicleAccess($pdo))->readable($vehicleId, $actor);
+            $link = PrintLink::sign($vehicleId, (int) $actor->userId);
+
+            return ['url' => PrintLink::PATH_PREFIX . $link['slug'], 'expires_at' => gmdate('Y-m-d\TH:i:s\Z', $link['expires_at'])];
+        });
     }
 
     /** @param callable(Actor, PDO): array<string, mixed> $load */

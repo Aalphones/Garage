@@ -17,7 +17,6 @@ final class VehicleRepository
 {
     public const STATUS_ACTIVE = 'aktiv';
     public const STATUS_DELETED = 'geloescht';
-    public const RESTORE_DAYS = 30;
     public const FACT_CURRENT = 'aktuell';
     public const FACT_SUPERSEDED = 'abgeloest';
     public const FACT_DISPUTED = 'strittig';
@@ -110,6 +109,60 @@ final class VehicleRepository
         $row = $statement->fetch();
 
         return $row === false ? null : self::vehicle($row);
+    }
+
+    /**
+     * Ein Fahrzeug in jedem Status (auch gelöscht), gesperrt bis zum Ende der Transaktion. `is_restorable` vergleicht
+     * `updated_at` in der Abfrage mit der Frist von `$restoreDays` Tagen.
+     *
+     * @return array{id: int, garage_id: int, label: string, status: string, status_reason: string|null, updated_at: string, is_restorable: bool}|null
+     */
+    public function findForLifecycle(int $vehicleId, int $restoreDays, Actor $actor): ?array
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return null;
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf(
+                'SELECT id, garage_id, label, status, status_reason, updated_at, updated_at >= UTC_TIMESTAMP() - INTERVAL %d DAY AS is_restorable
+                 FROM vehicles WHERE id = ? AND garage_id IN (%s) FOR UPDATE',
+                $restoreDays,
+                self::placeholders($garageIds)
+            )
+        );
+        $statement->execute([$vehicleId, ...$garageIds]);
+        $row = $statement->fetch();
+        if ($row === false) {
+            return null;
+        }
+
+        return self::vehicle($row) + [
+            'status_reason' => $row['status_reason'] === null ? null : (string) $row['status_reason'],
+            'updated_at' => (string) $row['updated_at'],
+            'is_restorable' => (int) $row['is_restorable'] === 1,
+        ];
+    }
+
+    /** @return string der neue `updated_at` (UTC) */
+    public function setStatus(int $vehicleId, string $status, ?string $reason, Actor $actor): string
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            throw new LogicException('Statuswechsel ohne Garage.');
+        }
+
+        $placeholders = self::placeholders($garageIds);
+        $update = $this->pdo->prepare(
+            sprintf('UPDATE vehicles SET status = ?, status_reason = ?, updated_at = UTC_TIMESTAMP() WHERE id = ? AND garage_id IN (%s)', $placeholders)
+        );
+        $update->execute([$status, $reason, $vehicleId, ...$garageIds]);
+
+        $select = $this->pdo->prepare(sprintf('SELECT updated_at FROM vehicles WHERE id = ? AND garage_id IN (%s)', $placeholders));
+        $select->execute([$vehicleId, ...$garageIds]);
+
+        return (string) $select->fetchColumn();
     }
 
     public function insert(int $garageId, string $label, Actor $actor): int

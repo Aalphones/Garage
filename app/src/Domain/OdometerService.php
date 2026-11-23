@@ -169,14 +169,7 @@ final class OdometerService
     {
         $readingId = $this->readings->insert($vehicle['garage_id'], $vehicle['id'], $readOn, $km, $eventId, $note, OdometerRepository::STATUS_DISPUTED, $provenance, $actor);
         $conflictIds = array_map(static fn (array $conflict): int => $conflict['id'], $conflicts);
-        $first = $conflicts[0];
-        $text = sprintf(
-            'Kilometerstand %s am %s passt nicht zu %s am %s. Kilometer laufen nur vorwärts; ein Mensch entscheidet, welcher Stand gilt.',
-            self::formatKm((int) $km),
-            $readOn,
-            self::formatKm($first['km']),
-            $first['read_on']
-        );
+        $text = self::conflictText((int) $km, $readOn, $conflicts[0]);
         $openItemId = $this->openItems->insert(
             $vehicle['garage_id'],
             $vehicle['id'],
@@ -198,6 +191,53 @@ final class OdometerService
         );
 
         return ['reading_id' => $readingId, 'result' => RecordMerger::RESULT_DISPUTE, 'open_item_id' => $openItemId];
+    }
+
+    /**
+     * Ein bisher gültiger Stand widerspricht einem Stand, der gerade gültig geworden ist: er wird strittig und bekommt
+     * einen eigenen Klärfall. Läuft in der Transaktion des Aufrufers, das Fahrzeug ist gesperrt.
+     *
+     * @param array{id: int, garage_id: int, label: string, status: string} $vehicle
+     * @param array{id: int, read_on: string, km: int} $reading
+     * @param array{id: int, read_on: string, km: int} $against
+     * @return int ID des neuen Klärfalls
+     */
+    public function disputeExisting(array $vehicle, array $reading, array $against, Actor $actor): int
+    {
+        $this->readings->setStatus($reading['id'], OdometerRepository::STATUS_DISPUTED, $actor);
+        $openItemId = $this->openItems->insert(
+            $vehicle['garage_id'],
+            $vehicle['id'],
+            OpenItemRepository::KIND_CONFLICT,
+            self::conflictText($reading['km'], $reading['read_on'], $against),
+            'odometer_readings',
+            $reading['id'],
+            $actor,
+            ['conflicts_with' => [$against['id']]]
+        );
+        $this->audit->record(
+            $actor,
+            'odometer.dispute',
+            sprintf('odometer_readings:%d', $reading['id']),
+            $vehicle['garage_id'],
+            ['reading_status' => OdometerRepository::STATUS_VALID],
+            ['reading_status' => OdometerRepository::STATUS_DISPUTED, 'conflicts_with' => [$against['id']], 'open_item_id' => $openItemId],
+            $vehicle['id']
+        );
+
+        return $openItemId;
+    }
+
+    /** @param array{read_on: string, km: int} $other */
+    private static function conflictText(int $km, string $readOn, array $other): string
+    {
+        return sprintf(
+            'Kilometerstand %s am %s passt nicht zu %s am %s. Kilometer laufen nur vorwärts; ein Mensch entscheidet, welcher Stand gilt.',
+            self::formatKm($km),
+            $readOn,
+            self::formatKm($other['km']),
+            $other['read_on']
+        );
     }
 
     private static function formatKm(int $km): string

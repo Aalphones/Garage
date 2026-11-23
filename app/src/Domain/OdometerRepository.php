@@ -287,6 +287,40 @@ final class OdometerRepository
     }
 
     /**
+     * Löscht die Stände eines Ereignisses mit ihm bzw. gibt sie mit ihm zurück (`status`, nicht `reading_status`).
+     *
+     * @return list<int> die geänderten Stände
+     */
+    public function setStatusForEvent(int $eventId, string $fromStatus, string $toStatus, ?string $reason, Actor $actor): array
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($garageIds), '?'));
+        $select = $this->pdo->prepare(
+            sprintf('SELECT id FROM odometer_readings WHERE event_id = ? AND status = ? AND garage_id IN (%s) ORDER BY id FOR UPDATE', $placeholders)
+        );
+        $select->execute([$eventId, $fromStatus, ...$garageIds]);
+        $ids = array_map(intval(...), $select->fetchAll(PDO::FETCH_COLUMN));
+        if ($ids === []) {
+            return [];
+        }
+
+        $update = $this->pdo->prepare(
+            sprintf(
+                'UPDATE odometer_readings SET status = ?, status_reason = ?, updated_at = UTC_TIMESTAMP() WHERE id IN (%s) AND garage_id IN (%s)',
+                implode(', ', array_fill(0, count($ids), '?')),
+                $placeholders
+            )
+        );
+        $update->execute([$toStatus, $reason, ...$ids, ...$garageIds]);
+
+        return $ids;
+    }
+
+    /**
      * @param list<array<string, mixed>> $rows
      * @return list<array{id: int, read_on: string, km: int}>
      */
