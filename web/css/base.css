@@ -198,8 +198,21 @@ button.row { width: 100%; text-align: left; background: none; border: 0; border-
 
 /* Anhänge-Leiste */
 .att { display: flex; gap: .45rem; margin-top: .7rem; overflow-x: auto; }
-.att button { flex: none; width: 4.2rem; height: 5.2rem; border-radius: 8px; border: 1px solid var(--line); background: var(--raised); display: grid; place-items: center; color: var(--muted); font-size: 11px; cursor: pointer; padding: .3rem; text-align: center; }
-.att button svg { width: 22px; height: 22px; }
+.att button, .att a { flex: none; width: 4.2rem; height: 5.2rem; border-radius: 8px; border: 1px solid var(--line); background: var(--raised); display: grid; place-items: center; color: var(--muted); font-size: 11px; cursor: pointer; padding: .3rem; text-align: center; }
+.att button svg, .att a svg { width: 22px; height: 22px; }
+.att a { text-decoration: none; overflow: hidden; align-content: center; gap: .2rem; }
+.att a img { width: 100%; height: 3.2rem; object-fit: cover; border-radius: 4px; }
+.att a span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+
+/* Tabellen: nur der Container rollt, nie die Seite */
+.tscroll { overflow-x: auto; max-width: 100%; }
+.tscroll .tbl { min-width: 36rem; }
+.tbl th.num { text-align: right; }
+.tbl td.strong { font-weight: 700; }
+.tbl td.prog { min-width: 7rem; }
+.tbl tr.gaprow td { color: var(--bad); background: var(--bad-soft); }
+.tbl td .src { margin-top: .25rem; }
+.row .s.stack { display: grid; gap: .35rem; width: 100%; }
 
 /* Klärfälle */
 .oi { border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); padding: .9rem; margin-bottom: .8rem; }

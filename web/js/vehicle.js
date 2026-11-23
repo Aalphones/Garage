@@ -5,6 +5,8 @@ import * as icons from './icons.js';
 import { mountCameraButton } from './capture-fab.js';
 import { requireSession } from './session.js';
 import { mountShell, scroller } from './shell.js';
+import { renderBook } from './tab-book.js';
+import { renderPlan } from './tab-plan.js';
 import { renderOverview } from './vehicle-overview.js';
 import { emptyBlock, errorBlock, plate, skeletons, STATUS_LABELS, stateWord } from './widgets.js';
 
@@ -12,8 +14,8 @@ mountShell({ active: 'garage' });
 
 const TABS = [
     { key: 'uebersicht', label: 'Übersicht' },
-    { key: 'scheckheft', label: 'Scheckheft', comingWith: 6 },
-    { key: 'wartung', label: 'Wartung', comingWith: 6 },
+    { key: 'scheckheft', label: 'Scheckheft' },
+    { key: 'wartung', label: 'Wartung' },
     { key: 'messwerte', label: 'Messwerte', comingWith: 7 },
     { key: 'reifen', label: 'Reifen', comingWith: 7 },
     { key: 'teile', label: 'Teile', comingWith: 7 },
@@ -124,14 +126,14 @@ async function showPanel(tab) {
     panelHost.appendChild(panel);
     scroller().scrollTop = 0;
 
-    if (tab.key !== 'uebersicht') {
+    if (tab.comingWith !== undefined) {
         panel.appendChild(placeholder(tab));
 
         return;
     }
     panel.appendChild(skeletons());
     const vehicleId = loaded.vehicleId;
-    await renderOverview(panel, {
+    const context = {
         vehicleId,
         vehicle: loaded.data,
         openItems: () => loaded.openItems,
@@ -140,7 +142,9 @@ async function showPanel(tab) {
         },
         onOpenItemsChanged: updateOverviewCount,
         reload: () => showPanel(tab),
-    });
+    };
+    const renderers = { uebersicht: renderOverview, scheckheft: renderBook, wartung: renderPlan };
+    await renderers[tab.key](panel, context);
 }
 
 function mountChrome() {
