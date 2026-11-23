@@ -249,6 +249,42 @@ final class TaskRepository
         return $executions;
     }
 
+    /**
+     * Alle Ausführungen eines Fahrzeugs je Aufgabenschlüssel, aufsteigend nach Datum: aktive Ereignisse mit einer aktiven
+     * Position dieses Schlüssels, je Ereignis einmal (mehrere Positionen desselben Schlüssels zählen als eine Ausführung).
+     *
+     * @return array<string, list<array{date: string, km: int|null}>> Aufgabenschlüssel => Ausführungen
+     */
+    public function executions(int $vehicleId, Actor $actor): array
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return [];
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf(
+                "SELECT DISTINCT i.task_key, e.id AS event_id, e.performed_on, e.odometer_km
+                 FROM events e
+                 JOIN event_items i ON i.event_id = e.id AND i.status = 'aktiv' AND i.task_key IS NOT NULL AND i.garage_id = e.garage_id
+                 WHERE e.status = 'aktiv' AND e.vehicle_id = ? AND e.garage_id IN (%s)
+                 ORDER BY e.performed_on, e.id",
+                self::placeholders($garageIds)
+            )
+        );
+        $statement->execute([$vehicleId, ...$garageIds]);
+
+        $executions = [];
+        foreach ($statement->fetchAll() as $row) {
+            $executions[(string) $row['task_key']][] = [
+                'date' => (string) $row['performed_on'],
+                'km' => $row['odometer_km'] === null ? null : (int) $row['odometer_km'],
+            ];
+        }
+
+        return $executions;
+    }
+
     private function assertOwnGarage(int $garageId, Actor $actor): void
     {
         if (!$actor->canRead($garageId)) {

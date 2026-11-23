@@ -112,6 +112,33 @@ final class DueService
     }
 
     /**
+     * Scheckheft-Lücken eines Fahrzeugs (ADR-020), jüngste zuerst. Aufgaben ohne aktuelle Regel haben keine Lücken.
+     *
+     * @return list<array{task_key: string, title: string, expected_by: string, previous: array{date: string, km: int|null}, next: array{date: string, km: int|null}, explanation: string, rule_uncertain: bool}>
+     */
+    public function gaps(int $vehicleId, Actor $actor): array
+    {
+        $this->access->readable($vehicleId, $actor);
+        $firstRegistration = $this->vehicles->currentValues([$vehicleId], ['erstzulassung'], $actor)[$vehicleId]['erstzulassung'] ?? null;
+        $executions = $this->tasks->executions($vehicleId, $actor);
+
+        $gaps = [];
+        foreach ($this->tasks->listTasksWithRules([$vehicleId], $actor) as $task) {
+            $rule = $task['rule'];
+            if ($rule === null) {
+                continue;
+            }
+            foreach (GapCalculator::find($rule, $executions[$task['task_key']] ?? [], $firstRegistration) as $gap) {
+                $gaps[] = ['task_key' => $task['task_key'], 'title' => $task['title']] + $gap
+                    + ['rule_uncertain' => $rule['confidence'] === DueCalculator::CONFIDENCE_UNCERTAIN];
+            }
+        }
+        usort($gaps, static fn (array $left, array $right): int => [$right['expected_by'], $left['task_key']] <=> [$left['expected_by'], $right['task_key']]);
+
+        return $gaps;
+    }
+
+    /**
      * Ohne Fahrzeug-ID zählen nur aktive Fahrzeuge: verkaufte und stillgelegte haben nichts mehr zu warten.
      *
      * @return list<array{id: int, garage_id: int, label: string, status: string}>

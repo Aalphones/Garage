@@ -18,7 +18,7 @@ Quelle: `app/index.php`. Alle Pfade absolut; die Brücke liegt unter `/garage/` 
 | GET | `/garage/api/vehicles?deleted=1` | `Api\VehicleController::list` | JWT | `{vehicles:[{id,garage_id,label,status_reason,deleted_at,restorable_until}]}` — nur gelöschte Fahrzeuge der Garagen mit Rolle `inhaber`, gelöscht vor höchstens 30 Tagen |
 | GET | `/garage/api/vehicles/{id}` | `Api\VehicleController::show` | JWT (nur Mensch) | Ausgabe von `get_vehicle` plus `permissions:{write,owner}` (write = Rolle `inhaber`/`mitglied`, owner = `inhaber`); 404 `not_found` bei fremdem oder unbekanntem Fahrzeug |
 | GET | `/garage/api/vehicles/{id}/due` | `Api\VehicleController::due` | JWT | wie `get_due_items` für das Fahrzeug, Horizont 36 |
-| GET | `/garage/api/vehicles/{id}/events` | `Api\EventController::listForVehicle` | JWT | `{events:[…wie list_events…], gaps:[]}`; die Lücken füllt eine spätere Phase |
+| GET | `/garage/api/vehicles/{id}/events` | `Api\EventController::listForVehicle` | JWT | `{events:[…wie list_events…], gaps:[{task_key,title,expected_by,previous:{date,km},next:{date,km},explanation,rule_uncertain}]}`; `gaps` = Scheckheft-Lücken nach ADR-020 (Ausführung später als Fälligkeit + 3 Monate bzw. + 3.000 km, auch ab Erstzulassung; nicht nach der letzten Ausführung, nicht vor `valid_from` der Regel), jüngste zuerst, `explanation` mit Rechenweg |
 | GET | `/garage/api/vehicles/{id}/odometer` | `Api\VehicleController::odometer` | JWT | `{readings:[{id,read_on,km,note,source,confidence}]}` — gültige Stände, älteste zuerst |
 | GET | `/garage/api/vehicles/{id}/measurements` | `Api\VehicleController::measurements` | JWT | wie `get_measurements` ohne Filter |
 | GET | `/garage/api/vehicles/{id}/tires` | `Api\VehicleController::tires` | JWT | wie `get_tires` |

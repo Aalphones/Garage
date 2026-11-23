@@ -8,6 +8,7 @@ use Garage\Auth\ApiAuth;
 use Garage\Db\Connection;
 use Garage\Domain\DocumentService;
 use Garage\Domain\DomainError;
+use Garage\Domain\DueService;
 use Garage\Domain\EventService;
 use Garage\Http\Request;
 use Garage\Http\Response;
@@ -25,13 +26,14 @@ final class EventController
         $actor = ApiAuth::user($request);
 
         try {
-            $events = (new EventService(Connection::open()))->list($vehicleId, null, null, null, $actor);
+            $pdo = Connection::open();
+            $events = (new EventService($pdo))->list($vehicleId, null, null, null, $actor);
+            $gaps = (new DueService($pdo))->gaps($vehicleId, $actor);
         } catch (DomainError $error) {
             ApiErrors::respond($error);
         }
 
-        // Die Lücken im Scheckheft berechnet eine spätere Phase; bis dahin bleibt die Liste leer.
-        Response::json(['events' => $events, 'gaps' => []]);
+        Response::json(['events' => $events, 'gaps' => $gaps]);
     }
 
     public function show(Request $request, int $eventId): never

@@ -23,7 +23,7 @@ final class DueCalculator
     public const STATUS_OK = 'ok';
     public const STATUS_UNKNOWN = 'unbekannt';
 
-    private const CONFIDENCE_UNCERTAIN = 'unsicher';
+    public const CONFIDENCE_UNCERTAIN = 'unsicher';
     private const MODE_FLEXIBLE = 'flexibel';
 
     /**
