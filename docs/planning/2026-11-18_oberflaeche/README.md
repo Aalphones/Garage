@@ -15,7 +15,7 @@ Die Akte wird im Browser sichtbar und bedienbar: Garage, Fahrzeug mit sieben Rei
 | 6 | Reiter Scheckheft und Wartung | standard | sonnet | complete |
 | 7 | Reiter Messwerte, Reifen, Teile, Belege | standard | sonnet | complete |
 | 8 | Fahrzeug-Aktionen, Druckansicht, gelöschte Fahrzeuge | standard | sonnet | complete |
-| 8b | Kleine Eingaben in der Oberfläche | standard | sonnet | pending |
+| 8b | Kleine Eingaben in der Oberfläche | standard | sonnet | complete |
 | 9 | Doku-Abgleich und Abschluss | mechanisch | sonnet | pending |
 
 Reihenfolge: 1 → 2 → 3 → 4 → 4b → 5 → 6 → 7 → 8 → 8b → 9. Phase 1 und 2 sind unabhängig voneinander; 5–8b brauchen 1 und 2, 6 braucht 3, 8 braucht 4, 8b braucht 4b.

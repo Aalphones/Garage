@@ -243,7 +243,9 @@ button.row { width: 100%; text-align: left; background: none; border: 0; border-
 .sheet { background: var(--surface); border-radius: 18px 18px 0 0; padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom)); max-height: 88vh; overflow: auto; box-shadow: var(--shadow); animation: up var(--t-mid) var(--ease-out); }
 .sheet .grab { width: 2.5rem; height: 4px; border-radius: 4px; background: var(--border); margin: 0 auto .8rem; }
 .sheet h2 { font-size: 1.1rem; }
-.sheet .foot { display: flex; gap: .5rem; justify-content: flex-end; margin-top: 1.1rem; flex-wrap: wrap; }
+/* Die Knopfzeile klebt am unteren Blattrand: bei offener Handy-Tastatur rollt der Inhalt, die Knöpfe bleiben erreichbar. */
+.sheet .foot { display: flex; gap: .5rem; justify-content: flex-end; margin: 1.1rem 0 calc(-1rem - env(safe-area-inset-bottom)); padding: .7rem 0 calc(1rem + env(safe-area-inset-bottom)); flex-wrap: wrap; position: sticky; bottom: 0; background: var(--surface); }
+@supports (height: 1dvh) { .sheet { max-height: 88dvh; } }
 @keyframes up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (min-width: 768px) { .scrim { place-items: center; } .sheet { width: min(32rem, 92vw); border-radius: 18px; } .sheet .grab { display: none; } }
 

@@ -7,6 +7,7 @@ import { loadContext, requireSession } from './session.js';
 import { registerShareWorker } from './share.js';
 import { mountShell } from './shell.js';
 import { hideToast, toast } from './toast.js';
+import { setCoverPhoto } from './vehicle-inputs.js';
 
 registerShareWorker();
 
@@ -314,6 +315,11 @@ function describeActions(entry) {
         fragment.appendChild(actionButton('Beleg wiederherstellen', 'link-button', () => restoreDocument(entry.id)));
 
         return fragment;
+    }
+    if (entry.doc_type === 'foto' && entry.vehicle_id !== null) {
+        const row = element('div', undefined, 'button-row');
+        row.appendChild(actionButton('Als Titelbild setzen', 'button', () => setCoverPhoto(entry.vehicle_id, entry.id)));
+        fragment.appendChild(row);
     }
     fragment.appendChild(actionButton('Beleg verwerfen', 'link-button', discardCurrent));
     fragment.appendChild(element('small', 'Verworfene Belege bleiben gespeichert und lassen sich wiederherstellen.'));

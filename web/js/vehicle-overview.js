@@ -2,10 +2,13 @@
 import { request } from './api.js';
 import { actionButton, clearChildren, element, formatDay, formatMoment, link } from './dom.js';
 import { KIND_LABELS, openItemBody } from './openitem-view.js';
+import * as icons from './icons.js';
 import { badge, tipText } from './provenance.js';
+import { openFactSheet, openNoteSheet, openOdometerSheet } from './vehicle-inputs.js';
 import { dueWord, errorBlock, formatEuro, formatKm, stateWord } from './widgets.js';
 
 const DUE_ROWS = 4;
+const INTEGER_FIELDS = ['leistung_kw', 'hubraum_ccm', 'co2_g_km', 'leergewicht_kg', 'zul_gesamtgewicht_kg', 'listenneupreis_eur', 'schluesselanzahl'];
 const PRIMARY_FIELDS = ['marke', 'modell', 'variante', 'fin', 'erstzulassung', 'kraftstoff', 'leistung_kw', 'farbe'];
 
 const FIELD_LABELS = {
@@ -80,20 +83,31 @@ function kpiLink(href, value, label) {
     return inner;
 }
 
-function kmCell(estimate) {
+/** Beschriftung unter dem Kilometerwert; mit Schreibrecht steht dahinter der Link „Stand eintragen“. */
+function kmLabel(text, context) {
+    const label = element('div', text, 'l');
+    if (context.vehicle.permissions.write) {
+        label.appendChild(document.createTextNode(' · '));
+        label.appendChild(actionButton('Stand eintragen', 'linkbtn', () => openOdometerSheet(context.vehicleId, context.reloadVehicle)));
+    }
+
+    return label;
+}
+
+function kmCell(estimate, context) {
     const cell = kpi();
     const value = element('div', undefined, 'v');
     if (estimate === null) {
         value.textContent = '–';
         cell.appendChild(value);
-        cell.appendChild(element('div', 'noch kein Kilometerstand', 'l'));
+        cell.appendChild(kmLabel('noch kein Kilometerstand', context));
 
         return cell;
     }
     const button = actionButton((estimate.estimated ? '≈ ' : '') + formatKm(estimate.km_estimate), 'est', () => tipText(button, 'Kilometerstand heute', estimateExplanation(estimate)));
     value.appendChild(button);
     cell.appendChild(value);
-    cell.appendChild(element('div', 'km heute', 'l'));
+    cell.appendChild(kmLabel('km heute', context));
 
     return cell;
 }
@@ -105,7 +119,7 @@ function kpiBar(context, dueItems) {
     const openCount = context.openItems().length;
     const maintenance = '/garage/fahrzeug.html#' + context.vehicleId + '/wartung';
 
-    bar.appendChild(kmCell(context.vehicle.km_estimate));
+    bar.appendChild(kmCell(context.vehicle.km_estimate, context));
     const overdueCell = kpi(overdue > 0 ? 'bad' : undefined);
     overdueCell.appendChild(kpiLink(maintenance, overdue, 'überfällig'));
     const soonCell = kpi(soon > 0 ? 'warn' : undefined);
@@ -190,6 +204,7 @@ function eventSection(context, result) {
 
 function openItemRow(context, item, list, refresh) {
     const details = element('details', undefined, 'xrow');
+    details.dataset.itemId = String(item.id);
     const summary = element('summary');
     summary.appendChild(element('span', item.text, 't'));
     summary.appendChild(stateWord(item.kind === 'konflikt' ? 'st warn' : 'st ok', KIND_LABELS[item.kind] ?? item.kind));
@@ -231,6 +246,10 @@ function openItemSection(context, refresh) {
 
 function noteSection(context, result) {
     const wrapper = section('Notizen');
+    const canWrite = context.vehicle.permissions.write;
+    if (canWrite) {
+        wrapper.querySelector('.sec-h').appendChild(actionButton('Notiz anlegen', 'btn quiet sm more', () => openNoteSheet(context.vehicleId, null, context.reload)));
+    }
     if (result.error !== null) {
         wrapper.appendChild(errorBlock(result.error.message, context.reload));
 
@@ -253,6 +272,11 @@ function noteSection(context, result) {
         const body = element('div', undefined, 'xbody');
         body.appendChild(element('pre', note.body, 'text'));
         body.appendChild(element('p', note.actor + ' · ' + formatMoment(note.updated_at), 'muted small'));
+        if (canWrite) {
+            const actions = element('div', undefined, 'acts');
+            actions.appendChild(actionButton('Bearbeiten', 'btn sm', () => openNoteSheet(context.vehicleId, note, context.reload)));
+            body.appendChild(actions);
+        }
         details.appendChild(body);
         list.appendChild(details);
     }
@@ -289,13 +313,60 @@ function damageSection(context, result) {
     return wrapper;
 }
 
-function factRow(label, valueText, source, confidence, detail, disputedItemId) {
+/** Springt vom Wort „strittig“ zum zugehörigen Klärfall in der Übersicht; fehlt er dort, öffnet sich die Klärfall-Seite. */
+function revealOpenItem(vehicleId, itemId) {
+    const target = document.querySelector('details[data-item-id="' + itemId + '"]');
+    if (target === null) {
+        location.href = '/garage/klaerfaelle.html#fz=' + vehicleId;
+
+        return;
+    }
+    target.open = true;
+    target.scrollIntoView({ block: 'center' });
+    target.querySelector('summary').focus();
+}
+
+function pencilButton(label, onClick) {
+    const button = actionButton('', 'iconsm', onClick);
+    button.setAttribute('aria-label', label + ' korrigieren');
+    button.insertAdjacentHTML('beforeend', icons.edit);
+
+    return button;
+}
+
+/** `edit`: Funktion, die das Blatt zum Korrigieren öffnet, oder `null` für Zeilen ohne Korrektur (Spezifikation, Ausstattung, Zulassung). */
+function factActions(context, edit) {
+    return {
+        canWrite: context.vehicle.permissions.write,
+        edit,
+        openDispute: (itemId) => revealOpenItem(context.vehicleId, itemId),
+    };
+}
+
+function inputKindOf(field) {
+    if (field === 'erstzulassung') {
+        return 'date';
+    }
+    if (INTEGER_FIELDS.includes(field)) {
+        return 'int';
+    }
+
+    return 'text';
+}
+
+function editAction(context, field, entry) {
+    const inputKind = inputKindOf(field);
+
+    return () => openFactSheet(context.vehicleId, { field, label: FIELD_LABELS[field], current: entry.value, inputKind }, context.reloadVehicle);
+}
+
+function factRow(label, valueText, source, confidence, detail, disputedItemId, actions) {
     const fact = element('div', undefined, disputedItemId === undefined ? 'fact' : 'fact disputed');
     fact.appendChild(element('span', label, 'k'));
     const value = element('span', undefined, 'v');
     value.appendChild(element('span', valueText));
     if (disputedItemId !== undefined) {
-        value.appendChild(link('strittig', '/garage/klaerfaelle.html#fz=' + detail.vehicleId, 'small'));
+        value.appendChild(actionButton('strittig', 'linkbtn small', () => actions.openDispute(disputedItemId)));
     }
     fact.appendChild(value);
     const badgeCell = element('span', undefined, 'b');
@@ -303,6 +374,14 @@ function factRow(label, valueText, source, confidence, detail, disputedItemId) {
         badgeCell.appendChild(badge(source, confidence, detail));
     }
     fact.appendChild(badgeCell);
+    if (actions.canWrite) {
+        const hasOpenDispute = disputedItemId !== undefined && disputedItemId > 0;
+        const editCell = element('span');
+        if (actions.edit !== null && !hasOpenDispute) {
+            editCell.appendChild(pencilButton(label, actions.edit));
+        }
+        fact.appendChild(editCell);
+    }
 
     return fact;
 }
@@ -311,7 +390,9 @@ function entryDetail(entry, vehicleId) {
     return { actor: entry.actor, recordedAt: entry.recorded_at, sourceUrl: entry.source_url, vehicleId };
 }
 
-function primaryFactRows(vehicle, vehicleId) {
+function primaryFactRows(context) {
+    const { vehicle } = context;
+    const vehicleId = context.vehicleId;
     const disputedByField = new Map(vehicle.disputed.map((entry) => [entry.field, entry]));
     const rows = [];
     for (const field of PRIMARY_FIELDS) {
@@ -321,35 +402,41 @@ function primaryFactRows(vehicle, vehicleId) {
             continue;
         }
         if (entry === undefined) {
-            rows.push(factRow(FIELD_LABELS[field], formatFact(field, disputed.value), disputed.source, disputed.confidence, { vehicleId }, disputed.open_item_id));
+            rows.push(factRow(FIELD_LABELS[field], formatFact(field, disputed.value), disputed.source, disputed.confidence, { vehicleId }, disputed.open_item_id, factActions(context, null)));
             continue;
         }
-        rows.push(factRow(FIELD_LABELS[field], formatFact(field, entry.value), entry.source, entry.confidence, entryDetail(entry, vehicleId), disputed === undefined ? undefined : disputed.open_item_id));
+        const disputedId = disputed === undefined ? undefined : disputed.open_item_id;
+        rows.push(factRow(FIELD_LABELS[field], formatFact(field, entry.value), entry.source, entry.confidence, entryDetail(entry, vehicleId), disputedId, factActions(context, editAction(context, field, entry))));
     }
 
     return rows;
 }
 
-function restFactRows(vehicle, vehicleId) {
+function restFactRows(context) {
+    const { vehicle } = context;
+    const vehicleId = context.vehicleId;
+    const readOnly = factActions(context, null);
     const rows = [];
     for (const [field, entry] of Object.entries(vehicle.facts)) {
         if (!PRIMARY_FIELDS.includes(field)) {
-            rows.push(factRow(FIELD_LABELS[field] ?? field, formatFact(field, entry.value), entry.source, entry.confidence, entryDetail(entry, vehicleId)));
+            const isCorrectable = field in FIELD_LABELS;
+            const actions = isCorrectable ? factActions(context, editAction(context, field, entry)) : readOnly;
+            rows.push(factRow(FIELD_LABELS[field] ?? field, formatFact(field, entry.value), entry.source, entry.confidence, entryDetail(entry, vehicleId), undefined, actions));
         }
     }
     for (const [area, keys] of Object.entries(vehicle.specs)) {
         for (const [key, entry] of Object.entries(keys)) {
-            rows.push(factRow(area + ' · ' + key, formatFact(key, entry.value), entry.source, entry.confidence, entryDetail(entry, vehicleId)));
+            rows.push(factRow(area + ' · ' + key, formatFact(key, entry.value), entry.source, entry.confidence, entryDetail(entry, vehicleId), undefined, readOnly));
         }
     }
     for (const equipment of vehicle.equipment) {
         const code = equipment.code === null ? '' : ' (' + equipment.code + ')';
-        rows.push(factRow('Ausstattung', equipment.name + code, equipment.source, equipment.confidence, { sourceUrl: equipment.source_url, vehicleId }));
+        rows.push(factRow('Ausstattung', equipment.name + code, equipment.source, equipment.confidence, { sourceUrl: equipment.source_url, vehicleId }, undefined, readOnly));
     }
     for (const registration of vehicle.registrations) {
         const period = formatDay(registration.valid_from) + ' – ' + (registration.valid_to === null ? 'heute' : formatDay(registration.valid_to));
         const holder = registration.holder === null ? '' : ' · ' + registration.holder;
-        rows.push(factRow('Zulassung', registration.plate + ' · ' + period + holder, registration.source, registration.confidence, { sourceUrl: registration.source_url, vehicleId }));
+        rows.push(factRow('Zulassung', registration.plate + ' · ' + period + holder, registration.source, registration.confidence, { sourceUrl: registration.source_url, vehicleId }, undefined, readOnly));
     }
 
     return rows;
@@ -357,8 +444,8 @@ function restFactRows(vehicle, vehicleId) {
 
 function factSection(context) {
     const wrapper = section('Angaben');
-    const primary = primaryFactRows(context.vehicle, context.vehicleId);
-    const rest = restFactRows(context.vehicle, context.vehicleId);
+    const primary = primaryFactRows(context);
+    const rest = restFactRows(context);
     if (primary.length === 0 && rest.length === 0) {
         wrapper.appendChild(element('p', 'Noch keine Angaben. Ein Agent liest sie aus dem Fahrzeugschein, wenn du ihm ein Foto gibst.', 'muted'));
 

@@ -139,6 +139,7 @@ async function showPanel(tab) {
         },
         onOpenItemsChanged: updateOverviewCount,
         reload: () => showPanel(tab),
+        reloadVehicle,
     };
     const renderers = {
         uebersicht: renderOverview,
