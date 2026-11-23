@@ -115,6 +115,7 @@ final class MeasurementService
                 $series[$key] = ['quantity' => (string) $row['quantity'], 'position' => (string) $row['position'], 'label' => (string) $row['label'], 'unit' => (string) $row['unit'], 'points' => []];
             }
             $series[$key]['points'][] = [
+                'id' => (int) $row['id'],
                 'date' => (string) $row['measured_on'],
                 'value' => (float) $row['value'],
                 'odometer_km' => $row['odometer_km'] === null ? null : (int) $row['odometer_km'],
