@@ -98,57 +98,184 @@ final class DossierService
         $this->openItems = new OpenItemService($pdo);
     }
 
-    /** @throws DomainError `not_found` für unbekannte und fremde Fahrzeuge */
+    /**
+     * Die Akte als Markdown. Sie entsteht aus denselben Abschnitten wie die Druckansicht (`sections`).
+     *
+     * @throws DomainError `not_found` für unbekannte und fremde Fahrzeuge
+     */
     public function render(int $vehicleId, Actor $actor): string
+    {
+        $document = $this->document($vehicleId, $actor);
+        $header = $document['header'];
+        $parts = [sprintf(
+            "# %s\n\nKennzeichen: %s · Status: %s · Stand: %s",
+            $header['label'],
+            $header['plate'] ?? self::NONE,
+            $header['status'],
+            DossierFormat::date($header['today'])
+        )];
+        foreach ($document['sections'] as $section) {
+            $parts[] = self::markdownSection($section);
+        }
+
+        return implode("\n\n", $parts) . "\n";
+    }
+
+    /**
+     * Die Abschnitte der Akte in fester Reihenfolge. Jeder Abschnitt ist eine Liste von Blöcken:
+     * `table` (headers, rows), `heading` (text), `text` (text, origin?, italic?), `list` (intro?, items[text, origin?, after?]),
+     * `markdown` (body, Notiztext). Texte enthalten höchstens `**fett**`.
+     *
+     * @return list<array{title: string, blocks: list<array<string, mixed>>}>
+     * @throws DomainError `not_found` für unbekannte und fremde Fahrzeuge
+     */
+    public function sections(int $vehicleId, Actor $actor): array
+    {
+        return $this->document($vehicleId, $actor)['sections'];
+    }
+
+    /**
+     * Kopfdaten und Abschnitte der Akte. `header`: label, status, today, plate (null ohne gültige Zulassung),
+     * first_registration (null ohne Angabe), km (null ohne Stand), km_estimated (Prognose statt Messwert).
+     *
+     * @return array{header: array<string, mixed>, sections: list<array{title: string, blocks: list<array<string, mixed>>}>}
+     * @throws DomainError `not_found` für unbekannte und fremde Fahrzeuge
+     */
+    public function document(int $vehicleId, Actor $actor): array
     {
         $vehicle = $this->vehicles->get($vehicleId, $actor);
         $due = $this->due->dueItems($vehicleId, self::DUE_HORIZON_MONTHS, $actor);
         $today = $due['today'];
 
-        $blocks = [
-            $this->header($vehicle, $today),
-            self::section('Stammdaten', $this->masterData($vehicle)),
-            self::section('Zulassung', $this->registrations($vehicle)),
-            self::section('Ausstattung', self::equipment($vehicle['equipment'])),
-            self::section('Spezifikationen', self::specs($vehicle['specs'])),
-            self::section('Kilometerstand', $this->odometerLines($vehicleId, $vehicle['km_estimate'], $actor)),
-            self::section('Fälligkeiten', self::dueTable($due['items'])),
-            self::section('Wartungsplan', self::maintenancePlan($due['items'])),
-            self::section('Scheckheft', $this->serviceRecord($vehicleId, $actor)),
-            self::section('Messwerte', $this->measurementLines($vehicleId, $actor)),
-            self::section('Reifen', $this->tireLines($vehicleId, $actor)),
-            self::section('Teile', $this->partLines($vehicleId, $actor)),
-            self::section('Schäden', $this->damageLines($vehicleId, $actor)),
-            self::section('Rückrufe', $this->recallLines($vehicleId, $actor)),
-            self::section('Notizen', $this->noteLines($vehicleId, $actor)),
-            self::section('Offene Klärfälle', $this->openItemLines($vehicleId, $actor)),
-            self::section('Belege', $this->documentLines($vehicleId, $actor)),
+        return [
+            'header' => $this->header($vehicle, $today),
+            'sections' => [
+                self::section('Stammdaten', $this->masterData($vehicle)),
+                self::section('Zulassung', $this->registrations($vehicle)),
+                self::section('Ausstattung', self::equipment($vehicle['equipment'])),
+                self::section('Spezifikationen', self::specs($vehicle['specs'])),
+                self::section('Kilometerstand', $this->odometerBlocks($vehicleId, $vehicle['km_estimate'], $actor)),
+                self::section('Fälligkeiten', self::dueTable($due['items'])),
+                self::section('Wartungsplan', self::maintenancePlan($due['items'])),
+                self::section('Scheckheft', $this->serviceRecord($vehicleId, $actor)),
+                self::section('Messwerte', $this->measurementBlocks($vehicleId, $actor)),
+                self::section('Reifen', $this->tireBlocks($vehicleId, $actor)),
+                self::section('Teile', $this->partBlocks($vehicleId, $actor)),
+                self::section('Schäden', $this->damageBlocks($vehicleId, $actor)),
+                self::section('Rückrufe', $this->recallBlocks($vehicleId, $actor)),
+                self::section('Notizen', $this->noteBlocks($vehicleId, $actor)),
+                self::section('Offene Klärfälle', $this->openItemBlocks($vehicleId, $actor)),
+                self::section('Belege', $this->documentBlocks($vehicleId, $actor)),
+            ],
         ];
-
-        return implode("\n\n", $blocks) . "\n";
     }
 
-    /** @param list<string> $lines */
-    private static function section(string $title, array $lines): string
+    /**
+     * @param list<array<string, mixed>> $blocks
+     * @return array{title: string, blocks: list<array<string, mixed>>}
+     */
+    private static function section(string $title, array $blocks): array
     {
-        $body = $lines === [] ? DossierFormat::EMPTY_SECTION : implode("\n", $lines);
-
-        return "## {$title}\n\n{$body}";
+        return ['title' => $title, 'blocks' => $blocks];
     }
 
-    /** @param array<string, mixed> $vehicle Ergebnis von `VehicleService::get` */
-    private function header(array $vehicle, string $today): string
+    /** @param array{title: string, blocks: list<array<string, mixed>>} $section */
+    private static function markdownSection(array $section): string
+    {
+        $lines = [];
+        foreach ($section['blocks'] as $index => $block) {
+            if ($index > 0) {
+                $lines[] = '';
+            }
+            array_push($lines, ...self::markdownLines($block));
+        }
+        $body = $section['blocks'] === [] ? DossierFormat::EMPTY_SECTION : implode("\n", $lines);
+
+        return "## {$section['title']}\n\n{$body}";
+    }
+
+    /**
+     * @param array<string, mixed> $block
+     * @return list<string>
+     */
+    private static function markdownLines(array $block): array
+    {
+        switch ($block['kind']) {
+            case 'table':
+                return $block['rows'] === [] ? [] : DossierFormat::table($block['headers'], $block['rows']);
+            case 'heading':
+                return ['### ' . $block['text']];
+            case 'text':
+                $text = $block['text'] . ($block['origin'] === null ? '' : ' ' . $block['origin']);
+
+                return [$block['italic'] ? '_' . $text . '_' : $text];
+            case 'markdown':
+                return [DossierFormat::shiftHeadings($block['body'], self::NOTE_HEADING_SHIFT)];
+            default:
+                $lines = $block['intro'] === null ? [] : [$block['intro']];
+                foreach ($block['items'] as $item) {
+                    $lines[] = '- ' . $item['text'] . ($item['origin'] === null ? '' : ' ' . $item['origin']) . ($item['after'] === null ? '' : ' ' . $item['after']);
+                }
+
+                return $lines;
+        }
+    }
+
+    /**
+     * @param list<string> $headers
+     * @param list<list<string|null>> $rows
+     * @return array<string, mixed>
+     */
+    private static function table(array $headers, array $rows): array
+    {
+        return ['kind' => 'table', 'headers' => $headers, 'rows' => $rows];
+    }
+
+    /** @return array<string, mixed> */
+    private static function heading(string $text): array
+    {
+        return ['kind' => 'heading', 'text' => $text];
+    }
+
+    /** @return array<string, mixed> */
+    private static function text(string $text, ?string $origin = null, bool $isItalic = false): array
+    {
+        return ['kind' => 'text', 'text' => $text, 'origin' => $origin, 'italic' => $isItalic];
+    }
+
+    /** @return array<string, string|null> */
+    private static function item(string $text, ?string $origin = null, ?string $after = null): array
+    {
+        return ['text' => $text, 'origin' => $origin, 'after' => $after];
+    }
+
+    /**
+     * @param list<array<string, string|null>> $items
+     * @return array<string, mixed>
+     */
+    private static function items(array $items, ?string $intro = null): array
+    {
+        return ['kind' => 'list', 'intro' => $intro, 'items' => $items];
+    }
+
+    /**
+     * @param array<string, mixed> $vehicle Ergebnis von `VehicleService::get`
+     * @return array<string, mixed>
+     */
+    private function header(array $vehicle, string $today): array
     {
         $current = self::currentRegistration($vehicle['registrations'], $today);
-        $plate = $current === null ? self::NONE : (string) $current['plate'];
+        $forecast = $vehicle['km_estimate'];
 
-        return sprintf(
-            "# %s\n\nKennzeichen: %s · Status: %s · Stand: %s",
-            $vehicle['vehicle']['label'],
-            $plate,
-            $vehicle['vehicle']['status'],
-            DossierFormat::date($today)
-        );
+        return [
+            'label' => (string) $vehicle['vehicle']['label'],
+            'status' => (string) $vehicle['vehicle']['status'],
+            'today' => $today,
+            'plate' => $current === null ? null : (string) $current['plate'],
+            'first_registration' => isset($vehicle['facts']['erstzulassung']) ? (string) $vehicle['facts']['erstzulassung']['value'] : null,
+            'km' => $forecast === null ? null : (int) $forecast['km_estimate'],
+            'km_estimated' => $forecast !== null && $forecast['estimated'] === true,
+        ];
     }
 
     /**
@@ -171,7 +298,7 @@ final class DossierService
 
     /**
      * @param array<string, mixed> $vehicle
-     * @return list<string>
+     * @return list<array<string, mixed>>
      */
     private function masterData(array $vehicle): array
     {
@@ -181,23 +308,21 @@ final class DossierService
             $rows[] = [self::LABELS[$field] ?? $field, self::factValue($field, $fact['value']), DossierFormat::provenanceOf($fact)];
         }
 
-        $lines = $rows === [] ? [] : DossierFormat::table(['Feld', 'Wert', 'Herkunft'], $rows);
+        $blocks = $rows === [] && $vehicle['disputed'] === [] ? [] : [self::table(['Feld', 'Wert', 'Herkunft'], $rows)];
         if ($vehicle['disputed'] !== []) {
-            $lines[] = '';
-            $lines[] = 'Strittig:';
+            $items = [];
             foreach ($vehicle['disputed'] as $disputed) {
                 $field = (string) $disputed['field'];
-                $lines[] = sprintf(
-                    '- %s: %s %s — wartet auf Entscheidung, Klärfall #%d',
-                    str_starts_with($field, 'spec.') ? $field : (self::LABELS[$field] ?? $field),
-                    self::factValue($field, $disputed['value']),
+                $items[] = self::item(
+                    sprintf('%s: %s', str_starts_with($field, 'spec.') ? $field : (self::LABELS[$field] ?? $field), self::factValue($field, $disputed['value'])),
                     DossierFormat::provenanceOf($disputed),
-                    $disputed['open_item_id']
+                    sprintf('— wartet auf Entscheidung, Klärfall #%d', $disputed['open_item_id'])
                 );
             }
+            $blocks[] = self::items($items, 'Strittig:');
         }
 
-        return $lines;
+        return $blocks;
     }
 
     /**
@@ -229,7 +354,7 @@ final class DossierService
 
     /**
      * @param array<string, mixed> $vehicle
-     * @return list<string>
+     * @return list<array<string, mixed>>
      */
     private function registrations(array $vehicle): array
     {
@@ -247,83 +372,77 @@ final class DossierService
             ];
         }
 
-        return [...DossierFormat::table(['Von', 'Bis', 'Kennzeichen', 'Halter', 'Herkunft'], $rows), '', 'Halterzahl: ' . $vehicle['holder_count']];
+        return [self::table(['Von', 'Bis', 'Kennzeichen', 'Halter', 'Herkunft'], $rows), self::text('Halterzahl: ' . $vehicle['holder_count'])];
     }
 
     /**
      * @param list<array<string, mixed>> $equipment
-     * @return list<string>
+     * @return list<array<string, mixed>>
      */
     private static function equipment(array $equipment): array
     {
-        $lines = [];
+        $blocks = [];
         foreach (self::EQUIPMENT_GROUPS as $category => $title) {
-            $items = array_values(array_filter($equipment, static fn (array $item): bool => $item['category'] === $category));
-            if ($items === []) {
+            $group = array_values(array_filter($equipment, static fn (array $item): bool => $item['category'] === $category));
+            if ($group === []) {
                 continue;
             }
-            $lines[] = $title . ':';
-            foreach ($items as $item) {
+            $items = [];
+            foreach ($group as $item) {
                 $price = $item['list_price_eur'] === null ? '' : ' — Neupreis ' . DossierFormat::euro($item['list_price_eur']);
-                $lines[] = sprintf(
-                    '- %s%s%s %s',
-                    $item['code'] === null ? '' : $item['code'] . ' · ',
-                    $item['name'],
-                    $price,
+                $items[] = self::item(
+                    sprintf('%s%s%s', $item['code'] === null ? '' : $item['code'] . ' · ', $item['name'], $price),
                     DossierFormat::provenanceOf($item)
                 );
             }
-            $lines[] = '';
+            $blocks[] = self::items($items, $title . ':');
         }
 
-        return $lines === [] ? [] : array_slice($lines, 0, -1);
+        return $blocks;
     }
 
     /**
      * @param array<string, array<string, array<string, mixed>>> $specs
-     * @return list<string>
+     * @return list<array<string, mixed>>
      */
     private static function specs(array $specs): array
     {
         ksort($specs);
-        $lines = [];
+        $blocks = [];
         foreach ($specs as $area => $entries) {
             ksort($entries);
-            $lines[] = "### {$area}";
-            $lines[] = '';
+            $items = [];
             foreach ($entries as $key => $entry) {
-                $lines[] = sprintf('- %s: %s %s', $key, $entry['value'], DossierFormat::provenanceOf($entry));
+                $items[] = self::item(sprintf('%s: %s', $key, $entry['value']), DossierFormat::provenanceOf($entry));
             }
-            $lines[] = '';
+            $blocks[] = self::heading((string) $area);
+            $blocks[] = self::items($items);
         }
 
-        return $lines === [] ? [] : array_slice($lines, 0, -1);
+        return $blocks;
     }
 
     /**
      * @param array<string, mixed>|null $forecast
-     * @return list<string>
+     * @return list<array<string, mixed>>
      */
-    private function odometerLines(int $vehicleId, ?array $forecast, Actor $actor): array
+    private function odometerBlocks(int $vehicleId, ?array $forecast, Actor $actor): array
     {
         $latest = $this->odometer->latestValid($vehicleId, $actor);
         if ($latest === null || $forecast === null) {
             return [];
         }
 
-        $lines = [sprintf(
-            'Letzter Stand: %s km am %s %s',
-            DossierFormat::number($latest['km']),
-            DossierFormat::date($latest['read_on']),
+        $lines = [self::text(
+            sprintf('Letzter Stand: %s km am %s', DossierFormat::number($latest['km']), DossierFormat::date($latest['read_on'])),
             DossierFormat::provenanceOf($latest)
         )];
-        $lines[] = '';
         if ($forecast['estimated'] === false || $forecast['per_day'] === null) {
-            $lines[] = 'Prognose: keine Hochrechnung möglich (zu wenige Stände); heute gilt der letzte Stand.';
+            $lines[] = self::text('Prognose: keine Hochrechnung möglich (zu wenige Stände); heute gilt der letzte Stand.');
 
             return $lines;
         }
-        $lines[] = sprintf(
+        $lines[] = self::text(sprintf(
             'Prognose: heute %s %s km (%s %s km/Tag, aus %s bis %s)',
             DossierFormat::APPROXIMATE,
             DossierFormat::number($forecast['km_estimate']),
@@ -331,14 +450,14 @@ final class DossierService
             DossierFormat::decimal((float) $forecast['per_day']),
             DossierFormat::date($forecast['basis']['from']['date'] ?? null),
             DossierFormat::date($forecast['basis']['to']['date'])
-        );
+        ));
 
         return $lines;
     }
 
     /**
      * @param list<array<string, mixed>> $items
-     * @return list<string>
+     * @return list<array<string, mixed>>
      */
     private static function dueTable(array $items): array
     {
@@ -354,7 +473,7 @@ final class DossierService
             $rows[] = [(string) $item['title'], self::dueWhen($item), $status, (string) $item['explanation']];
         }
 
-        return DossierFormat::table(['Aufgabe', 'Fällig', 'Status', 'Rechenweg'], $rows);
+        return [self::table(['Aufgabe', 'Fällig', 'Status', 'Rechenweg'], $rows)];
     }
 
     /**
@@ -378,7 +497,7 @@ final class DossierService
 
     /**
      * @param list<array<string, mixed>> $items Aufgaben aus der Fälligkeitsrechnung
-     * @return list<string>
+     * @return list<array<string, mixed>>
      */
     private static function maintenancePlan(array $items): array
     {
@@ -390,7 +509,7 @@ final class DossierService
                 : [(string) $item['title'], self::ruleText($rule), (string) $rule['mode'], DossierFormat::provenanceOf($rule)];
         }
 
-        return $rows === [] ? [] : DossierFormat::table(['Aufgabe', 'Regel', 'Modus', 'Herkunft'], $rows);
+        return $rows === [] ? [] : [self::table(['Aufgabe', 'Regel', 'Modus', 'Herkunft'], $rows)];
     }
 
     /** @param array<string, mixed> $rule */
@@ -417,23 +536,23 @@ final class DossierService
         return $parts === [] ? self::NONE : implode(' / ', $parts);
     }
 
-    /** @return list<string> */
+    /** @return list<array<string, mixed>> */
     private function serviceRecord(int $vehicleId, Actor $actor): array
     {
-        $lines = [];
+        $blocks = [];
         foreach ($this->events->list($vehicleId, null, null, null, $actor) as $summary) {
             $event = $this->events->get($summary['id'], $actor);
-            $lines = [...$lines, ...self::eventBlock($event), ''];
+            $blocks = [...$blocks, ...self::eventBlocks($event)];
         }
 
-        return $lines === [] ? [] : array_slice($lines, 0, -1);
+        return $blocks;
     }
 
     /**
      * @param array<string, mixed> $event
-     * @return list<string>
+     * @return list<array<string, mixed>>
      */
-    private static function eventBlock(array $event): array
+    private static function eventBlocks(array $event): array
     {
         $details = [];
         if ($event['workshop'] !== null) {
@@ -452,9 +571,8 @@ final class DossierService
         $details[] = DossierFormat::provenanceOf($event);
 
         $lines = [
-            sprintf('### %s · %s · %s', DossierFormat::date($event['performed_on']), DossierFormat::humanize((string) $event['kind']), $event['title']),
-            '',
-            implode(' · ', $details),
+            self::heading(sprintf('%s · %s · %s', DossierFormat::date($event['performed_on']), DossierFormat::humanize((string) $event['kind']), $event['title'])),
+            self::text(implode(' · ', $details)),
         ];
         if ($event['items'] === []) {
             return $lines;
@@ -465,40 +583,34 @@ final class DossierService
             $rows[] = [$item['type'], $item['description'], $item['part_number'], $quantity, DossierFormat::euro($item['net_eur'])];
         }
 
-        return [...$lines, '', ...DossierFormat::table(['Typ', 'Beschreibung', 'Teilenummer', 'Menge', 'Netto'], $rows)];
+        return [...$lines, self::table(['Typ', 'Beschreibung', 'Teilenummer', 'Menge', 'Netto'], $rows)];
     }
 
-    /** @return list<string> */
-    private function measurementLines(int $vehicleId, Actor $actor): array
+    /** @return list<array<string, mixed>> */
+    private function measurementBlocks(int $vehicleId, Actor $actor): array
     {
-        $lines = [];
+        $blocks = [];
         foreach ($this->measurements->series($vehicleId, null, $actor)['series'] as $series) {
             $points = array_reverse($series['points']);
             $latest = $points[0];
             $unit = (string) $series['unit'];
             $kilometers = $latest['odometer_km'] === null ? '' : ', ' . DossierFormat::number($latest['odometer_km']) . ' km';
 
-            $lines[] = '### ' . self::seriesTitle($series);
-            $lines[] = '';
-            $lines[] = sprintf(
-                'Jüngster Wert: %s %s am %s%s %s',
-                DossierFormat::decimal($latest['value']),
-                $unit,
-                DossierFormat::date($latest['date']),
-                $kilometers,
+            $blocks[] = self::heading(self::seriesTitle($series));
+            $blocks[] = self::text(
+                sprintf('Jüngster Wert: %s %s am %s%s', DossierFormat::decimal($latest['value']), $unit, DossierFormat::date($latest['date']), $kilometers),
                 DossierFormat::provenanceOf($latest)
             );
             if (count($points) > 1) {
-                $lines[] = '';
-                $lines[] = 'Verlauf:';
+                $items = [];
                 foreach ($points as $point) {
-                    $lines[] = sprintf('- %s: %s %s', DossierFormat::date($point['date']), DossierFormat::decimal($point['value']), $unit);
+                    $items[] = self::item(sprintf('%s: %s %s', DossierFormat::date($point['date']), DossierFormat::decimal($point['value']), $unit));
                 }
+                $blocks[] = self::items($items, 'Verlauf:');
             }
-            $lines[] = '';
         }
 
-        return $lines === [] ? [] : array_slice($lines, 0, -1);
+        return $blocks;
     }
 
     /** @param array<string, mixed> $series */
@@ -510,11 +622,11 @@ final class DossierService
         return $position === null ? $name : "{$name}, {$position}";
     }
 
-    /** @return list<string> */
-    private function tireLines(int $vehicleId, Actor $actor): array
+    /** @return list<array<string, mixed>> */
+    private function tireBlocks(int $vehicleId, Actor $actor): array
     {
         $tires = $this->tires->list($vehicleId, $actor);
-        $lines = [];
+        $items = [];
         foreach ($tires['sets'] as $set) {
             $isMounted = $set['id'] === $tires['mounted_set_id'];
             $details = array_values(array_filter([
@@ -525,10 +637,13 @@ final class DossierService
                 $set['storage_location'] === null ? null : 'Lager: ' . $set['storage_location'],
                 self::currentMount($set['mounts']),
             ], static fn (?string $detail): bool => $detail !== null && $detail !== ''));
-            $lines[] = sprintf('- **%s**%s — %s %s', $set['label'], $isMounted ? ' (**montiert**)' : '', implode(', ', $details), DossierFormat::provenanceOf($set));
+            $items[] = self::item(
+                sprintf('**%s**%s — %s', $set['label'], $isMounted ? ' (**montiert**)' : '', implode(', ', $details)),
+                DossierFormat::provenanceOf($set)
+            );
         }
 
-        return $lines;
+        return $items === [] ? [] : [self::items($items)];
     }
 
     /** @param list<array<string, mixed>> $mounts */
@@ -545,24 +660,23 @@ final class DossierService
         return null;
     }
 
-    /** @return list<string> */
-    private function partLines(int $vehicleId, Actor $actor): array
+    /** @return list<array<string, mixed>> */
+    private function partBlocks(int $vehicleId, Actor $actor): array
     {
-        $lines = [];
+        $blocks = [];
         foreach ($this->parts->grouped($vehicleId, $actor)['components'] as $component) {
-            $lines[] = '### ' . $component['component'];
-            $lines[] = '';
-            foreach ($component['parts'] as $part) {
-                $lines[] = self::partLine($part);
-            }
-            $lines[] = '';
+            $blocks[] = self::heading((string) $component['component']);
+            $blocks[] = self::items(array_map(self::partItem(...), $component['parts']));
         }
 
-        return $lines === [] ? [] : array_slice($lines, 0, -1);
+        return $blocks;
     }
 
-    /** @param array<string, mixed> $part */
-    private static function partLine(array $part): string
+    /**
+     * @param array<string, mixed> $part
+     * @return array<string, string|null>
+     */
+    private static function partItem(array $part): array
     {
         $role = $part['role'] === 'verbaut' ? 'verbaut' : 'Alternative';
         $identity = array_values(array_filter([
@@ -578,13 +692,13 @@ final class DossierService
             $details[] = $part['note'];
         }
 
-        return sprintf('- %s: %s %s', $role, implode(', ', $details), DossierFormat::provenanceOf($part));
+        return self::item(sprintf('%s: %s', $role, implode(', ', $details)), DossierFormat::provenanceOf($part));
     }
 
-    /** @return list<string> */
-    private function damageLines(int $vehicleId, Actor $actor): array
+    /** @return list<array<string, mixed>> */
+    private function damageBlocks(int $vehicleId, Actor $actor): array
     {
-        $lines = [];
+        $items = [];
         foreach ($this->damages->listDamages($vehicleId, $actor) as $damage) {
             $details = [];
             if ($damage['odometer_km'] !== null) {
@@ -599,23 +713,25 @@ final class DossierService
             if ($damage['diminished_value_eur'] !== null) {
                 $details[] = 'Wertminderung ' . DossierFormat::euro($damage['diminished_value_eur']);
             }
-            $lines[] = sprintf(
-                '- %s · %s · %s%s %s',
-                DossierFormat::date($damage['occurred_on']),
-                DossierFormat::humanize((string) $damage['kind']),
-                $damage['description'],
-                $details === [] ? '' : ' — ' . implode(', ', $details),
+            $items[] = self::item(
+                sprintf(
+                    '%s · %s · %s%s',
+                    DossierFormat::date($damage['occurred_on']),
+                    DossierFormat::humanize((string) $damage['kind']),
+                    $damage['description'],
+                    $details === [] ? '' : ' — ' . implode(', ', $details)
+                ),
                 DossierFormat::provenanceOf($damage)
             );
         }
 
-        return $lines;
+        return $items === [] ? [] : [self::items($items)];
     }
 
-    /** @return list<string> */
-    private function recallLines(int $vehicleId, Actor $actor): array
+    /** @return list<array<string, mixed>> */
+    private function recallBlocks(int $vehicleId, Actor $actor): array
     {
-        $lines = [];
+        $items = [];
         foreach ($this->damages->listRecalls($vehicleId, $actor) as $recall) {
             $references = array_values(array_filter([
                 $recall['manufacturer_code'] === null ? null : 'Hersteller-Code ' . $recall['manufacturer_code'],
@@ -623,41 +739,34 @@ final class DossierService
             ], static fn (?string $reference): bool => $reference !== null));
             $status = self::RECALL_STATUS_WORDS[$recall['status']] ?? (string) $recall['status'];
             $doneOn = $recall['done_on'] === null ? '' : ' am ' . DossierFormat::date($recall['done_on']);
-            $lines[] = sprintf(
-                '- %s%s — %s%s %s',
-                $recall['title'],
-                $references === [] ? '' : ' (' . implode(', ', $references) . ')',
-                $status,
-                $doneOn,
+            $items[] = self::item(
+                sprintf('%s%s — %s%s', $recall['title'], $references === [] ? '' : ' (' . implode(', ', $references) . ')', $status, $doneOn),
                 DossierFormat::provenanceOf($recall)
             );
         }
 
-        return $lines;
+        return $items === [] ? [] : [self::items($items)];
     }
 
-    /** @return list<string> */
-    private function noteLines(int $vehicleId, Actor $actor): array
+    /** @return list<array<string, mixed>> */
+    private function noteBlocks(int $vehicleId, Actor $actor): array
     {
-        $lines = [];
+        $blocks = [];
         foreach ($this->notes->listCurrent($vehicleId, $actor) as $note) {
-            $lines[] = '### ' . $note['topic'];
-            $lines[] = '';
-            $lines[] = DossierFormat::shiftHeadings($note['body'], self::NOTE_HEADING_SHIFT);
-            $lines[] = '';
-            $lines[] = sprintf('_Revision %d, %s, %s_', $note['revision'], $note['actor'], DossierFormat::date($note['updated_at']));
-            $lines[] = '';
+            $blocks[] = self::heading((string) $note['topic']);
+            $blocks[] = ['kind' => 'markdown', 'body' => (string) $note['body']];
+            $blocks[] = self::text(sprintf('Revision %d, %s, %s', $note['revision'], $note['actor'], DossierFormat::date($note['updated_at'])), null, true);
         }
 
-        return $lines === [] ? [] : array_slice($lines, 0, -1);
+        return $blocks;
     }
 
     /**
      * Belege des Fahrzeugs als Tabelle, ohne Links: die Akte bleibt, Links laufen ab.
      *
-     * @return list<string>
+     * @return list<array<string, mixed>>
      */
-    private function documentLines(int $vehicleId, Actor $actor): array
+    private function documentBlocks(int $vehicleId, Actor $actor): array
     {
         $documents = $this->documents->list($actor, $vehicleId, null, null);
         if ($documents === []) {
@@ -679,17 +788,17 @@ final class DossierService
             ];
         }
 
-        return DossierFormat::table(['Datum', 'Typ', 'Titel', 'hängt an'], $rows);
+        return [self::table(['Datum', 'Typ', 'Titel', 'hängt an'], $rows)];
     }
 
-    /** @return list<string> */
-    private function openItemLines(int $vehicleId, Actor $actor): array
+    /** @return list<array<string, mixed>> */
+    private function openItemBlocks(int $vehicleId, Actor $actor): array
     {
-        $lines = [];
+        $items = [];
         foreach ($this->openItems->list($vehicleId, OpenItemRepository::STATUS_OPEN, $actor) as $item) {
-            $lines[] = sprintf('- #%d (%s): %s', $item['id'], $item['kind'], preg_replace('/\s*[\r\n]+\s*/', ' ', (string) $item['text']));
+            $items[] = self::item(sprintf('#%d (%s): %s', $item['id'], $item['kind'], preg_replace('/\s*[\r\n]+\s*/', ' ', (string) $item['text'])));
         }
 
-        return $lines;
+        return $items === [] ? [] : [self::items($items)];
     }
 }
