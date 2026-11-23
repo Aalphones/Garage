@@ -62,6 +62,14 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
+/** Popover mit frei gebautem Inhalt, etwa der Wert eines Diagrammpunkts samt Knopf; `fill(tip)` baut den Inhalt. */
+export function tipContent(anchor, title, fill) {
+    openTip(anchor, title, (tip) => {
+        tip.appendChild(element('b', title));
+        fill(tip);
+    });
+}
+
 /** Rechenweg oder Erklärung als Text, etwa unter „≈ km“ oder einem Zustand. */
 export function tipText(anchor, title, text) {
     openTip(anchor, title, (tip) => {
@@ -95,7 +103,7 @@ function sourceLink(address) {
     return anchor;
 }
 
-function fillProvenance(tip, source, confidence, detail) {
+export function fillProvenance(tip, source, confidence, detail) {
     tip.appendChild(element('b', 'Herkunft'));
     const list = element('dl');
     addRow(list, 'Quelle', SOURCE_LABELS[source] ?? source);

@@ -6,7 +6,11 @@ import { mountCameraButton } from './capture-fab.js';
 import { requireSession } from './session.js';
 import { mountShell, scroller } from './shell.js';
 import { renderBook } from './tab-book.js';
+import { renderDocs } from './tab-docs.js';
+import { renderMeasure } from './tab-measure.js';
+import { renderParts } from './tab-parts.js';
 import { renderPlan } from './tab-plan.js';
+import { renderTires } from './tab-tires.js';
 import { renderOverview } from './vehicle-overview.js';
 import { emptyBlock, errorBlock, plate, skeletons, STATUS_LABELS, stateWord } from './widgets.js';
 
@@ -16,10 +20,10 @@ const TABS = [
     { key: 'uebersicht', label: 'Übersicht' },
     { key: 'scheckheft', label: 'Scheckheft' },
     { key: 'wartung', label: 'Wartung' },
-    { key: 'messwerte', label: 'Messwerte', comingWith: 7 },
-    { key: 'reifen', label: 'Reifen', comingWith: 7 },
-    { key: 'teile', label: 'Teile', comingWith: 7 },
-    { key: 'belege', label: 'Belege', comingWith: 7 },
+    { key: 'messwerte', label: 'Messwerte' },
+    { key: 'reifen', label: 'Reifen' },
+    { key: 'teile', label: 'Teile' },
+    { key: 'belege', label: 'Belege' },
 ];
 const ADDRESS = /^#(\d+)\/([a-z]+)$/;
 
@@ -108,10 +112,6 @@ function scrollActiveTabIntoView() {
     tabsNav.scrollLeft = active.offsetLeft - (tabsNav.clientWidth - active.offsetWidth) / 2;
 }
 
-function placeholder(tab) {
-    return emptyBlock(icons.doc, tab.label + ' kommt mit Phase ' + tab.comingWith, 'Dieser Reiter wird in der nächsten Ausbaustufe gefüllt.');
-}
-
 async function showPanel(tab) {
     for (const anchor of tabsNav.querySelectorAll('[role="tab"]')) {
         anchor.setAttribute('aria-selected', String(anchor.dataset.tab === tab.key));
@@ -126,11 +126,6 @@ async function showPanel(tab) {
     panelHost.appendChild(panel);
     scroller().scrollTop = 0;
 
-    if (tab.comingWith !== undefined) {
-        panel.appendChild(placeholder(tab));
-
-        return;
-    }
     panel.appendChild(skeletons());
     const vehicleId = loaded.vehicleId;
     const context = {
@@ -143,7 +138,15 @@ async function showPanel(tab) {
         onOpenItemsChanged: updateOverviewCount,
         reload: () => showPanel(tab),
     };
-    const renderers = { uebersicht: renderOverview, scheckheft: renderBook, wartung: renderPlan };
+    const renderers = {
+        uebersicht: renderOverview,
+        scheckheft: renderBook,
+        wartung: renderPlan,
+        messwerte: renderMeasure,
+        reifen: renderTires,
+        teile: renderParts,
+        belege: renderDocs,
+    };
     await renderers[tab.key](panel, context);
 }
 

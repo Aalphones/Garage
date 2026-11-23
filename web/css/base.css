@@ -292,6 +292,14 @@ button.row { width: 100%; text-align: left; background: none; border: 0; border-
 .wheel { border: 1px solid var(--line); border-radius: 12px; padding: .6rem .7rem; background: var(--surface); }
 .wheel .p { font-size: 12px; color: var(--muted); font-weight: 600; }
 .wheel .v { font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.wheel { display: grid; gap: .25rem; justify-items: start; }
+.wheel.warn .v, .wheel.warn .stbtn { color: var(--warn); }
+.wheel.bad .v, .wheel.bad .stbtn { color: var(--bad); }
+.row .r .stbtn { font-weight: 700; }
+.row .s .btn { margin-left: auto; }
+.tire .actions, .tip .actions { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; margin-top: .3rem; }
+.chart g[data-point] { cursor: pointer; }
+.chart g[data-point]:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 /* Reifen */
 .tires { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); }
