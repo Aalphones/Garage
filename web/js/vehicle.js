@@ -11,6 +11,7 @@ import { renderMeasure } from './tab-measure.js';
 import { renderParts } from './tab-parts.js';
 import { renderPlan } from './tab-plan.js';
 import { renderTires } from './tab-tires.js';
+import { mountVehicleActions } from './vehicle-actions.js';
 import { renderOverview } from './vehicle-overview.js';
 import { emptyBlock, errorBlock, plate, skeletons, STATUS_LABELS, stateWord } from './widgets.js';
 
@@ -88,6 +89,7 @@ function buildHead() {
     actions.setAttribute('role', 'group');
     actions.setAttribute('aria-label', 'Aktionen zum Fahrzeug');
     head.appendChild(actions);
+    mountVehicleActions(actions, loaded.data, reloadVehicle);
 
     return head;
 }
@@ -213,6 +215,12 @@ async function route() {
         }
     }
     await showPanel(address.tab);
+}
+
+/** Nach einer Änderung am Fahrzeug selbst (Status): Kopf und Reiter neu aufbauen. */
+function reloadVehicle() {
+    loaded = null;
+    route();
 }
 
 async function start() {

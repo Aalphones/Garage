@@ -14,7 +14,7 @@ Die Akte wird im Browser sichtbar und bedienbar: Garage, Fahrzeug mit sieben Rei
 | 5 | Seiten Garage, Fahrzeug-Übersicht, Klärfälle | standard | sonnet | complete |
 | 6 | Reiter Scheckheft und Wartung | standard | sonnet | complete |
 | 7 | Reiter Messwerte, Reifen, Teile, Belege | standard | sonnet | complete |
-| 8 | Fahrzeug-Aktionen, Druckansicht, gelöschte Fahrzeuge | standard | sonnet | pending |
+| 8 | Fahrzeug-Aktionen, Druckansicht, gelöschte Fahrzeuge | standard | sonnet | complete |
 | 8b | Kleine Eingaben in der Oberfläche | standard | sonnet | pending |
 | 9 | Doku-Abgleich und Abschluss | mechanisch | sonnet | pending |
 

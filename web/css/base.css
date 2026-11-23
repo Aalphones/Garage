@@ -63,7 +63,8 @@ h2 { font-size: 1.05rem; margin: 0; }
 .btn.quiet:hover { background: var(--raised); }
 .btn.danger { border-color: var(--bad); color: var(--bad); }
 .btn.danger:hover { background: var(--bad-soft); }
-.btn[aria-disabled='true'] { opacity: .45; cursor: not-allowed; }
+.btn[aria-disabled='true'], .btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.quiet.danger-text { color: var(--bad); }
 .btn.sm { min-height: 2.1rem; padding: 0 .8rem; font-size: 13.5px; }
 .iconbtn { width: var(--touch); height: var(--touch); padding: 0; border-radius: 50%; }
 

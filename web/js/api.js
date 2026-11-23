@@ -104,6 +104,32 @@ export async function request(method, path, body) {
     return send(method, path, body, { Authorization: 'Bearer ' + (await accessToken(true)) });
 }
 
+/** Datei-Antwort mit Anmeldung (etwa die Akte als Markdown); bei 401 einmal mit erneuertem Token wiederholt. Gibt `{ blob, filename }` zurück. */
+export async function download(path) {
+    const fetchWith = (token) => fetch(API_BASE + path, { credentials: 'same-origin', headers: { Authorization: 'Bearer ' + token } });
+    let response;
+    try {
+        response = await fetchWith(await accessToken(false));
+        if (response.status === 401) {
+            response = await fetchWith(await accessToken(true));
+        }
+    } catch (error) {
+        throw error instanceof ApiError ? error : new ApiError(0, 'network_error', 'Keine Verbindung zum Server.');
+    }
+    if (!response.ok) {
+        let data = null;
+        try {
+            data = await response.json();
+        } catch {
+            data = null;
+        }
+        throw new ApiError(response.status, data && data.error ? data.error : 'http_error', data && data.message ? data.message : 'Der Aufruf ist fehlgeschlagen.');
+    }
+    const match = /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') ?? '');
+
+    return { blob: await response.blob(), filename: match === null ? 'akte.md' : match[1] };
+}
+
 // XMLHttpRequest statt fetch, weil nur er den Fortschritt des Hochladens meldet.
 function sendForm(path, formData, token, onProgress) {
     return new Promise((resolve, reject) => {
