@@ -10,7 +10,7 @@ import { hideToast, toast } from './toast.js';
 
 registerShareWorker();
 
-const DETAIL_HASH = /^#beleg/(d+)$/;
+const DETAIL_HASH = /^#beleg\/(\d+)$/;
 const DISCARD_REASON = 'In der Oberfläche verworfen';
 
 const CHANNEL_LABELS = {
