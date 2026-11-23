@@ -228,6 +228,73 @@ final class VehicleService
     }
 
     /**
+     * Ein Mensch im Browser korrigiert einen Stammdaten-Wert (ADR-021). Anders als `setFacts` ersetzt das sofort, auch
+     * einen bestätigten Wert: der Mensch ist die Instanz, die sonst Klärfälle entscheidet (ADR-010), ein Klärfall gegen
+     * sich selbst wäre Leerlauf. Der alte Wert bleibt als abgelöste Zeile im Verlauf. Liegt am Feld ein offener Klärfall,
+     * geht dieser vor.
+     *
+     * @return array{field: string, value: int|string, result: string}
+     */
+    public function correctByHuman(int $vehicleId, mixed $field, mixed $value, Actor $actor): array
+    {
+        if ($actor->via !== Actor::VIA_WEB) {
+            throw new DomainError('forbidden', 'Stammdaten ohne Klärfall korrigiert nur ein Mensch in der Oberfläche; Agenten nutzen set_vehicle_facts.');
+        }
+
+        return Transaction::run($this->pdo, function () use ($vehicleId, $field, $value, $actor): array {
+            $vehicle = $this->access->writable($vehicleId, $actor);
+            $validField = self::validCorrectableField($field);
+            $fact = ['field' => $validField, 'value' => self::validValue($validField, $value)] + Provenance::BY_HUMAN;
+            $this->assertNoOpenDispute($vehicleId, $validField, $actor);
+
+            $current = $this->currentFact($vehicleId, $validField, $actor);
+            $outcome = ['field' => $validField, 'value' => self::typed($validField, $fact['value'])];
+            if ($current === null) {
+                $this->writeCurrent($vehicle, $fact, null, $actor);
+
+                return $outcome + ['result' => self::RESULT_CREATED];
+            }
+            $isSameEntry = $current['value'] === $fact['value']
+                && $current['source'] === Provenance::SOURCE_USER
+                && $current['confidence'] === Provenance::CONFIRMED;
+            if ($isSameEntry) {
+                return $outcome + ['result' => self::RESULT_UNCHANGED];
+            }
+
+            $this->writeCurrent($vehicle, $fact, $current, $actor);
+
+            return $outcome + ['result' => self::RESULT_UPDATED];
+        });
+    }
+
+    private static function validCorrectableField(mixed $field): string
+    {
+        if (!is_string($field) || !isset(self::FIELDS[$field])) {
+            throw new DomainError(
+                'invalid_value',
+                sprintf('Korrigierbar sind nur die Stammdaten %s. Beispiel: {"field": "farbe", "value": "Urano-Grau"}', implode(', ', array_keys(self::FIELDS))),
+                ['field' => 'field']
+            );
+        }
+
+        return $field;
+    }
+
+    /** Ein strittiger Wert mit offenem Klärfall: erst dort entscheiden, sonst stünde die Korrektur neben einer offenen Frage. */
+    private function assertNoOpenDispute(int $vehicleId, string $field, Actor $actor): void
+    {
+        foreach ($this->vehicles->disputedFacts($vehicleId, $actor) as $disputed) {
+            if ($disputed['field'] === $field && $disputed['open_item_id'] > 0) {
+                throw new DomainError(
+                    'open_item_pending',
+                    sprintf('Zu „%s“ ist ein Klärfall offen. Erst den Klärfall entscheiden, dann korrigieren.', $field),
+                    ['field' => $field, 'open_item_id' => $disputed['open_item_id']]
+                );
+            }
+        }
+    }
+
+    /**
      * Spezifikationen (Öl, Kühlmittel, Batterie …) als Fakten: dieselbe Konfliktregel wie bei setFacts,
      * die Einheit steht im Wert („4,3 l“).
      *
@@ -408,7 +475,8 @@ final class VehicleService
             sprintf('vehicle:%d.%s', $vehicle['id'], $fact['field']),
             $vehicle['garage_id'],
             $previous === null ? null : ['value' => $previous['value'], 'source' => $previous['source'], 'confidence' => $previous['confidence']],
-            ['fact_id' => $factId, 'value' => $fact['value'], 'source' => $fact['source'], 'confidence' => $fact['confidence'], 'status' => VehicleRepository::FACT_CURRENT],
+            // `via` unterscheidet im Verlauf die Korrektur im Browser (ADR-021) von der Meldung eines Agenten.
+            ['fact_id' => $factId, 'value' => $fact['value'], 'source' => $fact['source'], 'confidence' => $fact['confidence'], 'status' => VehicleRepository::FACT_CURRENT, 'via' => $actor->via],
             $vehicle['id']
         );
     }

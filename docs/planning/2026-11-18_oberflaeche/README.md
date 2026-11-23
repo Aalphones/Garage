@@ -10,7 +10,7 @@ Die Akte wird im Browser sichtbar und bedienbar: Garage, Fahrzeug mit sieben Rei
 | 2 | Lese-API der Akte | standard | sonnet | complete |
 | 3 | Scheckheft-Lücken | heikel | opus | complete |
 | 4 | Schreib-API: Status, Löschen, Wiederherstellen, Druck-Link, Kilometer-Randfall | heikel | opus | complete |
-| 4b | Schreib-API: kleine Eingaben durch Menschen (km-Stand, Wert korrigieren, Notiz, Titelbild) | heikel | opus | pending |
+| 4b | Schreib-API: kleine Eingaben durch Menschen (km-Stand, Wert korrigieren, Notiz, Titelbild) | heikel | opus | complete |
 | 5 | Seiten Garage, Fahrzeug-Übersicht, Klärfälle | standard | sonnet | pending |
 | 6 | Reiter Scheckheft und Wartung | standard | sonnet | pending |
 | 7 | Reiter Messwerte, Reifen, Teile, Belege | standard | sonnet | pending |

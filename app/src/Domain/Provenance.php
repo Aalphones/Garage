@@ -10,6 +10,10 @@ final class Provenance
     public const SOURCES = ['beleg', 'nutzer', 'recherche', 'agent', 'werkstatt'];
     public const CONFIDENCE_RANK = ['unsicher' => 1, 'wahrscheinlich' => 2, 'bestaetigt' => 3];
     public const CONFIRMED = 'bestaetigt';
+    public const SOURCE_USER = 'nutzer';
+
+    /** Herkunft einer Eingabe, die ein Mensch selbst im Browser macht (ADR-021). */
+    public const BY_HUMAN = ['source' => self::SOURCE_USER, 'source_url' => null, 'confidence' => self::CONFIRMED];
 
     /**
      * `$context` steht in den Fehlertexten, wo sonst der Feldname stünde (bei Fakten das Feld, bei Listen der Tool-Parameter).

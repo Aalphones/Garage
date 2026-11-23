@@ -59,6 +59,10 @@ $router->add('PATCH', '/garage/api/vehicles/{id}', static fn (array $parameters)
 $router->add('POST', '/garage/api/vehicles/{id}/delete', static fn (array $parameters) => (new VehicleController($config))->delete($request, (int) $parameters['id']));
 $router->add('POST', '/garage/api/vehicles/{id}/restore', static fn (array $parameters) => (new VehicleController($config))->restore($request, (int) $parameters['id']));
 $router->add('POST', '/garage/api/vehicles/{id}/print-link', static fn (array $parameters) => (new VehicleController($config))->printLink($request, (int) $parameters['id']));
+$router->add('POST', '/garage/api/vehicles/{id}/odometer', static fn (array $parameters) => (new VehicleController($config))->addOdometer($request, (int) $parameters['id']));
+$router->add('PATCH', '/garage/api/vehicles/{id}/facts', static fn (array $parameters) => (new VehicleController($config))->correctFact($request, (int) $parameters['id']));
+$router->add('PUT', '/garage/api/vehicles/{id}/notes', static fn (array $parameters) => (new VehicleController($config))->upsertNote($request, (int) $parameters['id']));
+$router->add('POST', '/garage/api/vehicles/{id}/cover', static fn (array $parameters) => (new VehicleController($config))->setCover($request, (int) $parameters['id']));
 $router->add('POST', '/garage/api/records/{type}/{id}/delete', static fn (array $parameters) => (new RecordController())->delete($request, (string) $parameters['type'], (int) $parameters['id']));
 $router->add('POST', '/garage/api/records/{type}/{id}/restore', static fn (array $parameters) => (new RecordController())->restore($request, (string) $parameters['type'], (int) $parameters['id']));
 $router->add('GET', '/garage/api/events/{id}', static fn (array $parameters) => (new EventController($config))->show($request, (int) $parameters['id']));

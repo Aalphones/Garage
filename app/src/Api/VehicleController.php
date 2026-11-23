@@ -19,6 +19,7 @@ use Garage\Domain\NoteService;
 use Garage\Domain\OdometerService;
 use Garage\Domain\PartService;
 use Garage\Domain\TireService;
+use Garage\Domain\Validate;
 use Garage\Domain\VehicleAccess;
 use Garage\Domain\VehicleRepository;
 use Garage\Domain\VehicleService;
@@ -29,11 +30,14 @@ use PDO;
 /**
  * Routen der Oberfläche für Garagen und Fahrzeuge. Jede Lese-Route ruft denselben Service wie das gleichnamige MCP-Tool
  * und gibt dessen Ausgabe unverändert zurück (Kontrakt in ADR-018); Status, Löschen und Wiederherstellen nur für
- * Menschen (ADR-019).
+ * Menschen (ADR-019); kleine Eingaben von Menschen mit Herkunft `nutzer`/`bestaetigt` (ADR-021).
  */
 final class VehicleController
 {
     private const MARKDOWN_TYPE = 'text/markdown; charset=utf-8';
+    private const COVER_TARGET = 'fahrzeug';
+    private const COVER_ROLE = 'titelbild';
+    private const COVER_EXAMPLE = '{"document_id": 5}';
 
     /** @param array<string, mixed> $config */
     public function __construct(private readonly array $config = [])
@@ -144,6 +148,39 @@ final class VehicleController
     public function restore(Request $request, int $vehicleId): never
     {
         $this->respondJson($request, static fn (Actor $actor, PDO $pdo): array => (new LifecycleService($pdo))->restoreVehicle($vehicleId, $actor));
+    }
+
+    public function addOdometer(Request $request, int $vehicleId): never
+    {
+        $this->respondJson($request, static fn (Actor $actor, PDO $pdo): array => (new OdometerService($pdo))->recordByHuman($vehicleId, $request->json(), $actor));
+    }
+
+    public function correctFact(Request $request, int $vehicleId): never
+    {
+        $this->respondJson($request, static function (Actor $actor, PDO $pdo) use ($request, $vehicleId): array {
+            $body = $request->json();
+
+            return (new VehicleService($pdo))->correctByHuman($vehicleId, $body['field'] ?? null, $body['value'] ?? null, $actor);
+        });
+    }
+
+    public function upsertNote(Request $request, int $vehicleId): never
+    {
+        $this->respondJson($request, static fn (Actor $actor, PDO $pdo): array => (new NoteService($pdo))->upsert($vehicleId, $request->json(), $actor));
+    }
+
+    /** Das Schreibrecht wird vor dem Dokument geprüft, damit `lesend` immer 403 bekommt, egal welche document_id. */
+    public function setCover(Request $request, int $vehicleId): never
+    {
+        $this->respondJson($request, function (Actor $actor, PDO $pdo) use ($request, $vehicleId): array {
+            $access = new VehicleAccess($pdo);
+            $vehicle = $access->readable($vehicleId, $actor);
+            $access->assertCanWriteGarage($vehicle['garage_id'], $actor);
+            $body = $request->json();
+            $documentId = (int) Validate::int('document_id', $body['document_id'] ?? null, self::COVER_EXAMPLE, 1);
+
+            return (new DocumentService($pdo, $this->config))->attach($documentId, self::COVER_TARGET, $vehicleId, self::COVER_ROLE, null, $actor);
+        });
     }
 
     /** Lesezugriff genügt; der Link trägt den Nutzer, die Druckansicht prüft dessen Rollen beim Öffnen erneut. */

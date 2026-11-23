@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Garage\Domain;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use Garage\Db\Transaction;
 use PDO;
 
@@ -16,6 +18,8 @@ final class OdometerService
     public const MAX_KM = 2000000;
 
     private const EXAMPLE = '{"read_on": "2026-03-02", "km": 26910}';
+    /** Die Nutzer lesen den Tacho in Deutschland ab; nach Mitternacht ist dort schon „heute“, in UTC noch nicht. */
+    private const LOCAL_TIMEZONE = 'Europe/Berlin';
 
     private OdometerRepository $readings;
     private OpenItemRepository $openItems;
@@ -46,6 +50,24 @@ final class OdometerService
 
             return $this->recordInTransaction($vehicle, $readOn, $km, null, $note, $provenance, $actor);
         });
+    }
+
+    /**
+     * Kilometerstand eines Menschen im Browser (ADR-021): Herkunft `nutzer`/`bestaetigt`, sonst wie `record` — ein
+     * Rückwärts-Stand wird auch hier ein Klärfall. Ein Datum in der Zukunft ist ein Tippfehler.
+     *
+     * @param array<string, mixed> $input read_on, km, note?
+     * @return array{reading_id: int, result: string, open_item_id?: int}
+     */
+    public function recordByHuman(int $vehicleId, array $input, Actor $actor): array
+    {
+        $readOn = Validate::date('read_on', $input['read_on'] ?? null, self::EXAMPLE);
+        $today = (new DateTimeImmutable('now', new DateTimeZone(self::LOCAL_TIMEZONE)))->format('Y-m-d');
+        if ($readOn > $today) {
+            throw Validate::invalid('read_on', 'Das Datum der Ablesung liegt in der Zukunft.', self::EXAMPLE);
+        }
+
+        return $this->record($vehicleId, ['read_on' => $readOn, 'km' => $input['km'] ?? null, 'note' => $input['note'] ?? null] + Provenance::BY_HUMAN, $actor);
     }
 
     /**

@@ -33,6 +33,7 @@ final class ApiErrors
         'already_deleted' => 409,
         'not_deleted' => 409,
         'conflict' => 409,
+        'open_item_pending' => 409,
         'restore_expired' => 410,
         'already_has_file' => 409,
         'email_taken' => 409,
