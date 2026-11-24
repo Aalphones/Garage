@@ -29,7 +29,7 @@ final class VehicleTools
         $registry->add(new Tool(
             'list_vehicles',
             'Fahrzeuge auflisten',
-            'Listet alle Garagen des Nutzers (auch leere) mit Rolle und Fahrzeugen: id, label, status, marke, modell, fin, die Zahl offener Klärfälle, km_estimate (geschätzter Kilometerstand heute, null ohne Kilometerstand) und next_due (dringendste Wartung: task_key, title, effective_date, status; null ohne berechenbare Aufgabe; Details in get_due_items). Starte hiermit, um die vehicle_id und garage_id für die anderen Tools zu finden und um zu prüfen, ob es ein Fahrzeug schon gibt. Keine Eingabe nötig: {}.',
+            'Listet alle Garagen des Nutzers (auch leere) mit Rolle und Fahrzeugen: id, label, status, marke, modell, fin, die Zahl offener Klärfälle, km_estimate (geschätzter Kilometerstand heute, null ohne Kilometerstand) und next_due (dringendste Wartung: task_key, title, effective_date, status; null ohne berechenbare Aufgabe; Details in get_due_items), costs (nur aktive Fahrzeuge, sonst null: Unterhalt der letzten 12 Monate als month_running_cents und month_full_cents mit Wertverlust, dazu missing = fehlende Bausteine; Details in get_cost_summary) und value (nur aktive Fahrzeuge mit Marktkorridor, sonst null: low_cents, median_cents, high_cents und listings = Zahl der zählenden Inserate; Details in get_value_summary). Starte hiermit, um die vehicle_id und garage_id für die anderen Tools zu finden und um zu prüfen, ob es ein Fahrzeug schon gibt. Keine Eingabe nötig: {}.',
             Schema::object(),
             Tool::annotations('Fahrzeuge auflisten', 'R'),
             Scopes::READ,

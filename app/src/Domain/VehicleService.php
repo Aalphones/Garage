@@ -72,6 +72,8 @@ final class VehicleService
     private RegistrationService $registrations;
     private EquipmentService $equipment;
     private DueService $due;
+    private CostService $costs;
+    private ValueService $value;
 
     /** `$documents` braucht nur `list` (Titelbild und Belegzahl je Fahrzeug). */
     public function __construct(private readonly PDO $pdo, private readonly ?DocumentService $documents = null)
@@ -79,6 +81,8 @@ final class VehicleService
         $this->registrations = new RegistrationService($pdo);
         $this->equipment = new EquipmentService($pdo);
         $this->due = new DueService($pdo);
+        $this->costs = new CostService($pdo);
+        $this->value = new ValueService($pdo);
         $this->vehicles = new VehicleRepository($pdo);
         $this->openItems = new OpenItemRepository($pdo);
         $this->garages = new GarageRepository($pdo);
@@ -105,6 +109,8 @@ final class VehicleService
         $values = $this->vehicles->currentValues($vehicleIds, ['marke', 'modell', 'fin'], $actor);
         $openCounts = $this->vehicles->countOpenItems($vehicleIds, $actor);
         $dueSummary = $this->due->summary($vehicles, $actor);
+        $activeVehicles = array_values(array_filter($vehicles, static fn (array $vehicle): bool => $vehicle['status'] === VehicleRepository::STATUS_ACTIVE));
+        $costs = $this->costs->vehicleTotals($activeVehicles, $actor);
 
         $byGarage = [];
         foreach ($vehicles as $vehicle) {
@@ -122,6 +128,8 @@ final class VehicleService
                 'open_items' => $openCounts[$vehicle['id']] ?? 0,
                 'km_estimate' => $dueSummary[$vehicle['id']]['km_estimate'],
                 'next_due' => $dueSummary[$vehicle['id']]['next_due'],
+                'costs' => $costs[$vehicle['id']] ?? null,
+                'value' => isset($costs[$vehicle['id']]) ? $this->value->corridorToday($vehicle['id'], $actor) : null,
             ];
         }
 

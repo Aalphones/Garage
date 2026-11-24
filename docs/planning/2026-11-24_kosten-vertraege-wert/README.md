@@ -14,7 +14,7 @@ Wünsche des Inhabers (2026-11-24): ein Plan für den ganzen Meilenstein; erst E
 | 4 | Wertermittlung: Korridor, Regression, Wertfaktoren | heikel | opus | complete |
 | 5 | Kostenrechnung: Blöcke, Verteilung, Umlage, pro km | heikel | opus | complete |
 | 6 | Stichtage, Notfallkarte-Daten, Kalender-Abo | heikel | opus | complete |
-| 7 | Akte, Fahrzeugliste, Prompts, Server-Anweisungen | standard | sonnet | pending |
+| 7 | Akte, Fahrzeugliste, Prompts, Server-Anweisungen | standard | sonnet | complete |
 | 8 | Reiter Kosten mit Blättern Tankung und Ausgabe | standard | sonnet | pending |
 | 9 | Reiter Wert | standard | sonnet | pending |
 | 10 | Reiter Papiere | standard | sonnet | pending |

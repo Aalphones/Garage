@@ -79,6 +79,31 @@ final class ValueService
     }
 
     /**
+     * Korridor von heute für Listen (Fahrzeugliste, `list_vehicles`); `null`, solange zu wenige Inserate zählen.
+     *
+     * @return array{low_cents: int, high_cents: int, median_cents: int, listings: int}|null
+     */
+    public function corridorToday(int $vehicleId, Actor $actor): ?array
+    {
+        $this->access->readable($vehicleId, $actor);
+        $today = $this->tasks->utcToday();
+        $firstRegistration = $this->vehicles->currentValues([$vehicleId], ['erstzulassung'], $actor)[$vehicleId]['erstzulassung'] ?? null;
+        $own = ValueCalculator::ownAt($this->odometer->validReadings($vehicleId, $actor), $firstRegistration, $today);
+        $listings = array_map(static fn (array $row): array => self::listingInput($row), $this->records->listForVehicle(self::LISTINGS, $vehicleId, $actor));
+        $corridor = ValueCalculator::corridor($listings, $own, $today);
+        if ($corridor['median_cents'] === null || $corridor['low_cents'] === null || $corridor['high_cents'] === null) {
+            return null;
+        }
+
+        return [
+            'low_cents' => $corridor['low_cents'],
+            'high_cents' => $corridor['high_cents'],
+            'median_cents' => $corridor['median_cents'],
+            'listings' => $corridor['counting'],
+        ];
+    }
+
+    /**
      * Jüngster Wert für die Kostenrechnung: der jüngere von Korridor-Mitte heute und jüngster Bewertung außer Kaufpreis;
      * am selben Tag gilt die Bewertung.
      *

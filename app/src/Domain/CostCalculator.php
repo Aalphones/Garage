@@ -47,7 +47,7 @@ final class CostCalculator
 
     private const DAYS_PER_MONTH = 30.4375;
     private const DAYS_PER_YEAR = 365;
-    private const BLOCK_NAMES = [
+    public const BLOCK_NAMES = [
         self::BLOCK_FIX => 'Fixkosten',
         self::BLOCK_RUN => 'Betrieb',
         self::BLOCK_SHOP => 'Werkstatt',

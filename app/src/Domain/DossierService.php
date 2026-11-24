@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Garage\Domain;
 
+use DateTimeImmutable;
 use PDO;
 
 /**
- * Die Akte eines Fahrzeugs als Markdown, Aufbau fest (16 Abschnitte). Liest nur über die Dienste der Bereiche — jeder prüft
+ * Die Akte eines Fahrzeugs als Markdown, Aufbau fest (20 Abschnitte). Liest nur über die Dienste der Bereiche — jeder prüft
  * den Zugriff selbst — und rechnet nichts Eigenes; Fälligkeit und Prognose kommen aus `DueService`.
  */
 final class DossierService
@@ -15,6 +16,13 @@ final class DossierService
     private const DUE_HORIZON_MONTHS = 120;
     private const NOTE_HEADING_SHIFT = 2;
     private const NONE = '–';
+    private const DAYS_PER_YEAR = 365;
+    private const CONTRACT_EVENT_DONE = 'erledigt';
+    private const VERDICT_MARKS = [
+        ValueCalculator::VERDICT_PLUS => '+',
+        ValueCalculator::VERDICT_MINUS => '−',
+        ValueCalculator::VERDICT_UNKNOWN => '?',
+    ];
 
     /** Lesbare Namen der Stammdatenfelder; Felder ohne Eintrag erscheinen mit ihrem Schlüssel. */
     private const LABELS = [
@@ -84,9 +92,15 @@ final class DossierService
     private DamageService $damages;
     private NoteService $notes;
     private OpenItemService $openItems;
+    private PaperService $papers;
+    private CostService $costs;
+    private ValueService $value;
 
     public function __construct(PDO $pdo)
     {
+        $this->papers = new PaperService($pdo);
+        $this->costs = new CostService($pdo);
+        $this->value = new ValueService($pdo);
         $this->documents = new DocumentRepository($pdo);
         $this->vehicles = new VehicleService($pdo);
         $this->events = new EventService($pdo);
@@ -148,6 +162,7 @@ final class DossierService
         $vehicle = $this->vehicles->get($vehicleId, $actor);
         $due = $this->due->dueItems($vehicleId, self::DUE_HORIZON_MONTHS, $actor);
         $today = $due['today'];
+        $papers = $this->papers->forVehicle($vehicleId, $actor);
 
         return [
             'header' => $this->header($vehicle, $today),
@@ -165,6 +180,10 @@ final class DossierService
                 self::section('Teile', $this->partBlocks($vehicleId, $actor)),
                 self::section('Schäden', $this->damageBlocks($vehicleId, $actor)),
                 self::section('Rückrufe', $this->recallBlocks($vehicleId, $actor)),
+                self::section('Verträge', self::contractBlocks($papers['contracts'], $papers['deadlines'], $today)),
+                self::section('Kosten', $this->costBlocks($vehicleId, $actor)),
+                self::section('Wert', $this->valueBlocks($vehicleId, $actor)),
+                self::section('Zubehör und Plaketten', self::paperBlocks($papers['accessories'], $papers['permits'])),
                 self::section('Notizen', $this->noteBlocks($vehicleId, $actor)),
                 self::section('Offene Klärfälle', $this->openItemBlocks($vehicleId, $actor)),
                 self::section('Belege', $this->documentBlocks($vehicleId, $actor)),
@@ -791,6 +810,265 @@ final class DossierService
         }
 
         return [self::table(['Datum', 'Typ', 'Titel', 'hängt an'], $rows)];
+    }
+
+    /**
+     * Tabelle der Verträge (eigene und die der Garage) mit Beitrag je Jahr, Hauptfälligkeit und Kündigungsstichtag; darunter
+     * die offenen Vorgänge (Schadenmeldung, Änderung, Kündigung) als Liste.
+     *
+     * @param list<array<string, mixed>> $contracts Ausgabe von `PaperService::forVehicle`
+     * @param list<array<string, mixed>> $deadlines
+     * @return list<array<string, mixed>>
+     */
+    private static function contractBlocks(array $contracts, array $deadlines, string $today): array
+    {
+        if ($contracts === []) {
+            return [];
+        }
+
+        $noticeDates = [];
+        foreach ($deadlines as $deadline) {
+            if ($deadline['kind'] === DeadlineService::KIND_NOTICE && $deadline['ref']['type'] === DeadlineService::REF_CONTRACT) {
+                $noticeDates[$deadline['ref']['id']] = $deadline['date'];
+            }
+        }
+
+        $rows = [];
+        $openEvents = [];
+        foreach ($contracts as $contract) {
+            $kind = DossierFormat::humanize((string) $contract['kind']);
+            $rows[] = [
+                $contract['level'] === ContractService::LEVEL_GARAGE ? $kind . ' (Garage)' : $kind,
+                $contract['provider'],
+                $contract['contract_number'],
+                self::yearlyAmount($contract, $today),
+                self::mainDueText($contract['main_due']),
+                DossierFormat::date($noticeDates[$contract['id']] ?? null),
+            ];
+            foreach ($contract['events'] as $event) {
+                if ($event['event_status'] !== self::CONTRACT_EVENT_DONE) {
+                    $openEvents[] = self::openEventItem($contract, $event);
+                }
+            }
+        }
+
+        $blocks = [self::table(['Art', 'Anbieter', 'Nummer', 'Beitrag/Jahr', 'Hauptfälligkeit', 'Kündigungsstichtag'], $rows)];
+        if ($openEvents !== []) {
+            $blocks[] = self::items($openEvents, 'Offene Vorgänge:');
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * Beitrag je Jahr: bei Garagen-Verträgen der Anteil dieses Fahrzeugs, sonst die heute gültige (sonst jüngste) Periode auf 365 Tage gerechnet.
+     *
+     * @param array<string, mixed> $contract
+     */
+    private static function yearlyAmount(array $contract, string $today): ?string
+    {
+        if ($contract['level'] === ContractService::LEVEL_GARAGE) {
+            return $contract['share']['eur_per_year'] === null ? null : DossierFormat::euro($contract['share']['eur_per_year']) . ' (Anteil)';
+        }
+        if ($contract['terms'] === []) {
+            return null;
+        }
+        $term = $contract['terms'][0];
+        foreach ($contract['terms'] as $candidate) {
+            if ($candidate['valid_from'] <= $today && $candidate['valid_to'] >= $today) {
+                $term = $candidate;
+                break;
+            }
+        }
+        $days = (int) (new DateTimeImmutable($term['valid_from']))->diff(new DateTimeImmutable($term['valid_to']))->days + 1;
+
+        return DossierFormat::euro(number_format((float) $term['amount_eur'] * self::DAYS_PER_YEAR / $days, 2, '.', ''));
+    }
+
+    /** Die Hauptfälligkeit liegt als `MM-TT` ohne Jahr vor und steht als `TT.MM.`. */
+    private static function mainDueText(?string $mainDue): ?string
+    {
+        if ($mainDue === null) {
+            return null;
+        }
+        [$month, $day] = explode('-', $mainDue);
+
+        return $day . '.' . $month . '.';
+    }
+
+    /**
+     * @param array<string, mixed> $contract
+     * @param array<string, mixed> $event
+     * @return array<string, string|null>
+     */
+    private static function openEventItem(array $contract, array $event): array
+    {
+        $details = [DossierFormat::humanize((string) $event['kind']), DossierFormat::date($event['occurred_on'])];
+        if ($event['claim_number'] !== null) {
+            $details[] = 'Aktenzeichen ' . $event['claim_number'];
+        }
+        if ($event['amount_eur'] !== null) {
+            $details[] = DossierFormat::euro($event['amount_eur']);
+        }
+
+        return self::item(
+            sprintf('%s: %s — %s', $contract['provider'], implode(', ', $details), DossierFormat::humanize((string) $event['event_status'])),
+            DossierFormat::provenanceOf($event)
+        );
+    }
+
+    /**
+     * Kosten der letzten 12 Monate nach Block, dazu Kilometerpreis und fehlende Bausteine. Leer, solange das Fahrzeug nicht aktiv war.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function costBlocks(int $vehicleId, Actor $actor): array
+    {
+        $summary = $this->costs->summary($vehicleId, CostCalculator::PERIOD_12_MONTHS, CostCalculator::GROUP_BLOCK, $actor);
+        if ($summary['active'] === null) {
+            return [];
+        }
+
+        // Je Monat teilt jeder Block durch denselben Divisor wie die Monatssumme: Tage des Zeitraums ÷ 30,4375.
+        $monthsPerFull = $summary['full_cents'] > 0 ? $summary['month_full_cents'] / $summary['full_cents'] : 0;
+        $rows = [];
+        foreach (CostCalculator::BLOCK_NAMES as $block => $name) {
+            $cents = $summary['blocks'][$block]['cents'];
+            $rows[] = [$name, self::cents($cents), self::cents((int) round($cents * $monthsPerFull))];
+        }
+        $rows[] = ['Summe laufend', self::cents($summary['running_cents']), self::cents($summary['month_running_cents'])];
+        $rows[] = ['Summe mit Wertverlust', self::cents($summary['full_cents']), self::cents($summary['month_full_cents'])];
+
+        $blocks = [self::text('Letzte 12 Monate (Stand heute).'), self::table(['Block', 'Betrag', 'je Monat'], $rows)];
+        if ($summary['per_km_full_cents'] === null) {
+            $blocks[] = self::text('Pro km: nicht berechenbar, es fehlt ein Kilometerstand.');
+        } else {
+            $blocks[] = self::text(sprintf('Pro km (mit Wertverlust): %s bei %s km.', DossierFormat::euro($summary['per_km_full_cents']), DossierFormat::number($summary['km'])));
+        }
+        if ($summary['missing'] !== []) {
+            $blocks[] = self::text('Fehlt: ' . implode(', ', $summary['missing']) . '.');
+        }
+
+        return $blocks;
+    }
+
+    private static function cents(int $cents): string
+    {
+        return DossierFormat::euro(Money::centsToEuro($cents));
+    }
+
+    /**
+     * Ankerwerte als Tabelle, Marktkorridor als Satz und die Wertfaktoren als Liste mit +, − oder ?.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function valueBlocks(int $vehicleId, Actor $actor): array
+    {
+        $summary = $this->value->summary($vehicleId, $actor);
+
+        $blocks = [];
+        if ($summary['anchors'] !== []) {
+            $rows = [];
+            foreach ($summary['anchors'] as $anchor) {
+                $rows[] = [
+                    DossierFormat::date($anchor['valued_on']),
+                    DossierFormat::humanize($anchor['kind']),
+                    self::anchorAmount($anchor),
+                    $anchor['odometer_km'] === null ? null : DossierFormat::number($anchor['odometer_km']) . ' km',
+                    $anchor['provider'],
+                    DossierFormat::provenanceOf($anchor),
+                ];
+            }
+            $blocks[] = self::table(['Datum', 'Art', 'Betrag', 'Kilometerstand', 'Anbieter', 'Herkunft'], $rows);
+        }
+
+        $blocks[] = self::text(self::corridorSentence($summary['corridor']) . ' ' . $summary['note']);
+
+        $items = [];
+        foreach ($summary['factors'] as $factor) {
+            $items[] = self::item(sprintf('%s **%s:** %s', self::VERDICT_MARKS[$factor['verdict']] ?? '?', $factor['label'], $factor['detail']));
+        }
+        $blocks[] = self::items($items, 'Wertfaktoren:');
+
+        return $blocks;
+    }
+
+    /** @param array<string, mixed> $anchor */
+    private static function anchorAmount(array $anchor): string
+    {
+        $amount = self::cents($anchor['amount_cents']);
+        if ($anchor['range_low_cents'] === null || $anchor['range_high_cents'] === null) {
+            return $amount;
+        }
+
+        return sprintf('%s (%s bis %s)', $amount, self::cents($anchor['range_low_cents']), self::cents($anchor['range_high_cents']));
+    }
+
+    /** @param array<string, mixed> $corridor */
+    private static function corridorSentence(array $corridor): string
+    {
+        if ($corridor['median_cents'] === null) {
+            return sprintf('Marktkorridor: noch keiner, es zählen %d von %d nötigen Inseraten.', $corridor['counting'], $corridor['needed_for_corridor']);
+        }
+
+        return sprintf(
+            'Marktkorridor heute: %s bis %s, Mitte %s, aus %d Inseraten (Angebotspreise).',
+            self::cents($corridor['low_cents']),
+            self::cents($corridor['high_cents']),
+            self::cents($corridor['median_cents']),
+            $corridor['counting']
+        );
+    }
+
+    /**
+     * Zubehör und Plaketten, je als Tabelle; ein leerer Teil trägt den kursiven Satz der leeren Abschnitte.
+     *
+     * @param list<array<string, mixed>> $accessories
+     * @param list<array<string, mixed>> $permits
+     * @return list<array<string, mixed>>
+     */
+    private static function paperBlocks(array $accessories, array $permits): array
+    {
+        if ($accessories === [] && $permits === []) {
+            return [];
+        }
+
+        $accessoryRows = [];
+        foreach ($accessories as $accessory) {
+            $accessoryRows[] = [
+                $accessory['name'],
+                DossierFormat::humanize($accessory['category']),
+                $accessory['manufacturer'],
+                DossierFormat::date($accessory['bought_on']),
+                DossierFormat::euro($accessory['price_eur']),
+                DossierFormat::date($accessory['warranty_until']),
+                $accessory['mount_state'] === null ? null : DossierFormat::humanize($accessory['mount_state']),
+                $accessory['storage_location'],
+                $accessory['goes_with_sale'] === null ? null : ($accessory['goes_with_sale'] ? 'ja' : 'nein'),
+            ];
+        }
+        $permitRows = [];
+        foreach ($permits as $permit) {
+            $permitRows[] = [
+                DossierFormat::humanize($permit['kind']),
+                $permit['label'],
+                $permit['number'],
+                DossierFormat::date($permit['valid_from']),
+                DossierFormat::date($permit['valid_until']),
+                DossierFormat::euro($permit['price_eur']),
+            ];
+        }
+
+        return [
+            self::heading('Zubehör'),
+            $accessoryRows === []
+                ? self::text(DossierFormat::EMPTY_SECTION, null, true)
+                : self::table(['Name', 'Kategorie', 'Hersteller', 'Gekauft', 'Preis', 'Garantie bis', 'Zustand', 'Lager', 'Mit Verkauf'], $accessoryRows),
+            self::heading('Plaketten'),
+            $permitRows === []
+                ? self::text(DossierFormat::EMPTY_SECTION, null, true)
+                : self::table(['Art', 'Bezeichnung', 'Nummer', 'Gültig von', 'Gültig bis', 'Preis'], $permitRows),
+        ];
     }
 
     /** @return list<array<string, mixed>> */

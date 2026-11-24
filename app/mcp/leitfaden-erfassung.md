@@ -42,6 +42,13 @@ Jede Zeile des Belegs wird eine Position:
 
 Nach `record_service_event` hängst du die Rechnung an das Ereignis: `attach_document {"document_id": <ID>, "target": "ereignis", "target_id": <event_id>, "role": "beleg", "text": "<erkannter Text>"}`. Den erkannten Text (Datum, Beträge, Positionen) gibst du mit; die Suche findet ihn. Das Dokument kommt vorher per `store_document` (Datei-Parameter, `request_upload` oder `import_document_from_url`); ohne Datei (Status „wartet“) lässt es sich nicht anhängen. Ein Tacho-Foto: `record_odometer`, dann `attach_document` mit `target` `kilometerstand` und der `reading_id`. Dasselbe Dokument zweimal anzuhängen schadet nicht (`unveraendert`).
 
+## 4b. Andere Belege
+
+- **Beitragsrechnung** einer Versicherung oder eines Clubs: `record_contract_event` (Art `beitragsrechnung`) und die Periode mit `record_contract_term`. **Steuerbescheid:** Vertrag der Art `steuer` plus Periode. **ADAC und ähnliche Mitgliedschaften** gelten für alle Autos der Garage: Garagen-Vertrag.
+- **Tankbeleg:** `record_fuel`. **Parken, Wäsche, Maut, Bußgeld:** `record_expense`.
+- **Kaufvertrag:** der Preis ist `add_valuation` mit Art `kaufpreis`, nicht ein Ereignis mit Betrag.
+- **Inserat oder Gutachten:** `add_market_listing` (immer mit URL und Abrufdatum) bzw. `add_valuation`.
+
 ## 5. Unleserlich oder widersprüchlich
 
 Ein unleserlicher Betrag, ein fehlendes Datum oder eine Position, die du nicht zuordnen kannst: **nie raten.** Lass den Wert weg und lege mit `open_item` eine Nachfrage an. Widerspricht der Beleg einem bestätigten Wert, entsteht ein Klärfall; sag dem Nutzer, dass er in der Oberfläche entscheidet.

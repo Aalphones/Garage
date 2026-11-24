@@ -34,6 +34,18 @@ final class Prompts
                 'description' => 'Arbeitet den Eingang ab: reserviert den ältesten freien Eintrag, erfasst seine Belege und Fotos in der Akte, hängt sie an und schließt den Eintrag ab.',
                 'arguments' => [],
             ],
+            [
+                'name' => 'marktwert_recherche',
+                'title' => 'Marktwert recherchieren',
+                'description' => 'Sucht vergleichbare Inserate im Netz, trägt sie mit Adresse und Abrufdatum ein und fasst den Marktkorridor zusammen.',
+                'arguments' => [self::vehicleArgument('Fahrzeug (Name oder Kennzeichen); ohne Angabe wählt der Agent über list_vehicles')],
+            ],
+            [
+                'name' => 'verkaufsakte',
+                'title' => 'Verkaufsakte',
+                'description' => 'Stellt aus Akte, Wert, offenen Punkten und Unterlagen eine Verkaufsakte zusammen: Wertargumente, offene Punkte, Stichtage.',
+                'arguments' => [self::vehicleArgument('Fahrzeug (Name oder Kennzeichen); ohne Angabe wählt der Agent über list_vehicles')],
+            ],
         ];
     }
 
@@ -49,9 +61,11 @@ final class Prompts
             'beleg_erfassen' => self::message('Beleg erfassen', self::recordText($vehicle)),
             'was_steht_an' => self::message('Was steht an?', self::dueText($vehicle)),
             'eingang_abarbeiten' => self::message('Eingang abarbeiten', self::inboxText()),
+            'marktwert_recherche' => self::message('Marktwert recherchieren', self::marketText($vehicle)),
+            'verkaufsakte' => self::message('Verkaufsakte', self::saleText($vehicle)),
             default => throw new ProtocolError(
                 ProtocolError::INVALID_PARAMS,
-                sprintf('Prompt „%s“ ist unbekannt. prompts/list nennt die gültigen: beleg_erfassen, was_steht_an, eingang_abarbeiten.', $name),
+                sprintf('Prompt „%s“ ist unbekannt. prompts/list nennt die gültigen: beleg_erfassen, was_steht_an, eingang_abarbeiten, marktwert_recherche, verkaufsakte.', $name),
                 400,
                 ['name' => $name]
             ),
@@ -108,6 +122,32 @@ final class Prompts
 
         return sprintf(
             'Rufe get_due_items für %s und fasse zusammen: was ist überfällig, was kommt in 3 Monaten, welche Regeln sind unbelegt. Schätze Kosten nur, wenn das Scheckheft vergleichbare Ereignisse hat (list_events), und nenne die Quelle.',
+            $target
+        );
+    }
+
+    private static function marketText(?string $vehicle): string
+    {
+        $target = $vehicle === null ? self::ANY_VEHICLE_RECORD : sprintf('das Fahrzeug „%s“ (vehicle_id aus list_vehicles)', $vehicle);
+
+        return sprintf(
+            'Recherchiere den Marktwert für %s. Lies das Fahrzeug mit get_vehicle (Motor, Getriebe, Erstzulassung, Kilometerstand). '
+            . 'Suche Inserate mit gleichem Motor und Getriebe, Erstzulassung höchstens ein Jahr daneben und Kilometerstand höchstens 25 Prozent daneben. '
+            . 'Trage jedes Inserat mit add_market_listing ein: URL des Inserats, Abrufdatum heute, Preis, Kilometerstand, Erstzulassung und same_drivetrain (true nur, wenn Motor und Getriebe im Inserat belegt gleich sind). '
+            . 'Erfinde kein Inserat und rate keinen Wert; was im Inserat fehlt, bleibt weg. Rufe am Ende get_value_summary und fasse zusammen: Korridor, Zahl der zählenden Inserate, welche Inserate nicht zählen und warum. Angebotspreise sind keine Verkaufspreise — sag das dazu.',
+            $target
+        );
+    }
+
+    private static function saleText(?string $vehicle): string
+    {
+        $target = $vehicle === null ? self::ANY_VEHICLE_RECORD : sprintf('das Fahrzeug „%s“ (vehicle_id aus list_vehicles)', $vehicle);
+
+        return sprintf(
+            'Stelle die Verkaufsakte für %s zusammen. Lies get_dossier, get_value_summary, list_open_items und get_papers. '
+            . 'Nenne: die vorhandenen Unterlagen (Papiere, Scheckheft, Belege, Zubehör, das mit verkauft wird), die Wertargumente (die Wertfaktoren mit Urteil plus), '
+            . 'die offenen Punkte (Faktoren mit Urteil minus oder unbekannt, offene Klärfälle) und die Stichtage (Verträge, Plaketten, Hauptuntersuchung). '
+            . 'Schreibe nur, was die Akte belegt; was fehlt, steht als offener Punkt da, nicht als Behauptung.',
             $target
         );
     }
