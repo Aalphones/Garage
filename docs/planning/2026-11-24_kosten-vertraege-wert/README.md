@@ -1,6 +1,6 @@
 # Meilenstein 5 — Kosten, Verträge, Wert
 
-Stand: 2026-11-24 (Entwurf zur Freigabe) · Entwurf: [`artifacts/entwurf-kosten-wert.html`](artifacts/entwurf-kosten-wert.html) (nach Freigabe verbindlich, siehe [`artifacts/README.md`](artifacts/README.md))
+Stand: 2026-11-24 (freigegeben) · Entwurf: [`artifacts/entwurf-kosten-wert.html`](artifacts/entwurf-kosten-wert.html) (verbindlich, siehe [`artifacts/README.md`](artifacts/README.md))
 
 Die Akte rechnet, was ein Auto kostet und wert ist, und führt alles, was Papier und Fristen erzeugt: Verträge mit Beitragsperioden und Vorgängen, Umlage von Garagen-Verträgen (ADAC) auf die aktiven Autos, Tankbuch, sonstige Ausgaben, Zubehör, Plaketten, Bewertungen und Vergleichsinserate. Neu am Fahrzeug die Reiter Kosten, Wert und Papiere (mit Notfallkarte, auch offline), in der Garage der Unterhalt aller aktiven Autos, im Konto ein Kalender-Abo für Fälligkeiten und Stichtage.
 
