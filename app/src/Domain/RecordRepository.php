@@ -21,6 +21,9 @@ final class RecordRepository
         'parts' => 'component, role, brand, article_number, id',
         'damages' => 'occurred_on DESC, id DESC',
         'recalls' => 'recall_status, title, id',
+        // ENUM-Reihenfolge der Kategorie, dann alphabetisch.
+        'accessories' => 'category, name, id',
+        'permits' => 'kind, label, id',
     ];
 
     public function __construct(private readonly PDO $pdo)

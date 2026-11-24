@@ -9,7 +9,7 @@ Wünsche des Inhabers (2026-11-24): ein Plan für den ganzen Meilenstein; erst E
 | Phase | Inhalt | Rating | Modell | Status |
 |---|---|---|---|---|
 | 1 | Datenmodell und Entscheidungen (Migrationen 020–024, ADR-022 bis 025) | standard | sonnet | complete |
-| 2 | Verträge, Vorgänge, Plaketten, Zubehör: Dienste, Agenten-Werkzeuge, Löschen | heikel | opus | pending |
+| 2 | Verträge, Vorgänge, Plaketten, Zubehör: Dienste, Agenten-Werkzeuge, Löschen | heikel | opus | complete |
 | 3 | Tankbuch und Ausgaben: Dienste, Werkzeuge, Eingabe-Routen | standard | sonnet | pending |
 | 4 | Wertermittlung: Korridor, Regression, Wertfaktoren | heikel | opus | pending |
 | 5 | Kostenrechnung: Blöcke, Verteilung, Umlage, pro km | heikel | opus | pending |
@@ -91,7 +91,7 @@ Alle schreibenden Werkzeuge tragen die Herkunftsfelder (`ProvenanceSchema`), mel
 - Geprüft: `attachments.target_table` ist `VARCHAR(40)` (Migration 017) → neue Anhang-Ziele brauchen nur `DocumentService::TARGETS`.
 - Geprüft: `DueCalculator` liefert `effective_date` je Fälligkeit → das Kalender-Abo braucht keine eigene Fälligkeitsrechnung.
 - Geprüft: `web/sw.js` hält heute keinen Offline-Cache; Phase 11 baut ihn neu und darf das Teilen-Ziel nicht brechen.
-- 🟡 **Löschen an Garagen-Verträgen**: `LifecycleService::lockedRecord` sperrt immer über `vehicle_id`; Garagen-Verträge haben keins. Check in Phase 2: `RecordRepository::findAnyStatus` auf eine Zeile mit `vehicle_id IS NULL` lesen und den Zweig über `VehicleAccess::assertCanWriteGarage` einbauen, bevor `contract` in `RECORD_TABLES` kommt.
+- Geprüft (Phase 2): **Löschen an Garagen-Verträgen** — der alte Weg über `RecordRepository` hätte Verträge gar nicht gelesen und `NULL` zu Fahrzeug 0 gemacht; eigener Zweig über `ContractRepository`, ohne Fahrzeug sperrt die Garage und es zählt `assertCanWriteGarage` (Befund in `phase-2-vertraege-papiere.md` → Report-Back).
 - 🟡 **Aktiv-Zeitraum eines Autos** für die Umlage braucht das Datum des Statuswechsels; heute steht es nur im Audit-Log. Phase 1 legt `vehicles.status_since` an; für schon verkaufte Fahrzeuge bleibt es leer, sie zählen dann in keinem Zeitraum mit. Check: `SELECT id, status FROM vehicles WHERE status <> 'aktiv'` nach dem Deploy — Inhaber trägt fehlende Daten ggf. über den Status-Dialog nach.
 - 🟡 **Kalender-Abo in fremden Kalendern**: Google und Apple holen Abos selten (Stunden bis zu einem Tag) und verzeihen kleine Formfehler nicht. Check nach dem Deploy: Link in Google Kalender abonnieren und den Kündigungsstichtag dort sehen; vorher `.ics` gegen einen Online-Validator (z. B. icalendar.org) laufen lassen.
 

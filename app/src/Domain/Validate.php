@@ -35,6 +35,26 @@ final class Validate
         return $value;
     }
 
+    /** `null` und leerer Text heißen „nicht angegeben“. */
+    public static function optionalDate(string $field, mixed $raw, string $example): ?string
+    {
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        return self::date($field, $raw, $example);
+    }
+
+    /** `null` und leerer Text heißen „nicht angegeben“. */
+    public static function optionalInt(string $field, mixed $raw, string $example, int $min = 0, ?int $max = null): ?string
+    {
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        return self::int($field, $raw, $example, $min, $max);
+    }
+
     public static function int(string $field, mixed $raw, string $example, int $min = 0, ?int $max = null): string
     {
         $text = is_int($raw) ? (string) $raw : (is_string($raw) ? trim($raw) : '');

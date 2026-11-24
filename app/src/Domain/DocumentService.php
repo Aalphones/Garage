@@ -26,7 +26,7 @@ final class DocumentService
     public const MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
     public const LIST_STATUSES = ['wartet', 'unzugeordnet', 'zugeordnet', 'offen', 'verworfen', 'alle'];
 
-    /** Anhangsziele (E5): Name im Tool → Tabelle. Alle außer `vehicles` tragen `source_document_id`; M5 ergänzt Verträge ohne Migration. */
+    /** Anhangsziele (E5): Name im Tool → Tabelle. Alle außer `vehicles` tragen `source_document_id`. */
     public const TARGETS = [
         'fahrzeug' => 'vehicles',
         'ereignis' => 'events',
@@ -37,6 +37,10 @@ final class DocumentService
         'messwert' => 'measurements',
         'kilometerstand' => 'odometer_readings',
         'zulassung' => 'registrations',
+        'vertrag' => 'contracts',
+        'vorgang' => 'contract_events',
+        'zubehoer' => 'accessories',
+        'plakette' => 'permits',
     ];
     public const ROLES = ['beleg', 'foto', 'anhang', 'titelbild'];
 
@@ -58,6 +62,7 @@ final class DocumentService
 
     private DocumentRepository $documents;
     private VehicleAccess $access;
+    private ContractRepository $contracts;
     private AuditRepository $audit;
     private ImageProcessor $images;
     /** @var array<string, mixed> */
@@ -68,6 +73,7 @@ final class DocumentService
     {
         $this->documents = new DocumentRepository($pdo);
         $this->access = new VehicleAccess($pdo);
+        $this->contracts = new ContractRepository($pdo);
         $this->audit = new AuditRepository($pdo);
         $this->documentsConfig = (array) $config['documents'];
         $this->images = new ImageProcessor($this->documentsConfig);
@@ -173,10 +179,17 @@ final class DocumentService
             }
 
             $row = $this->documents->findTarget($table, $targetId, $actor);
-            if ($row === null || $row['garage_id'] !== $document['garage_id'] || ($document['vehicle_id'] !== null && $document['vehicle_id'] !== $row['vehicle_id'])) {
+            // Ein Garagen-Vertrag (ohne Fahrzeug) nimmt jedes Dokument seiner Garage, auch eines, das schon an einem Fahrzeug hängt.
+            $isOtherVehicle = $row !== null && $row['vehicle_id'] !== null && $document['vehicle_id'] !== null && $document['vehicle_id'] !== $row['vehicle_id'];
+            if ($row === null || $row['garage_id'] !== $document['garage_id'] || $isOtherVehicle) {
                 throw new DomainError('not_found', 'Dieses Ziel gibt es für das Dokument nicht: es muss zum selben Fahrzeug gehören. list_events, list_documents und die anderen Lese-Tools nennen die IDs.', ['target_id' => $targetId]);
             }
-            $this->access->writable($row['vehicle_id'], $actor);
+            if ($row['vehicle_id'] === null) {
+                $this->contracts->lockGarage($row['garage_id'], $actor);
+                $this->access->assertCanWriteGarage($row['garage_id'], $actor);
+            } else {
+                $this->access->writable($row['vehicle_id'], $actor);
+            }
 
             if ($role === 'titelbild' && ($table !== 'vehicles' || $document['doc_type'] !== 'foto')) {
                 throw Validate::invalid('role', 'Ein Titelbild ist nur ein Foto (doc_type „foto“) und nur am Fahrzeug (target „fahrzeug“).', '{"document_id": 5, "target": "fahrzeug", "target_id": 12, "role": "titelbild"}');
@@ -190,7 +203,7 @@ final class DocumentService
             $isSourceSet = $role === 'beleg' && $table !== 'vehicles' && $this->documents->setSourceDocument($table, $targetId, $row['garage_id'], $documentId);
 
             $fields = ['status' => DocumentRepository::STATUS_ASSIGNED];
-            if ($document['vehicle_id'] === null) {
+            if ($document['vehicle_id'] === null && $row['vehicle_id'] !== null) {
                 $fields['vehicle_id'] = $row['vehicle_id'];
             }
             if ($text !== null) {

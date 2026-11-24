@@ -42,6 +42,12 @@ final class RecordMerger
         'parts' => ['label' => 'Teil', 'key' => ['component', 'brand', 'article_number'], 'columns' => ['oem_number', 'role', 'verified', 'note']],
         'damages' => ['label' => 'Schaden', 'key' => ['occurred_on', 'kind'], 'columns' => ['description', 'odometer_km', 'repaired', 'repair_event_id', 'appraisal', 'diminished_value_cents']],
         'recalls' => ['label' => 'Rückruf', 'key' => ['manufacturer_code', 'kba_reference'], 'columns' => ['title', 'recall_status', 'done_on', 'event_id']],
+        'accessories' => [
+            'label' => 'Zubehör',
+            'key' => ['name'],
+            'columns' => ['category', 'manufacturer', 'article_number', 'bought_on', 'price_cents', 'warranty_until', 'mount_state', 'storage_location', 'goes_with_sale'],
+        ],
+        'permits' => ['label' => 'Plakette', 'key' => ['kind', 'label'], 'columns' => ['number', 'valid_from', 'valid_until', 'price_cents']],
     ];
 
     private OpenItemRepository $openItems;

@@ -26,6 +26,10 @@ final class LifecycleService
         'damage' => 'damages',
         'recall' => 'recalls',
         'note' => 'notes',
+        'contract' => 'contracts',
+        'contract_event' => 'contract_events',
+        'accessory' => 'accessories',
+        'permit' => 'permits',
     ];
 
     public const VEHICLE_STATUSES = ['aktiv', 'verkauft', 'stillgelegt'];
@@ -41,6 +45,7 @@ final class LifecycleService
     private VehicleRepository $vehicles;
     private VehicleAccess $access;
     private RecordRepository $records;
+    private ContractRepository $contracts;
     private NoteRepository $notes;
     private OdometerRepository $readings;
     private AuditRepository $audit;
@@ -50,6 +55,7 @@ final class LifecycleService
         $this->vehicles = new VehicleRepository($pdo);
         $this->access = new VehicleAccess($pdo);
         $this->records = new RecordRepository($pdo);
+        $this->contracts = new ContractRepository($pdo);
         $this->notes = new NoteRepository($pdo);
         $this->readings = new OdometerRepository($pdo);
         $this->audit = new AuditRepository($pdo);
@@ -149,7 +155,7 @@ final class LifecycleService
                 throw new DomainError('not_deleted', 'Dieser Eintrag ist nicht gelöscht.', ['type' => $type, 'id' => $id]);
             }
             // Notizen brauchen keine Prüfung: der eindeutige Schlüssel (Fahrzeug, Thema) lässt kein zweites gleiches Thema zu.
-            if ($table !== self::NOTES_TABLE && $this->records->hasActiveDuplicate($table, $id, self::keyColumns($table, $record['row']), $actor)) {
+            if ($table !== self::NOTES_TABLE && $this->hasActiveDuplicate($table, $id, $record['row'], $actor)) {
                 throw new DomainError('conflict', 'Es gibt inzwischen einen gleichen Eintrag.', ['type' => $type, 'id' => $id]);
             }
 
@@ -201,9 +207,10 @@ final class LifecycleService
 
     /**
      * Sperrreihenfolge wie überall: erst das Fahrzeug (mit Schreibrecht), dann der Datensatz. Fremd, unbekannt oder an
-     * einem gelöschten Fahrzeug ergibt `not_found`.
+     * einem gelöschten Fahrzeug ergibt `not_found`. Garagen-Verträge und ihre Vorgänge haben kein Fahrzeug: dort sperrt die
+     * Garage, und es zählt das Schreibrecht in ihr.
      *
-     * @return array{garage_id: int, vehicle_id: int, status: string, status_reason: string|null, row: array<string, mixed>}
+     * @return array{garage_id: int, vehicle_id: int|null, status: string, status_reason: string|null, row: array<string, mixed>}
      */
     private function lockedRecord(string $table, int $id, Actor $actor): array
     {
@@ -211,12 +218,19 @@ final class LifecycleService
         if ($known === null) {
             throw self::recordNotFound($id);
         }
-        $this->access->writable($known['vehicle_id'], $actor);
+        if ($known['vehicle_id'] === null) {
+            if ($this->contracts->lockGarage($known['garage_id'], $actor) === null) {
+                throw self::recordNotFound($id);
+            }
+            $this->access->assertCanWriteGarage($known['garage_id'], $actor);
+        } else {
+            $this->access->writable($known['vehicle_id'], $actor);
+        }
 
         return $this->loadRecord($table, $id, $actor, true) ?? throw self::recordNotFound($id);
     }
 
-    /** @return array{garage_id: int, vehicle_id: int, status: string, status_reason: string|null, row: array<string, mixed>}|null */
+    /** @return array{garage_id: int, vehicle_id: int|null, status: string, status_reason: string|null, row: array<string, mixed>}|null */
     private function loadRecord(string $table, int $id, Actor $actor, bool $lock): ?array
     {
         if ($table === self::NOTES_TABLE) {
@@ -228,21 +242,23 @@ final class LifecycleService
             return ['garage_id' => $note['garage_id'], 'vehicle_id' => $note['vehicle_id'], 'status' => $note['status'], 'status_reason' => null, 'row' => $note];
         }
 
-        $row = $this->records->findAnyStatus($table, $id, $actor, $lock);
+        $row = isset(ContractMerger::TABLES[$table])
+            ? $this->contracts->findAnyStatus($table, $id, $actor, $lock)
+            : $this->records->findAnyStatus($table, $id, $actor, $lock);
         if ($row === null) {
             return null;
         }
 
         return [
             'garage_id' => (int) $row['garage_id'],
-            'vehicle_id' => (int) $row['vehicle_id'],
+            'vehicle_id' => $row['vehicle_id'] === null ? null : (int) $row['vehicle_id'],
             'status' => (string) $row['status'],
             'status_reason' => $row['status_reason'] === null ? null : (string) $row['status_reason'],
             'row' => $row,
         ];
     }
 
-    /** @param array{garage_id: int, vehicle_id: int, status: string, status_reason: string|null, row: array<string, mixed>} $record */
+    /** @param array{garage_id: int, vehicle_id: int|null, status: string, status_reason: string|null, row: array<string, mixed>} $record */
     private function writeStatus(string $table, array $record, string $status, ?string $reason, Actor $actor): void
     {
         $id = (int) $record['row']['id'];
@@ -251,8 +267,27 @@ final class LifecycleService
 
             return;
         }
+        if (isset(ContractMerger::TABLES[$table])) {
+            $this->contracts->setStatus($table, $id, $status, $reason, $actor);
+
+            return;
+        }
 
         $this->records->setStatus($table, $id, $status, $reason, $actor);
+    }
+
+    /**
+     * Vertragstabellen vergleichen innerhalb der Garage (Garagen-Verträge haben kein Fahrzeug), alle übrigen am Fahrzeug.
+     *
+     * @param array<string, mixed> $row
+     */
+    private function hasActiveDuplicate(string $table, int $id, array $row, Actor $actor): bool
+    {
+        if (isset(ContractMerger::TABLES[$table])) {
+            return $this->contracts->hasActiveDuplicate($table, $id, $actor);
+        }
+
+        return $this->records->hasActiveDuplicate($table, $id, self::keyColumns($table, $row), $actor);
     }
 
     /**
@@ -290,7 +325,7 @@ final class LifecycleService
     }
 
     /**
-     * @param array{garage_id: int, vehicle_id: int, status: string, status_reason: string|null, row: array<string, mixed>} $record
+     * @param array{garage_id: int, vehicle_id: int|null, status: string, status_reason: string|null, row: array<string, mixed>} $record
      * @param array<string, mixed> $after
      */
     private function recordRecordAudit(Actor $actor, string $action, string $table, array $record, array $after): void

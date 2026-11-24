@@ -246,8 +246,9 @@ final class DocumentRepository
 
     /**
      * Zeile eines Anhangsziels samt Garage und Fahrzeug; `$table` stammt aus `DocumentService::TARGETS` (nie aus Eingaben).
+     * `vehicle_id` ist `null` bei einem Garagen-Vertrag und seinen Vorgängen; Vorgänge erben das Fahrzeug ihres Vertrags.
      *
-     * @return array{id: int, garage_id: int, vehicle_id: int}|null
+     * @return array{id: int, garage_id: int, vehicle_id: int|null}|null
      */
     public function findTarget(string $table, int $id, Actor $actor): ?array
     {
@@ -256,14 +257,19 @@ final class DocumentRepository
             return null;
         }
 
-        $vehicleColumn = $table === 'vehicles' ? 'id' : 'vehicle_id';
-        $statement = $this->pdo->prepare(
-            sprintf('SELECT id, garage_id, %s AS vehicle_id FROM %s WHERE id = ? AND garage_id IN (%s)', $vehicleColumn, $table, self::placeholders($garageIds))
-        );
+        $sql = match ($table) {
+            'vehicles' => 'SELECT id, garage_id, id AS vehicle_id FROM vehicles WHERE id = ? AND garage_id IN (%s)',
+            'contract_events' => 'SELECT e.id, e.garage_id, c.vehicle_id FROM contract_events e JOIN contracts c ON c.id = e.contract_id WHERE e.id = ? AND e.garage_id IN (%s)',
+            default => 'SELECT id, garage_id, vehicle_id FROM ' . $table . ' WHERE id = ? AND garage_id IN (%s)',
+        };
+        $statement = $this->pdo->prepare(sprintf($sql, self::placeholders($garageIds)));
         $statement->execute([$id, ...$garageIds]);
         $row = $statement->fetch();
+        if ($row === false) {
+            return null;
+        }
 
-        return $row === false ? null : ['id' => (int) $row['id'], 'garage_id' => (int) $row['garage_id'], 'vehicle_id' => (int) $row['vehicle_id']];
+        return ['id' => (int) $row['id'], 'garage_id' => (int) $row['garage_id'], 'vehicle_id' => $row['vehicle_id'] === null ? null : (int) $row['vehicle_id']];
     }
 
     /** @return bool `true`, wenn der Anhang neu entstand; `false`, wenn es ihn schon gab */

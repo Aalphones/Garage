@@ -16,6 +16,7 @@ final class OpenItemEffect
 {
     private VehicleRepository $vehicles;
     private RecordMerger $merger;
+    private ContractMerger $contractMerger;
     private EventService $events;
     private OdometerRepository $readings;
     private TaskRepository $tasks;
@@ -26,6 +27,7 @@ final class OpenItemEffect
         $this->vehicles = new VehicleRepository($pdo);
         $this->odometer = new OdometerService($pdo);
         $this->merger = new RecordMerger($pdo);
+        $this->contractMerger = new ContractMerger($pdo);
         $this->events = new EventService($pdo);
         $this->readings = new OdometerRepository($pdo);
         $this->tasks = new TaskRepository($pdo);
@@ -245,6 +247,9 @@ final class OpenItemEffect
      */
     private function acceptColumn(string $table, int $rowId, array $proposal, Actor $actor): array
     {
+        if (isset(ContractMerger::TABLES[$table])) {
+            return $this->contractMerger->applyProposal($table, $rowId, $proposal, $actor);
+        }
         if (!isset(RecordMerger::TABLES[$table])) {
             throw new LogicException(sprintf('Klärfall mit unbekannter Tabelle „%s“.', $table));
         }

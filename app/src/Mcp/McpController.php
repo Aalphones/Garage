@@ -7,8 +7,10 @@ namespace Garage\Mcp;
 use Garage\Auth\McpAuth;
 use Garage\Auth\Scopes;
 use Garage\Db\Connection;
+use Garage\Domain\AccessoryService;
 use Garage\Domain\Actor;
 use Garage\Domain\ChangeService;
+use Garage\Domain\ContractService;
 use Garage\Domain\DamageService;
 use Garage\Domain\DocumentService;
 use Garage\Domain\DossierService;
@@ -20,7 +22,9 @@ use Garage\Domain\MeasurementService;
 use Garage\Domain\NoteService;
 use Garage\Domain\OdometerService;
 use Garage\Domain\OpenItemService;
+use Garage\Domain\PaperService;
 use Garage\Domain\PartService;
+use Garage\Domain\PermitService;
 use Garage\Domain\RegistrationService;
 use Garage\Domain\SearchService;
 use Garage\Domain\TaskService;
@@ -31,6 +35,7 @@ use Garage\Domain\VehicleService;
 use Garage\Http\Request;
 use Garage\Http\Response;
 use Garage\Mcp\Tools\ChangeTools;
+use Garage\Mcp\Tools\ContractTools;
 use Garage\Mcp\Tools\DamageTools;
 use Garage\Mcp\Tools\DocumentTools;
 use Garage\Mcp\Tools\DossierTools;
@@ -41,6 +46,7 @@ use Garage\Mcp\Tools\MeasurementTools;
 use Garage\Mcp\Tools\NoteTools;
 use Garage\Mcp\Tools\OdometerTools;
 use Garage\Mcp\Tools\OpenItemTools;
+use Garage\Mcp\Tools\PaperTools;
 use Garage\Mcp\Tools\PartTools;
 use Garage\Mcp\Tools\RegistrationTools;
 use Garage\Mcp\Tools\SearchTools;
@@ -91,6 +97,10 @@ final class McpController
             'tires' => new TireService($pdo),
             'parts' => new PartService($pdo),
             'damages' => new DamageService($pdo),
+            'contracts' => new ContractService($pdo),
+            'accessories' => new AccessoryService($pdo),
+            'permits' => new PermitService($pdo),
+            'papers' => new PaperService($pdo),
             'notes' => new NoteService($pdo),
             'openItems' => new OpenItemService($pdo),
             'changes' => new ChangeService($pdo),
@@ -410,6 +420,9 @@ final class McpController
         PartTools::register($registry, $services);
         $registry->group('Schäden und Rückrufe');
         DamageTools::register($registry, $services);
+        $registry->group('Verträge und Papiere');
+        ContractTools::register($registry, $services);
+        PaperTools::register($registry, $services);
         $registry->group('Notizen');
         NoteTools::register($registry, $services);
         $registry->group('Klärfälle und Verlauf');
