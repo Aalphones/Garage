@@ -34,6 +34,7 @@ final class LifecycleService
     private const STATUS_DELETED = 'geloescht';
     private const NOTES_TABLE = 'notes';
     private const EVENTS_TABLE = 'events';
+    private const LOCAL_TIMEZONE = 'Europe/Berlin';
     private const MAX_REASON = 200;
     private const REASON_EXAMPLE = '{"reason": "Doppelt erfasst"}';
 
@@ -66,6 +67,7 @@ final class LifecycleService
             $vehicle = $this->ownedVehicle($vehicleId, $actor, 'Den Status eines Fahrzeugs ändert nur der Inhaber der Garage.');
 
             $this->vehicles->setStatus($vehicleId, $status, $reason, $actor);
+            $this->vehicles->setStatusSince($vehicleId, $status === self::STATUS_ACTIVE ? null : self::today(), $actor);
             $this->recordVehicleAudit($actor, 'vehicle.status', $vehicle, $status, $reason);
 
             return ['id' => $vehicleId, 'status' => $status, 'status_reason' => $reason];
@@ -104,6 +106,7 @@ final class LifecycleService
             }
 
             $this->vehicles->setStatus($vehicleId, self::STATUS_ACTIVE, null, $actor);
+            $this->vehicles->setStatusSince($vehicleId, null, $actor);
             $this->recordVehicleAudit($actor, 'vehicle.restore', $vehicle, self::STATUS_ACTIVE, null);
 
             return ['id' => $vehicleId, 'status' => self::STATUS_ACTIVE];
@@ -159,6 +162,11 @@ final class LifecycleService
 
             return ['type' => $type, 'id' => $id, 'status' => self::STATUS_ACTIVE];
         });
+    }
+
+    private static function today(): string
+    {
+        return (new DateTimeImmutable('now', new DateTimeZone(self::LOCAL_TIMEZONE)))->format('Y-m-d');
     }
 
     private static function assertHuman(Actor $actor): void

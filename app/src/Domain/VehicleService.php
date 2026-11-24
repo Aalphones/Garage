@@ -27,7 +27,7 @@ final class VehicleService
     private const TYPE_DATE = 'date';
     private const TYPE_INT = 'int';
 
-    /** Feld → Typ, Längengrenzen (nur Text) und ein Beispielwert für die Fehlermeldung. */
+    /** Feld → Typ, Grenzen (Länge bei Text, Wert bei Zahl), erlaubte Werte (`choices`) und ein Beispielwert für die Fehlermeldung. */
     public const FIELDS = [
         'fin' => ['type' => self::TYPE_FIN, 'example' => 'WVWZZZ1KZAW123456'],
         'hsn' => ['type' => self::TYPE_TEXT, 'min' => 4, 'max' => 4, 'example' => '0603'],
@@ -50,6 +50,8 @@ final class VehicleService
         'listenneupreis_eur' => ['type' => self::TYPE_INT, 'example' => '28000'],
         'schluesselanzahl' => ['type' => self::TYPE_INT, 'example' => '2'],
         'ablageort_papiere' => ['type' => self::TYPE_TEXT, 'example' => 'Ordner Auto, Regal Büro'],
+        'unfallfrei' => ['type' => self::TYPE_TEXT, 'choices' => ['ja', 'nein'], 'example' => 'ja'],
+        'halterzahl' => ['type' => self::TYPE_INT, 'min' => 1, 'max' => 20, 'example' => '2'],
     ];
 
     /** Spezifikationen sind Fakten mit Feldnamen `spec.<bereich>.<schluessel>` (ADR-009). */
@@ -648,10 +650,14 @@ final class VehicleService
         $definition = self::FIELDS[$field];
         $example = sprintf('{"field": "%s", "value": "%s"}', $field, $definition['example']);
 
+        if (isset($definition['choices'])) {
+            return Validate::enum($field, $raw, $definition['choices']);
+        }
+
         return match ($definition['type']) {
             self::TYPE_FIN => self::validFin($field, $raw, $example),
             self::TYPE_DATE => Validate::date($field, $raw, $example),
-            self::TYPE_INT => Validate::int($field, $raw, $example),
+            self::TYPE_INT => Validate::int($field, $raw, $example, $definition['min'] ?? 0, $definition['max'] ?? null),
             default => Validate::text($field, $raw, $definition['min'] ?? 1, $definition['max'] ?? self::TEXT_MAX, $example),
         };
     }

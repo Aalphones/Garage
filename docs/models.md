@@ -88,6 +88,44 @@ Tokens, Einladungen und Passwörter liegen nur als Hash in der Datenbank; Klarte
 | `inbox_items` | `id` PK, `garage_id`, `vehicle_id` NULL, `note` VARCHAR(200) NULL, `status` ENUM(`neu`,`in_arbeit`,`erfasst`,`klaerfall`,`verworfen`), `claimed_by` NULL (Akteur), `claimed_user_id` NULL, `claimed_until` DATETIME NULL, `result` VARCHAR(500) NULL, `open_item_id` NULL, `actor`, `user_id`, `created_at`, `updated_at`; Index (`garage_id`,`status`,`created_at`) | Kein Job setzt die Frist zurück: `in_arbeit` mit `claimed_until` < `UTC_TIMESTAMP()` gilt als `neu` (ADR-016) |
 | `inbox_documents` | PK (`inbox_item_id`,`document_id`), `position`; Index (`inbox_item_id`,`position`) | Dokumente eines Eintrags in Reihenfolge |
 
+## Kosten, Wert, Zubehör, Kalender (Meilenstein 5, Migrationen 020–024)
+
+Alle Tabellen tragen `garage_id` (FK `garages`) und den Herkunftsblock der Listen-Tabellen (`source` … `updated_at`, `status` ENUM(`aktiv`,`geloescht`)); Beträge sind `…_cents` INT. Index `(vehicle_id, status)` überall dort, wo die Tabelle ein `vehicle_id` trägt. Kosten werden nie gespeichert, sondern beim Lesen gerechnet (ADR-022).
+
+### Kosten und Verträge (`020_contract.sql`, `021_expense.sql`; ADR-022, ADR-025)
+
+| Tabelle | Fachspalten | Hinweis |
+|---|---|---|
+| `contracts` | `vehicle_id` FK **NULL** (NULL = Garagen-Vertrag), `kind` ENUM(`versicherung`,`steuer`,`club`,`stellplatz`,`finanzierung`,`sonstiges`), `provider` VARCHAR(120), `contract_number` VARCHAR(60) (leer statt NULL), `tariff` NULL, `starts_on` DATE NULL, `main_due` CHAR(5) NULL (`MM-TT`), `notice_months` TINYINT NULL, `payment_interval` ENUM(`jaehrlich`,`halbjaehrlich`,`vierteljaehrlich`,`monatlich`) NULL, `ends_on` DATE NULL (gekündigt zum), `allocation` ENUM(`gleich`,`km`,`fest`) NULL (nur Garagen-Vertrag), `hotline` NULL, `member_number` NULL, `note` NULL; Index `(garage_id, status)`, `(vehicle_id, status)` | Abgleich über `ContractMerger` (Phase 2) |
+| `contract_terms` | `contract_id` FK, `valid_from`/`valid_to` DATE, `amount_cents` INT UNSIGNED (Betrag der ganzen Periode), `coverage` NULL, `sf_liability`/`sf_comprehensive` VARCHAR(10) NULL, `type_class_liability`/`type_class_partial`/`type_class_full`/`regional_class` TINYINT NULL, `declared_km_per_year` NULL, `deductible_note` NULL; Index `(contract_id, status)` | Beitragsperioden; kein `vehicle_id`, hängt über den Vertrag |
+| `contract_allocations` | `contract_id` FK, `vehicle_id` FK, `share_percent` DECIMAL(5,2), `valid_from` DATE, `valid_to` DATE NULL; Index `(contract_id, status)` | feste Anteile eines Garagen-Vertrags (`allocation = fest`) |
+| `contract_events` | `contract_id` FK, `kind` ENUM(`beitragsrechnung`,`aenderung`,`schadenmeldung`,`regulierung`,`rueckstufung`,`kuendigung`), `occurred_on` DATE, `amount_cents` INT NULL (Erstattung negativ), `event_status` ENUM(`offen`,`in_bearbeitung`,`erledigt`), `claim_number` NULL, `damage_id` NULL (ohne FK), `note` NULL; Index `(contract_id, status)` | Vorgänge; `kind` und `event_status` sind getrennt, weil `status` der Herkunftsblock ist |
+| `expenses` | `vehicle_id` FK, `spent_on` DATE, `category` ENUM(`parken`,`waesche`,`pflege`,`maut`,`reifeneinlagerung`,`bussgeld`,`sonstiges`), `amount_cents`, `spread_months` TINYINT (1 = am Tag, sonst gleichmäßig verteilt), `note` NULL | |
+| `fuel_logs` | `vehicle_id` FK, `fueled_on` DATE, `odometer_km`, `liters` DECIMAL(6,2), `amount_cents`, `is_full` TINYINT(1), `odometer_reading_id` NULL (ohne FK; der Kilometerstand der Tankung), `station` NULL | Verbrauch aus vollen Tankungen (Phase 3) |
+
+### Wert (`022_valuation.sql`; ADR-023)
+
+| Tabelle | Fachspalten | Hinweis |
+|---|---|---|
+| `valuations` | `vehicle_id` FK, `valued_on` DATE, `kind` ENUM(`kaufpreis`,`verkaufspreis`,`gutachten`,`haendlerangebot`,`bewertung`,`schaetzung`), `value_type` ENUM(`haendlereinkauf`,`privatverkauf`,`haendlerverkauf`) NULL, `amount_cents`, `range_low_cents`/`range_high_cents` NULL, `odometer_km` NULL, `provider` VARCHAR(120) (leer statt NULL), `note` NULL | Ankerwerte; der Kaufpreis ist eine Bewertung der Art `kaufpreis` |
+| `market_listings` | `vehicle_id` FK, `url` VARCHAR(500), `fetched_on` DATE, `price_cents`, `odometer_km`, `first_registration` CHAR(7) (`JJJJ-MM`), `same_drivetrain` TINYINT(1), `equipment_note` NULL, `postal_code` NULL | Vergleichsinserate; Zählregeln in ADR-023 |
+
+### Zubehör und Plaketten (`023_accessory.sql`)
+
+| Tabelle | Fachspalten | Hinweis |
+|---|---|---|
+| `accessories` | `vehicle_id` FK, `name` VARCHAR(120), `category` ENUM(`traeger`,`kindersitz`,`matten`,`dashcam`,`kabel`,`sonstiges`), `manufacturer` NULL, `article_number` NULL, `bought_on` DATE NULL, `price_cents` NULL, `warranty_until` DATE NULL, `mount_state` ENUM(`montiert`,`eingelagert`) NULL, `storage_location` NULL, `goes_with_sale` TINYINT(1) NULL | Garantie-Ende ist ein Stichtag (ADR-024) |
+| `permits` | `vehicle_id` FK, `kind` ENUM(`umweltplakette`,`critair`,`vignette`,`parkausweis`,`mautbox`,`sonstiges`), `label` VARCHAR(80), `number` NULL, `valid_from` DATE NULL, `valid_until` DATE NULL (NULL = unbegrenzt), `price_cents` NULL | Gültigkeit ist ein Stichtag und Fixkosten-Anteil |
+
+### Kalender und Statuswechsel (`024_calendar.sql`)
+
+| Tabelle | Neue Spalte | Hinweis |
+|---|---|---|
+| `garages` | `calendar_version` INT UNSIGNED NOT NULL DEFAULT 1 | geht in die Signatur des Kalender-Abo-Links ein; Erneuern zählt hoch (ADR-024) |
+| `vehicles` | `status_since` DATE NULL | Datum (Europe/Berlin), an dem das Fahrzeug auf `verkauft`/`stillgelegt` gesetzt wurde; `NULL` bei `aktiv` und bei Fahrzeugen, die vor Meilenstein 5 den Status wechselten; `LifecycleService` setzt es, Löschen lässt es unberührt (ADR-022) |
+
+Neue Stammdatenfelder in `vehicle_facts` (keine Migration, `VehicleService::FIELDS`): `unfallfrei` (nur `ja`/`nein`) und `halterzahl` (1–20), beide für die Wertfaktoren (ADR-023).
+
 ## Regeln für jede neue Tabelle
 
 - Jede Tabelle mit Fakten trägt `garage_id`, `source`, `source_document_id` oder `source_url`, `confidence` und den Akteur.

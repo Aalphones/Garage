@@ -39,6 +39,8 @@ final class DossierService
         'listenneupreis_eur' => 'Listenneupreis (€)',
         'schluesselanzahl' => 'Schlüsselanzahl',
         'ablageort_papiere' => 'Ablageort der Papiere',
+        'unfallfrei' => 'Unfallfrei',
+        'halterzahl' => 'Anzahl Halter',
     ];
     private const DATE_FIELDS = ['erstzulassung'];
     private const INTEGER_FIELDS = ['leistung_kw', 'hubraum_ccm', 'co2_g_km', 'leergewicht_kg', 'zul_gesamtgewicht_kg', 'listenneupreis_eur'];

@@ -13,11 +13,11 @@ Rating: standard · Modell: sonnet
 
 ## AK
 
-- [ ] Fünf Migrationen `app/migrations/020_contract.sql`, `021_expense.sql`, `022_valuation.sql`, `023_accessory.sql`, `024_calendar.sql` mit genau den Tabellen und Spalten unten; jede Faktentabelle trägt den Herkunftsblock aus `013_part.sql` (`source` … `updated_at`) und `INDEX idx_<tabelle>_vehicle_status (vehicle_id, status)`.
-- [ ] `VehicleService::FIELDS` kennt `unfallfrei` (Text, nur `ja` oder `nein`) und `halterzahl` (Zahl 1–20); `DossierService::FACT_LABELS` (Konstante mit `'fin' => 'FIN'`) hat „Unfallfrei“ und „Anzahl Halter“.
-- [ ] `LifecycleService::setVehicleStatus` setzt `vehicles.status_since` auf das heutige Datum (Europe/Berlin), `restoreVehicle` und ein Wechsel zurück auf `aktiv` setzen es auf `NULL`.
-- [ ] ADR-022 bis ADR-025 liegen unter `docs/decisions/` mit dem Inhalt aus „ADR-Inhalte“ unten (Format wie ADR-021: Status, Kontext, Entscheidung, Verworfen, Konsequenzen).
-- [ ] `docs/models.md` beschreibt alle neuen Tabellen und Spalten.
+- [x] Fünf Migrationen `app/migrations/020_contract.sql`, `021_expense.sql`, `022_valuation.sql`, `023_accessory.sql`, `024_calendar.sql` mit genau den Tabellen und Spalten unten; jede Faktentabelle trägt den Herkunftsblock aus `013_part.sql` (`source` … `updated_at`) und `INDEX idx_<tabelle>_vehicle_status (vehicle_id, status)`.
+- [x] `VehicleService::FIELDS` kennt `unfallfrei` (Text, nur `ja` oder `nein`) und `halterzahl` (Zahl 1–20); `DossierService::FACT_LABELS` (Konstante mit `'fin' => 'FIN'`) hat „Unfallfrei“ und „Anzahl Halter“.
+- [x] `LifecycleService::setVehicleStatus` setzt `vehicles.status_since` auf das heutige Datum (Europe/Berlin), `restoreVehicle` und ein Wechsel zurück auf `aktiv` setzen es auf `NULL`.
+- [x] ADR-022 bis ADR-025 liegen unter `docs/decisions/` mit dem Inhalt aus „ADR-Inhalte“ unten (Format wie ADR-021: Status, Kontext, Entscheidung, Verworfen, Konsequenzen).
+- [x] `docs/models.md` beschreibt alle neuen Tabellen und Spalten.
 
 ## Tabellen
 
@@ -64,12 +64,16 @@ Die drei Untertabellen tragen kein `vehicle_id`: sie hängen über `contract_id`
 
 ## Checkliste
 
-- [ ] Migrationen 020–024 schreiben (Spalten exakt wie oben, Reihenfolge der Spalten wie gelistet, Herkunftsblock am Ende).
-- [ ] `VehicleService::FIELDS`: `'unfallfrei' => ['type' => self::TYPE_TEXT, 'choices' => ['ja', 'nein'], 'example' => 'ja']`, `'halterzahl' => ['type' => self::TYPE_INT, 'min' => 1, 'max' => 20, 'example' => '2']`; in der Validierung von `TYPE_TEXT` `choices` prüfen (Fehlertext nennt die erlaubten Werte); `TYPE_INT` `min`/`max` prüfen, falls noch nicht vorhanden (vorher lesen).
-- [ ] `DossierService` Feldnamen-Konstante um beide Felder ergänzen.
-- [ ] `LifecycleService::setVehicleStatus`/`restoreVehicle`: `status_since` schreiben (über `VehicleRepository`, Methode `setStatus` o. ä. — vorhandene Methode erweitern, die `status` schreibt).
-- [ ] ADR-022 bis 025 anlegen.
-- [ ] `docs/models.md`: Abschnitt „Kosten und Verträge“, „Wert“, „Zubehör und Plaketten“, Spalten `garages.calendar_version`, `vehicles.status_since`.
+- [x] Migrationen 020–024 schreiben (Spalten exakt wie oben, Reihenfolge der Spalten wie gelistet, Herkunftsblock am Ende).
+- [x] `VehicleService::FIELDS`: `'unfallfrei' => ['type' => self::TYPE_TEXT, 'choices' => ['ja', 'nein'], 'example' => 'ja']`, `'halterzahl' => ['type' => self::TYPE_INT, 'min' => 1, 'max' => 20, 'example' => '2']`; in der Validierung von `TYPE_TEXT` `choices` prüfen (Fehlertext nennt die erlaubten Werte); `TYPE_INT` `min`/`max` prüfen, falls noch nicht vorhanden (vorher lesen).
+- [x] `DossierService` Feldnamen-Konstante um beide Felder ergänzen.
+- [x] `LifecycleService::setVehicleStatus`/`restoreVehicle`: `status_since` schreiben (über `VehicleRepository`, Methode `setStatus` o. ä. — vorhandene Methode erweitern, die `status` schreibt).
+- [x] ADR-022 bis 025 anlegen.
+- [x] `docs/models.md`: Abschnitt „Kosten und Verträge“, „Wert“, „Zubehör und Plaketten“, Spalten `garages.calendar_version`, `vehicles.status_since`.
 - [ ] Syntax: lokal gibt es kein PHP — nach dem Push den CI-Lauf (`php -l` je Datei) ansehen; rot → in dieser Phase beheben.
 
 ## Report-Back
+
+Umgesetzt: Migrationen 020–024, `unfallfrei`/`halterzahl` (inkl. neuer `choices`- und `min`/`max`-Prüfung in `VehicleService::validValue`), `status_since` über neue Methode `VehicleRepository::setStatusSince` (aufgerufen aus `setVehicleStatus` und `restoreVehicle`; `deleteVehicle` lässt es unberührt), ADR-022 bis 025, `docs/models.md`.
+
+Abweichung: die Namenskonstante in `DossierService` heißt `LABELS`, nicht `FACT_LABELS`; dort ergänzt. Kein PHP lokal — Syntax-Prüfung steht noch aus (CI nach dem Push).

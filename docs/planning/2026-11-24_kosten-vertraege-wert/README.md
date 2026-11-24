@@ -8,7 +8,7 @@ Wünsche des Inhabers (2026-11-24): ein Plan für den ganzen Meilenstein; erst E
 
 | Phase | Inhalt | Rating | Modell | Status |
 |---|---|---|---|---|
-| 1 | Datenmodell und Entscheidungen (Migrationen 020–024, ADR-022 bis 025) | standard | sonnet | pending |
+| 1 | Datenmodell und Entscheidungen (Migrationen 020–024, ADR-022 bis 025) | standard | sonnet | complete |
 | 2 | Verträge, Vorgänge, Plaketten, Zubehör: Dienste, Agenten-Werkzeuge, Löschen | heikel | opus | pending |
 | 3 | Tankbuch und Ausgaben: Dienste, Werkzeuge, Eingabe-Routen | standard | sonnet | pending |
 | 4 | Wertermittlung: Korridor, Regression, Wertfaktoren | heikel | opus | pending |

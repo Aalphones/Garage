@@ -165,6 +165,18 @@ final class VehicleRepository
         return (string) $select->fetchColumn();
     }
 
+    /** Datum des Wechsels auf verkauft/stillgelegt; `null` bei aktiv. Die Kostenumlage zählt ein Auto bis dahin mit. */
+    public function setStatusSince(int $vehicleId, ?string $date, Actor $actor): void
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            throw new LogicException('Statuswechsel ohne Garage.');
+        }
+
+        $update = $this->pdo->prepare(sprintf('UPDATE vehicles SET status_since = ? WHERE id = ? AND garage_id IN (%s)', self::placeholders($garageIds)));
+        $update->execute([$date, $vehicleId, ...$garageIds]);
+    }
+
     public function insert(int $garageId, string $label, Actor $actor): int
     {
         $this->assertOwnGarage($garageId, $actor);
