@@ -1,6 +1,6 @@
 # Code-Map — GARAGE
 
-Feature → Ordner. Bewusst grob, keine Zeilennummern. Steht: Gerüst (Bootstrap, Http, Env, Log, Migrator, Brücke, Dev-Router, Deploy), Konten (Einladung, Anmeldung, Akteur), OAuth-Server, MCP-Endpunkt mit Fahrzeugen, Datensatz-Abgleich (Zulassung, Ausstattung, Spezifikationen), Scheckheft und Kilometer, Wartungsplan, Messwerte/Reifen/Teile, Klärfälle/Verlauf/Suche, Belege und Fotos (Ablage mit Tickets, Bildern, signierten Links; Anhänge; Eingang mit Reservierung; Seiten Eingang und Belege mit pdf.js; Teilen-Ziel Android; Claude-Widget). Übrige Ordner entstehen mit ihren Meilensteinen.
+Feature → Ordner. Bewusst grob, keine Zeilennummern. Steht: Gerüst (Bootstrap, Http, Env, Log, Migrator, Brücke, Dev-Router, Deploy), Konten (Einladung, Anmeldung, Akteur), OAuth-Server, MCP-Endpunkt mit Fahrzeugen, Datensatz-Abgleich (Zulassung, Ausstattung, Spezifikationen), Scheckheft und Kilometer, Wartungsplan, Messwerte/Reifen/Teile, Klärfälle/Verlauf/Suche, Belege und Fotos (Ablage mit Tickets, Bildern, signierten Links; Anhänge; Eingang mit Reservierung; Seiten Eingang und Belege mit pdf.js; Teilen-Ziel Android; Claude-Widget), Oberfläche (Gestaltung Dark Botanical mit Schale, Garage, Fahrzeug mit sieben Reitern, Klärfälle, Druckansicht; Lese- und Schreib-Routen der Akte, Scheckheft-Lücken, Löschen und kleine Eingaben durch Menschen). Übrige Ordner entstehen mit ihren Meilensteinen.
 
 ## Namensschema (erst raten, dann suchen)
 
@@ -20,7 +20,7 @@ Eine Domäne `<x>` (vehicle, event, task, measurement, tire, part, document, inb
 | Im Repo | Auf dem Server (`www/`) | Inhalt |
 |---|---|---|
 | `app/` | `garage-app/` | gesamter PHP-Code, Migrationen, Texte für Agenten, `.env`, `storage/` — gesperrt (ADR-002) |
-| `web/` | `garage/` | Brücke `index.php`, `.htaccess` (Rewrite, eigene CSP; sperrt `.user.ini`), `.user.ini` (`max_file_uploads = 40` für Seitenbilder), Oberfläche: Seiten `index.html` (Anmeldung + Konto), `garage.html`, `fahrzeug.html`, `klaerfaelle.html`, `einladung.html`, `zustimmung.html` direkt in `web/` (Unterordner gingen an die Brücke), Skripte in `js/`, Stil in `css/` (`print.css` nur für die Druckansicht) |
+| `web/` | `garage/` | Brücke `index.php`, `.htaccess` (Rewrite, eigene CSP; sperrt `.user.ini`), `.user.ini` (`max_file_uploads = 40` für Seitenbilder), Oberfläche: Seiten `index.html` (Anmeldung + Konto), `garage.html`, `fahrzeug.html`, `klaerfaelle.html`, `eingang.html`, `belege.html`, `einladung.html`, `zustimmung.html` direkt in `web/` (Unterordner gingen an die Brücke), Skripte in `js/`, Stil in `css/` (`print.css` nur für die Druckansicht) |
 | — | `.htaccess` an der Wurzel | gehört DISPATCH; leitet `/.well-known/<art>/garage…` an die Brücke (ADR-001) |
 | `deploy.cmd`, `deploy.env.example` | — | Deploy (ADR-003); Vorlage für `deploy.env` (nicht im Git) |
 | `dev-router.php`, `dev.env.example` | — | lokaler Server `php -S localhost:8081 dev-router.php`, Vorlage für `app/.env.local` |

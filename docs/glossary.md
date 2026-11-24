@@ -20,6 +20,9 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 | Begriff | Bedeutung |
 |---|---|
 | Akte (Dossier) | Alles zu einem Fahrzeug; als Markdown über `get_dossier` und als Druckansicht. |
+| Lücke (Scheckheft) | Eine Wartungsaufgabe, die später ausgeführt wurde als Fälligkeit + 3 Monate bzw. + 3.000 km (auch ab Erstzulassung); wird im Scheckheft rot mit Rechenweg gezeigt, nie gespeichert (ADR-020). |
+| Gelöscht (wiederherstellbar) | Status `geloescht` eines Fahrzeugs oder Datensatzes, gesetzt nur von Menschen; Fahrzeuge lassen sich als Inhaber 30 Tage wiederherstellen, Datensätze über die Rückgängig-Leiste (ADR-019). |
+| Druckansicht | HTML-Fassung der Akte ohne Skript unter `/garage/akte/{slug}`, erreichbar über einen signierten Link (600 s) aus „Drucken“. |
 | Ereignis (`events`) | Ein datierter Vorgang am Fahrzeug: Inspektion, Reparatur, HU, Reifen, Schaden, Rückruf, Kauf. Eindeutig über Werkstatt und Rechnungsnummer, ohne Rechnungsnummer über Art, Leistungsdatum und Werkstatt. |
 | Position (`event_items`) | Eine Zeile eines Ereignisses: Arbeit, Teil, Material oder Pauschale. |
 | Wartungsaufgabe (`tasks`) | Wiederkehrende Arbeit an einem Fahrzeug, etwa Ölwechsel. |

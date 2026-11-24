@@ -10,7 +10,7 @@
 |---|---|
 | Markup | statische HTML-Hülle in `web/` |
 | Script | Vanilla-JS als ES-Module, kein Build-Schritt; lädt alle Daten über `/garage/api` |
-| Styling | eigenes CSS ohne Präprozessor; Design-Tokens entstehen mit dem Oberflächen-Meilenstein |
+| Styling | eigenes CSS ohne Präprozessor; Design-Tokens in `web/css/tokens.css` (dunkel Standard, hell über `data-theme`), ADR-017 |
 | Diagramme | SVG im Browser (`web/js/chart.js`), ADR-018 |
 | Tests | keine (ADR-004) |
 
@@ -28,7 +28,7 @@
 
 ## Seiten
 
-`index.html` (Anmeldung, Konto; nach der Anmeldung geht es zu `garage.html`), `garage.html` (Garage: Kennzahlen, Fahrzeugkarten je Garage), `fahrzeug.html` (Adresse `#<id>/<reiter>`, sieben Reiter, alle sieben gefüllt, dazu Kamera-Knopf), `klaerfaelle.html` (offene Klärfälle, Filter je Fahrzeug, Entscheidung nach 6 s mit „Rückgängig“), `eingang.html` (Fotos und PDFs in den Eingang legen, Eingang ansehen), `belege.html` (Belege als Liste oder Galerie, Detail unter `#beleg/<id>`), `einladung.html`, `zustimmung.html`. Die Navigation „Konto · Eingang · Belege“ steht unter der `h1` der drei Hauptseiten. Der Entwurf liegt in `docs/archive/2026-11/2026-11-17_belege-und-fotos/artifacts/entwurf-belege.html`.
+`garage.html` (Garage: Kennzahlen, Fahrzeugkarten je Garage, Filter Aktiv/Verkauft/Stillgelegt/Alle, für Inhaber Gelöscht mit „Wiederherstellen“), `fahrzeug.html` (Adresse `#<id>/<reiter>`, sieben Reiter Übersicht, Scheckheft, Wartung, Messwerte, Reifen, Teile, Belege; Kopf-Aktionen Drucken, Markdown, Status, Löschen; Kamera-Knopf), `klaerfaelle.html` (offene Klärfälle, Filter je Fahrzeug, Entscheidung nach 6 s mit „Rückgängig“), `eingang.html` (Fotos und PDFs in den Eingang legen, Eingang ansehen), `belege.html` (Belege als Liste oder Galerie, Detail unter `#beleg/<id>`), `index.html` (Anmeldung und Konto mit Darstellung; nach der Anmeldung geht es zu `garage.html`), `einladung.html`, `zustimmung.html`. Dazu die Druckansicht `/garage/akte/{slug}`: serverseitig aus `templates/akte-druck.php` und `css/print.css`, ohne Skript, signierter Link (600 s), kein statisches HTML in `web/`. Die Seitenschale (Seitenleiste ab 992 px, darunter untere Leiste) baut `js/shell.js` auf jeder Seite. Der Entwurf liegt in `docs/archive/2026-11/2026-11-17_belege-und-fotos/artifacts/entwurf-belege.html`.
 
 ## Regeln
 
@@ -36,7 +36,7 @@
 - Mobil zuerst: 360 px Breite ohne waagerechtes Scrollen, Hauptaktion in Daumenreichweite, hell und dunkel.
 - Herkunft sichtbar: jeder Wert mit Herkunfts-Abzeichen; geschätzte Werte mit „≈" und Rechenweg.
 - Leere Zustände nennen den nächsten Schritt statt einer leeren Tabelle.
-- Das Access-Token liegt nur im Arbeitsspeicher, nie in `localStorage`.
+- Das Access-Token liegt nur im Arbeitsspeicher, nie in `localStorage`. Anzeige-Einstellungen (Ansicht je Liste, Thema) liegen in `localStorage` unter `garage.*` (`garage.theme`, `garage.view.<liste>`), nie Daten oder Tokens.
 - Alle Pfade zur API absolut mit Präfix `/garage/api/` (ADR-001).
 - Druckansicht funktioniert ohne Skript.
 - Sprunglink zum Inhalt, sichtbare Fokusrahmen, Kontrast mindestens WCAG AA, Alt-Text, genau eine `h1` pro Seite.

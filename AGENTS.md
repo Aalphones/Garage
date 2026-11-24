@@ -22,7 +22,7 @@ Kontext, Scope, Meilensteine: [`docs/PROJECT.md`](docs/PROJECT.md). Fachkonzept:
 |---|---|
 | Backend | PHP 8.5, kein Framework, kein Composer |
 | Datenbank | MySQL (Strato, eigene Datenbank), PDO |
-| Oberfläche | HTML-Hülle, Vanilla-JS-ES-Module gegen `/garage/api` |
+| Oberfläche | HTML-Hülle, Vanilla-JS-ES-Module gegen `/garage/api`, Gestaltung „Dark Botanical“ über `web/css/tokens.css` (ADR-017), SVG-Diagramme im Browser (ADR-018) |
 | Agenten | MCP-Server mit OAuth 2.1 + CIMD, aus DISPATCH übernommen ([ADR-005](docs/decisions/005-kern-aus-dispatch-kopiert.md)); Konten per Einladung ([ADR-006](docs/decisions/006-konten-per-einladung-sitzung-je-nutzer.md)) |
 | Hosting | Strato Shared Hosting, SFTP auf `www/` |
 | Deploy | `deploy.cmd` + WinSCP ([ADR-003](docs/decisions/003-deploy-skript.md)) |

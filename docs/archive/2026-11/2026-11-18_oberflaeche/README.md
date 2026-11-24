@@ -1,6 +1,6 @@
 # Meilenstein 4 — Oberfläche
 
-Stand: 2026-11-18 · Entwurf freigegeben: [`artifacts/entwurf-oberflaeche.html`](artifacts/entwurf-oberflaeche.html) (verbindlich, siehe [`artifacts/README.md`](artifacts/README.md))
+Stand: 2026-11-24 (archiviert) · Entwurf freigegeben: [`artifacts/entwurf-oberflaeche.html`](artifacts/entwurf-oberflaeche.html) (verbindlich, siehe [`artifacts/README.md`](artifacts/README.md))
 
 Die Akte wird im Browser sichtbar und bedienbar: Garage, Fahrzeug mit sieben Reitern, Klärfälle, dazu Löschen, Statuswechsel und Druck durch Menschen. Gestaltung: dunkles Thema „GARAGE Dark Botanical“ (fast schwarze Flächen, Teal als Hervorhebung, Verläufe ins Dunkelgrüne, Hintergrundbild), hell umschaltbar.
 
@@ -16,13 +16,13 @@ Die Akte wird im Browser sichtbar und bedienbar: Garage, Fahrzeug mit sieben Rei
 | 7 | Reiter Messwerte, Reifen, Teile, Belege | standard | sonnet | complete |
 | 8 | Fahrzeug-Aktionen, Druckansicht, gelöschte Fahrzeuge | standard | sonnet | complete |
 | 8b | Kleine Eingaben in der Oberfläche | standard | sonnet | complete |
-| 9 | Doku-Abgleich und Abschluss | mechanisch | sonnet | pending |
+| 9 | Doku-Abgleich und Abschluss | mechanisch | sonnet | complete |
 
 Reihenfolge: 1 → 2 → 3 → 4 → 4b → 5 → 6 → 7 → 8 → 8b → 9. Phase 1 und 2 sind unabhängig voneinander; 5–8b brauchen 1 und 2, 6 braucht 3, 8 braucht 4, 8b braucht 4b.
 
 Wünsche des Inhabers (2026-11-18): Menschen dürfen kleine Eingaben machen (ADR-021); der Kamera-Knopf öffnet sofort die Kamera und legt das Foto ohne Seitenwechsel in den Eingang des Fahrzeugs; Klärfälle lassen sich direkt in der Fahrzeug-Übersicht lösen; Handy und Desktop sind gleich wichtig.
 
-Entscheidungen: [ADR-017](../../decisions/017-gestaltung-dark-botanical.md) Gestaltung · [ADR-018](../../decisions/018-oberflaeche-seiten-und-lese-api.md) Seiten, Lese-API, Diagramme, Druck · [ADR-019](../../decisions/019-loeschen-und-status-durch-menschen.md) Löschen und Status · [ADR-020](../../decisions/020-scheckheft-luecken.md) Scheckheft-Lücken · [ADR-021](../../decisions/021-kleine-eingaben-durch-menschen.md) kleine Eingaben.
+Entscheidungen: [ADR-017](../../../decisions/017-gestaltung-dark-botanical.md) Gestaltung · [ADR-018](../../../decisions/018-oberflaeche-seiten-und-lese-api.md) Seiten, Lese-API, Diagramme, Druck · [ADR-019](../../../decisions/019-loeschen-und-status-durch-menschen.md) Löschen und Status · [ADR-020](../../../decisions/020-scheckheft-luecken.md) Scheckheft-Lücken · [ADR-021](../../../decisions/021-kleine-eingaben-durch-menschen.md) kleine Eingaben.
 
 ## Breakpoints und Handy (gilt für jede Oberflächen-Phase)
 
@@ -87,17 +87,17 @@ Kamera-Knopf (Phase 5): nutzt die bestehenden Routen `POST documents` (multipart
 
 ## Finale AK
 
-- [ ] 1. Nach der Anmeldung landet man auf `garage.html`: Fahrzeugkarten je Garage mit Kennzeichen, Modell, „≈ km heute“, nächster Fälligkeit, Klärfällen, Belegzahl; Filter Aktiv/Verkauft/Stillgelegt/Alle, für Inhaber zusätzlich Gelöscht mit „Wiederherstellen“.
-- [ ] 2. `fahrzeug.html#<id>/<reiter>` zeigt die sieben Reiter Übersicht, Scheckheft, Wartung, Messwerte, Reifen, Teile, Belege mit echten Daten aus der Lese-API, jeder Wert mit Herkunfts-Abzeichen (Tippen zeigt Quelle, Sicherheit, Beleg).
-- [ ] 3. Scheckheft zeigt Lücken rot im Zeitstrahl und in der Tabelle; der Rechenweg steht an der Lücke.
-- [ ] 4. Klärfälle lassen sich auf `klaerfaelle.html` mit „A gilt / B gilt / Beide falsch“ bzw. „Erledigt / Verwerfen“ lösen, mit optionaler Notiz und Rückgängig-Leiste nur bis zur Entscheidung (Entscheidung selbst ist endgültig, ADR-010).
-- [ ] 5. Menschen können Ereignisse, Messwerte, Reifensätze, Teile, Schäden, Rückrufe und Notizen löschen (Rückgängig in der Leiste) und als Inhaber Fahrzeugstatus ändern, Fahrzeuge löschen und binnen 30 Tagen wiederherstellen; Rolle `lesend` sieht keine dieser Aktionen und bekommt von der API 403.
-- [ ] 5b. Inhaber und Mitglieder tragen im Browser einen Kilometerstand ein, korrigieren einen Stammdaten-Wert (ersetzt sofort, alter Wert im Verlauf), legen Notizen an bzw. bearbeiten sie und setzen ein Foto als Titelbild.
-- [ ] 5c. Der Kamera-Knopf öffnet am Handy direkt die Kamera; das Foto liegt danach ohne Seitenwechsel im Eingang dieses Fahrzeugs (Leiste mit „Notiz“). Klärfälle lassen sich in der Fahrzeug-Übersicht aufklappen und dort lösen.
-- [ ] 6. „Drucken“ öffnet eine Druckansicht ohne Skript (signierter Link), „Markdown“ lädt die Akte als Datei.
-- [ ] 7. Alle Seiten in der Gestaltung des Entwurfs (Tokens aus `web/css/tokens.css`), dunkel als Standard, hell umschaltbar unter Konto → Darstellung; jede Ansicht in allen Stufen aus „Breakpoints und Handy“ gebaut, am Handy (360 px) ohne waagerechtes Scrollen und mit allen Aktionen bedienbar; ab 992 px steht die Seitenleiste, nur der Inhalt scrollt; Kontrast der Tokens AA.
-- [ ] 8. Nutzer B sieht und ändert über keine neue Route ein Fahrzeug oder einen Datensatz von Nutzer A (404).
-- [ ] 9. `routes.md`, `code-map.md`, `conventions/frontend.md`, `PROJECT.md`, `GAPS.md` nachgezogen; der Kilometer-Randfall aus `GAPS.md` ist behoben und dort gestrichen.
+- [x] 1. Nach der Anmeldung landet man auf `garage.html`: Fahrzeugkarten je Garage mit Kennzeichen, Modell, „≈ km heute“, nächster Fälligkeit, Klärfällen, Belegzahl; Filter Aktiv/Verkauft/Stillgelegt/Alle, für Inhaber zusätzlich Gelöscht mit „Wiederherstellen“.
+- [x] 2. `fahrzeug.html#<id>/<reiter>` zeigt die sieben Reiter Übersicht, Scheckheft, Wartung, Messwerte, Reifen, Teile, Belege mit echten Daten aus der Lese-API, jeder Wert mit Herkunfts-Abzeichen (Tippen zeigt Quelle, Sicherheit, Beleg).
+- [x] 3. Scheckheft zeigt Lücken rot im Zeitstrahl und in der Tabelle; der Rechenweg steht an der Lücke.
+- [x] 4. Klärfälle lassen sich auf `klaerfaelle.html` mit „A gilt / B gilt / Beide falsch“ bzw. „Erledigt / Verwerfen“ lösen, mit optionaler Notiz und Rückgängig-Leiste nur bis zur Entscheidung (Entscheidung selbst ist endgültig, ADR-010).
+- [x] 5. Menschen können Ereignisse, Messwerte, Reifensätze, Teile, Schäden, Rückrufe und Notizen löschen (Rückgängig in der Leiste) und als Inhaber Fahrzeugstatus ändern, Fahrzeuge löschen und binnen 30 Tagen wiederherstellen; Rolle `lesend` sieht keine dieser Aktionen und bekommt von der API 403.
+- [x] 5b. Inhaber und Mitglieder tragen im Browser einen Kilometerstand ein, korrigieren einen Stammdaten-Wert (ersetzt sofort, alter Wert im Verlauf), legen Notizen an bzw. bearbeiten sie und setzen ein Foto als Titelbild.
+- [x] 5c. Der Kamera-Knopf öffnet am Handy direkt die Kamera; das Foto liegt danach ohne Seitenwechsel im Eingang dieses Fahrzeugs (Leiste mit „Notiz“). Klärfälle lassen sich in der Fahrzeug-Übersicht aufklappen und dort lösen.
+- [x] 6. „Drucken“ öffnet eine Druckansicht ohne Skript (signierter Link), „Markdown“ lädt die Akte als Datei.
+- [x] 7. Alle Seiten in der Gestaltung des Entwurfs (Tokens aus `web/css/tokens.css`), dunkel als Standard, hell umschaltbar unter Konto → Darstellung; jede Ansicht in allen Stufen aus „Breakpoints und Handy“ gebaut, am Handy (360 px) ohne waagerechtes Scrollen und mit allen Aktionen bedienbar; ab 992 px steht die Seitenleiste, nur der Inhalt scrollt; Kontrast der Tokens AA.
+- [x] 8. Nutzer B sieht und ändert über keine neue Route ein Fahrzeug oder einen Datensatz von Nutzer A (404).
+- [x] 9. `routes.md`, `code-map.md`, `conventions/frontend.md`, `PROJECT.md`, `GAPS.md` nachgezogen; der Kilometer-Randfall aus `GAPS.md` ist behoben und dort gestrichen.
 
 ## Konfidenz-Ausweis
 
@@ -110,10 +110,24 @@ Fehlerklassen geprüft: `frameworks/css-architecture` → „Freiraum per Innena
 
 ## Summary
 
+Meilenstein 4 ist gebaut: Gestaltung „Dark Botanical“ mit Schale, Garage, Fahrzeug mit sieben Reitern, Klärfälle, Scheckheft-Lücken, Löschen/Status/Wiederherstellen und kleine Eingaben durch Menschen, Druckansicht, Kamera-Knopf. AK-Abgleich am Code (Routen 1:1 gegen `app/index.php`, Seiten gegen `web/*.html`, `localStorage`-Schlüssel gegen `web/js`) ohne Abweichung. 🟡 Nichts davon ist gegen PHP/MySQL oder im Browser gelaufen (Phasen 2–4b ohne Syntaxprüfung, 6–8b nur `node --check`); Abnahme im Betrieb durch den Inhaber, siehe `docs/knowledge/GAPS.md`.
+
 ## Files touched
+
+`app/src/Api/` (`VehicleController`, `RecordController`, `PrintController`, `EventController`, `DueController`), `app/src/Domain/` (`LifecycleService`, `GapCalculator`, `DueService`, `DossierService`, `VehicleService`), `app/templates/akte-druck.php`, `app/index.php`, `web/*.html`, `web/css/` (`tokens.css`, `base.css`, `print.css`), `web/js/` (Schale, Bauteile, Seiten- und Reiter-Module), Doku unter `docs/`.
 
 ## Commits
 
+d8ac986, 7b2c081, 2d12d8e, 0458e0a, 68ddf5d, 87c0b8d, 21e29ca, 187c186, 9c42142, 8240eb6, 0d44643, be5006e, bbe531f, 1687b0a, 1d32256.
+
 ## Deviations from plan
 
+- `web/js/document.js` hatte seit Phase 1 einen Syntaxfehler (Beleg-Detail lud nicht), in Phase 8b behoben (1687b0a).
+- Phase 7: Messwert-Punkte tragen jetzt ihre `id` (8240eb6), nötig zum Löschen.
+
 ## Follow-ups
+
+- Abnahme im Browser (Handy 360 px, Tablet, Desktop, hell/dunkel) nach dem Deploy; CI-Lauf prüfen.
+- Markdown der Akte gegen den Stand vor Phase 8 vergleichen (Druckansicht-Umbau).
+- Wiederherstellen eines Ereignisses prüft den Kilometerstand nicht gegen neuere Stände (GAPS).
+- Vault-Eintrag offen: node `--check` meldet Modul-Syntaxfehler nicht (FINDINGS).
