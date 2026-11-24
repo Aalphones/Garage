@@ -11,6 +11,7 @@ use Garage\Domain\AccessoryService;
 use Garage\Domain\Actor;
 use Garage\Domain\ChangeService;
 use Garage\Domain\ContractService;
+use Garage\Domain\CostService;
 use Garage\Domain\DamageService;
 use Garage\Domain\DocumentService;
 use Garage\Domain\DossierService;
@@ -109,6 +110,7 @@ final class McpController
             'papers' => new PaperService($pdo),
             'fuel' => new FuelService($pdo),
             'expenses' => new ExpenseService($pdo),
+            'costs' => new CostService($pdo),
             'valuations' => new ValuationService($pdo),
             'value' => new ValueService($pdo),
             'notes' => new NoteService($pdo),

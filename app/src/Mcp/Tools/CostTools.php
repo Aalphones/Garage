@@ -6,8 +6,11 @@ namespace Garage\Mcp\Tools;
 
 use Garage\Auth\Scopes;
 use Garage\Domain\Actor;
+use Garage\Domain\CostCalculator;
+use Garage\Domain\CostService;
 use Garage\Domain\ExpenseService;
 use Garage\Domain\FuelService;
+use Garage\Domain\Validate;
 use Garage\Mcp\Registry;
 use Garage\Mcp\Schema;
 use Garage\Mcp\Tool;
@@ -22,6 +25,8 @@ final class CostTools
         $fuel = $services['fuel'];
         /** @var ExpenseService $expenses */
         $expenses = $services['expenses'];
+        /** @var CostService $costs */
+        $costs = $services['costs'];
 
         $registry->add(new Tool(
             'record_fuel',
@@ -56,6 +61,33 @@ final class CostTools
             Tool::annotations('Ausgabe erfassen', 'W'),
             Scopes::WRITE,
             static fn (array $args, Actor $actor): ToolResult => ToolResult::json($expenses->record((int) $args['vehicle_id'], $args, $actor))
+        ));
+
+        $registry->add(new Tool(
+            'get_cost_summary',
+            'Kosten lesen',
+            'Rechnet die Kosten eines Fahrzeugs (vehicle_id) oder einer Garage (garage_id, genau eins von beiden) in vier Blöcken: fix (Vertragsperioden, Plaketten, HU über 24 Monate, Anteile an Garagen-Verträgen), run (Tankungen, Zubehör, Ausgaben über spread_months), shop (Werkstatt-Ereignisse außer Kauf und HU, Bruttobetrag), loss (Wertverlust linear vom Kaufpreis bis zum jüngsten Wert). Alles tagesgenau: Betrag ÷ Tage der Periode, es zählen nur Tage im Zeitraum und im Aktiv-Zeitraum des Autos (ab Kaufpreis bzw. Zulassung bis Verkauf/Stilllegung). period: 12m (Standard), seit_kauf oder jahr:JJJJ. Ausgabe in Cent: months (je Kalendermonat fix, run, shop, loss, running_cents, full_cents), blocks (cents und ein Satz), running_cents (laufend, ohne Wertverlust), full_cents (mit Wertverlust), month_running_cents und month_full_cents (Summe ÷ Tage/30,4375), per_km_full_cents (Euro je km als Text, zwei Nachkommastellen, null ohne km), km, missing (Versicherung, Steuer, Kraftstoff, Wertverlust — nenne sie dem Nutzer), posts (group block: je Block; group monat: je Monat mit month_cents; jeder Posten mit explanation = Rechenweg und Herkunft) und shares (Anteile des Autos an Garagen-Verträgen). Garage zusätzlich: vehicles (je Auto Monatswerte) und garage_contracts (Betrag/Jahr, Umlage gleich/km/fest, Anteil je Auto heute). Garagen-ID steht in list_vehicles.',
+            Schema::object([
+                'vehicle_id' => Schema::integer('ID des Fahrzeugs aus list_vehicles'),
+                'garage_id' => Schema::integer('ID der Garage (statt vehicle_id) für den Unterhalt aller aktiven Autos'),
+                'period' => Schema::text('Zeitraum: 12m (Standard, heute − 12 Monate + 1 Tag bis heute), seit_kauf oder jahr:JJJJ, z. B. "jahr:2026"'),
+                'group' => Schema::choice(CostCalculator::GROUPS, 'Posten je Block (Standard) oder je Monat'),
+            ], []),
+            Tool::annotations('Kosten lesen', 'R'),
+            Scopes::READ,
+            static function (array $args, Actor $actor) use ($costs): ToolResult {
+                $hasVehicle = isset($args['vehicle_id']);
+                if ($hasVehicle === isset($args['garage_id'])) {
+                    throw Validate::invalid('vehicle_id', 'Genau eins von vehicle_id und garage_id angeben.', '{"vehicle_id": 12, "period": "12m"}');
+                }
+                $period = isset($args['period']) ? (string) $args['period'] : null;
+                $group = isset($args['group']) ? (string) $args['group'] : null;
+                if ($hasVehicle) {
+                    return ToolResult::json($costs->summary((int) $args['vehicle_id'], $period, $group, $actor));
+                }
+
+                return ToolResult::json($costs->garageSummary((int) $args['garage_id'], $period, $group, $actor));
+            }
         ));
     }
 }

@@ -45,6 +45,26 @@ final class VehicleRepository
     }
 
     /**
+     * Nicht gelöschte Fahrzeuge einer Garage mit Datum des Statuswechsels (Aktiv-Zeitraum der Kostenrechnung).
+     *
+     * @return list<array{id: int, garage_id: int, label: string, status: string, status_since: string|null}>
+     */
+    public function listForGarage(int $garageId, Actor $actor): array
+    {
+        if (!$actor->canRead($garageId)) {
+            return [];
+        }
+
+        $statement = $this->pdo->prepare('SELECT id, garage_id, label, status, status_since FROM vehicles WHERE garage_id = ? AND status <> ? ORDER BY id');
+        $statement->execute([$garageId, self::STATUS_DELETED]);
+
+        return array_map(
+            static fn (array $row): array => self::vehicle($row) + ['status_since' => $row['status_since'] === null ? null : (string) $row['status_since']],
+            $statement->fetchAll()
+        );
+    }
+
+    /**
      * Gelöschte Fahrzeuge der Garagen, in denen der Akteur Inhaber ist, gelöscht vor höchstens `$days` Tagen.
      * Der Löschzeitpunkt ist `updated_at` (Löschen ist die letzte Änderung am Fahrzeug).
      *

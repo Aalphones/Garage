@@ -66,7 +66,9 @@ $router->add('GET', '/garage/api/vehicles/{id}/fuel', static fn (array $paramete
 $router->add('POST', '/garage/api/vehicles/{id}/fuel', static fn (array $parameters) => (new CostController())->addFuel($request, (int) $parameters['id']));
 $router->add('GET', '/garage/api/vehicles/{id}/expenses', static fn (array $parameters) => (new CostController())->expenses($request, (int) $parameters['id']));
 $router->add('POST', '/garage/api/vehicles/{id}/expenses', static fn (array $parameters) => (new CostController())->addExpense($request, (int) $parameters['id']));
-$router->add('GET', '/garage/api/vehicles/{id}/value', static fn (array $parameters) => (new ValueController())->summary($request, (int) $parameters['id']));
+$router->add('GET', '/garage/api/vehicles/{id}/costs', static fn (array $parameters) => (new CostController())->costs($request, (int) $parameters['id']));
+$router->add('GET', '/garage/api/garages/{id}/costs', static fn (array $parameters) => (new CostController())->garageCosts($request, (int) $parameters['id']));
+$router->add('GET', '/garage/api/vehicles/{id}/value',static fn (array $parameters) => (new ValueController())->summary($request, (int) $parameters['id']));
 $router->add('PATCH', '/garage/api/vehicles/{id}/facts', static fn (array $parameters) => (new VehicleController($config))->correctFact($request, (int) $parameters['id']));
 $router->add('PUT', '/garage/api/vehicles/{id}/notes', static fn (array $parameters) => (new VehicleController($config))->upsertNote($request, (int) $parameters['id']));
 $router->add('POST', '/garage/api/vehicles/{id}/cover', static fn (array $parameters) => (new VehicleController($config))->setCover($request, (int) $parameters['id']));

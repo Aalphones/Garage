@@ -81,6 +81,25 @@ final class ContractRepository
     }
 
     /**
+     * Garagen-Verträge (ohne Fahrzeug) einer Garage.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function forGarage(int $garageId, Actor $actor): array
+    {
+        if (!$actor->canRead($garageId)) {
+            return [];
+        }
+
+        $statement = $this->pdo->prepare(
+            "SELECT * FROM contracts WHERE garage_id = ? AND status = 'aktiv' AND vehicle_id IS NULL ORDER BY kind, provider, id"
+        );
+        $statement->execute([$garageId]);
+
+        return $statement->fetchAll();
+    }
+
+    /**
      * Aktive Zeilen einer Untertabelle (Perioden, Anteile, Vorgänge) zu mehreren Verträgen, neueste zuerst.
      *
      * @param list<int> $contractIds

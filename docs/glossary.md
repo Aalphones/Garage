@@ -80,7 +80,11 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 |---|---|
 | Vertrag (`contracts`) | Versicherung, Steuer, Club, Stellplatz, Finanzierung; hängt an einem Fahrzeug oder an der Garage. |
 | Beitragsperiode (`contract_terms`) | Zeitraum mit Betrag und Merkmalen wie SF-Klasse und Typklasse. |
-| Umlage | Verteilung eines Garagen-Vertrags auf die aktiven Autos: gleich, nach km, feste Anteile oder ein Auto. |
+| Umlage | Verteilung eines Garagen-Vertrags auf die aktiven Autos, tagesgenau: gleich (1 ÷ Zahl der an dem Tag aktiven Autos), nach km (Anteil an den km aller aktiven Autos im Monat) oder feste Anteile (`contract_allocations`). |
+| Block | Einer der vier Kostenblöcke: Fixkosten (`fix`: Vertragsperioden, Plaketten, HU über 24 Monate, Umlage), Betrieb (`run`: Tankungen, Zubehör, Ausgaben), Werkstatt (`shop`: Ereignisse außer Kauf und HU), Wertverlust (`loss`). |
+| Laufend | Kosten ohne Wertverlust (Fixkosten + Betrieb + Werkstatt). |
+| Vollkosten | Laufende Kosten plus Wertverlust; Grundlage von „pro km“. |
+| Aktiv-Zeitraum | Tage, an denen ein Auto Kosten trägt und an der Umlage teilnimmt: ab Kaufpreis-Datum (sonst ältester Zulassung, sonst Beginn des Zeitraums) bis zum Verkauf oder zur Stilllegung (`status_since`); ohne dieses Datum zählt ein nicht aktives Auto nie. |
 | Unterhalt | Kosten pro Monat und pro km, laufend und mit Wertverlust (Vollkosten). |
 | Ankerwert (`valuations`) | Belegter Wert mit Datum: Kaufpreis, Verkaufspreis, Gutachten, Händlerangebot, Online-Bewertung oder Schätzung. Der Kaufpreis ist der Ausgangspunkt des Wertverlusts. |
 | Vergleichsinserat (`market_listings`) | Angebot eines vergleichbaren Autos mit URL und Abrufdatum; der Agent sagt beim Ablegen, ob Motor und Getriebe passen. Es zählt mit passendem Antrieb, Erstzulassungsjahr ±1, km ±25 % des eigenen Stands und höchstens 60 Tage alt. |

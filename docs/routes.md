@@ -34,6 +34,8 @@ Quelle: `app/index.php`. Alle Pfade absolut; die Brücke liegt unter `/garage/` 
 | GET | `/garage/api/vehicles/{id}/odometer` | `Api\VehicleController::odometer` | JWT | `{readings:[{id,read_on,km,note,source,confidence}]}` — gültige Stände, älteste zuerst |
 | GET | `/garage/api/vehicles/{id}/fuel` | `Api\CostController::fuel` | JWT | `{fuel:[{id,fueled_on,odometer_km,liters,amount_eur,price_per_liter,is_full,station,consumption_l_100km,source,confidence}]}` — neueste zuerst (Datum, dann km); `price_per_liter` Text mit drei Nachkommastellen; Verbrauch nur an Volltankungen mit vorheriger Volltankung, sonst `null` |
 | GET | `/garage/api/vehicles/{id}/expenses` | `Api\CostController::expenses` | JWT | `{expenses:[{id,spent_on,category,amount_eur,spread_months,note,source,confidence}]}` — neueste zuerst |
+| GET | `/garage/api/vehicles/{id}/costs` | `Api\CostController::costs` | JWT | wie `get_cost_summary` für das Fahrzeug; Query `period` (`12m` Standard, `seit_kauf`, `jahr:JJJJ`), `group` (`block` Standard, `monat`); 422 `invalid_value` bei unbekanntem Zeitraum; fremd/unbekannt → 404 (ADR-022) |
+| GET | `/garage/api/garages/{id}/costs` | `Api\CostController::garageCosts` | JWT | wie `get_cost_summary` für die Garage (zusätzlich `vehicles`, `garage_contracts`); Query wie oben; jede Rolle der Garage; fremd/unbekannt → 404 |
 | GET | `/garage/api/vehicles/{id}/value` | `Api\ValueController::summary` | JWT | wie `get_value_summary`; fremd/unbekannt → 404 (ADR-023) |
 | GET | `/garage/api/vehicles/{id}/measurements` | `Api\VehicleController::measurements` | JWT | wie `get_measurements` ohne Filter |
 | GET | `/garage/api/vehicles/{id}/tires` | `Api\VehicleController::tires` | JWT | wie `get_tires` |
