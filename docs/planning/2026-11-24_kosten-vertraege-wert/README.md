@@ -11,7 +11,7 @@ Wünsche des Inhabers (2026-11-24): ein Plan für den ganzen Meilenstein; erst E
 | 1 | Datenmodell und Entscheidungen (Migrationen 020–024, ADR-022 bis 025) | standard | sonnet | complete |
 | 2 | Verträge, Vorgänge, Plaketten, Zubehör: Dienste, Agenten-Werkzeuge, Löschen | heikel | opus | complete |
 | 3 | Tankbuch und Ausgaben: Dienste, Werkzeuge, Eingabe-Routen | standard | sonnet | complete |
-| 4 | Wertermittlung: Korridor, Regression, Wertfaktoren | heikel | opus | pending |
+| 4 | Wertermittlung: Korridor, Regression, Wertfaktoren | heikel | opus | complete |
 | 5 | Kostenrechnung: Blöcke, Verteilung, Umlage, pro km | heikel | opus | pending |
 | 6 | Stichtage, Notfallkarte-Daten, Kalender-Abo | heikel | opus | pending |
 | 7 | Akte, Fahrzeugliste, Prompts, Server-Anweisungen | standard | sonnet | pending |

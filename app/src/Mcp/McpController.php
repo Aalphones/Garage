@@ -33,6 +33,8 @@ use Garage\Domain\TaskService;
 use Garage\Domain\TireService;
 use Garage\Domain\TokenService;
 use Garage\Domain\UserRepository;
+use Garage\Domain\ValuationService;
+use Garage\Domain\ValueService;
 use Garage\Domain\VehicleService;
 use Garage\Http\Request;
 use Garage\Http\Response;
@@ -55,6 +57,7 @@ use Garage\Mcp\Tools\RegistrationTools;
 use Garage\Mcp\Tools\SearchTools;
 use Garage\Mcp\Tools\TaskTools;
 use Garage\Mcp\Tools\TireTools;
+use Garage\Mcp\Tools\ValueTools;
 use Garage\Mcp\Tools\VehicleTools;
 use Garage\OAuth\Discovery;
 use Garage\OAuth\TokenIssuer;
@@ -106,6 +109,8 @@ final class McpController
             'papers' => new PaperService($pdo),
             'fuel' => new FuelService($pdo),
             'expenses' => new ExpenseService($pdo),
+            'valuations' => new ValuationService($pdo),
+            'value' => new ValueService($pdo),
             'notes' => new NoteService($pdo),
             'openItems' => new OpenItemService($pdo),
             'changes' => new ChangeService($pdo),
@@ -430,6 +435,8 @@ final class McpController
         PaperTools::register($registry, $services);
         $registry->group('Kosten');
         CostTools::register($registry, $services);
+        $registry->group('Wert');
+        ValueTools::register($registry, $services);
         $registry->group('Notizen');
         NoteTools::register($registry, $services);
         $registry->group('Klärfälle und Verlauf');

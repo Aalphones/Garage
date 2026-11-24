@@ -43,6 +43,7 @@ final class DocumentService
         'plakette' => 'permits',
         'tankvorgang' => 'fuel_logs',
         'ausgabe' => 'expenses',
+        'bewertung' => 'valuations',
     ];
     public const ROLES = ['beleg', 'foto', 'anhang', 'titelbild'];
 

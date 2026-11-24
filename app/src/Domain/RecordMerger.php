@@ -50,6 +50,9 @@ final class RecordMerger
         'permits' => ['label' => 'Plakette', 'key' => ['kind', 'label'], 'columns' => ['number', 'valid_from', 'valid_until', 'price_cents']],
         'fuel_logs' => ['label' => 'Tankung', 'key' => ['fueled_on', 'odometer_km'], 'columns' => ['liters', 'amount_cents', 'is_full', 'station', 'odometer_reading_id']],
         'expenses' => ['label' => 'Ausgabe', 'key' => ['spent_on', 'category', 'amount_cents'], 'columns' => ['spread_months', 'note']],
+        // Ohne Anbieter steht '' im Schlüssel (NULL würde nie wiedererkannt).
+        'valuations' => ['label' => 'Bewertung', 'key' => ['valued_on', 'kind', 'provider'], 'columns' => ['value_type', 'amount_cents', 'range_low_cents', 'range_high_cents', 'odometer_km', 'note']],
+        'market_listings' => ['label' => 'Inserat', 'key' => ['url'], 'columns' => ['fetched_on', 'price_cents', 'odometer_km', 'first_registration', 'same_drivetrain', 'equipment_note', 'postal_code']],
     ];
 
     private OpenItemRepository $openItems;

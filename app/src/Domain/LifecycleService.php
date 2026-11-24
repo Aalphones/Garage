@@ -32,6 +32,8 @@ final class LifecycleService
         'permit' => 'permits',
         'fuel' => 'fuel_logs',
         'expense' => 'expenses',
+        'valuation' => 'valuations',
+        'listing' => 'market_listings',
     ];
 
     public const VEHICLE_STATUSES = ['aktiv', 'verkauft', 'stillgelegt'];

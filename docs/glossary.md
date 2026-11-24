@@ -82,9 +82,10 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 | Beitragsperiode (`contract_terms`) | Zeitraum mit Betrag und Merkmalen wie SF-Klasse und Typklasse. |
 | Umlage | Verteilung eines Garagen-Vertrags auf die aktiven Autos: gleich, nach km, feste Anteile oder ein Auto. |
 | Unterhalt | Kosten pro Monat und pro km, laufend und mit Wertverlust (Vollkosten). |
-| Ankerwert | Belegter Wert: Kaufpreis, Bewertung, Händlerangebot, Gutachten. |
-| Marktkorridor | Median und mittlere Hälfte passender Vergleichsinserate. |
-| Wertfaktoren-Check | Aus den eigenen Daten berechnete Plus/Minus/Unbekannt-Liste (Scheckheft lückenlos, HU, Unfallfreiheit …). |
+| Ankerwert (`valuations`) | Belegter Wert mit Datum: Kaufpreis, Verkaufspreis, Gutachten, Händlerangebot, Online-Bewertung oder Schätzung. Der Kaufpreis ist der Ausgangspunkt des Wertverlusts. |
+| Vergleichsinserat (`market_listings`) | Angebot eines vergleichbaren Autos mit URL und Abrufdatum; der Agent sagt beim Ablegen, ob Motor und Getriebe passen. Es zählt mit passendem Antrieb, Erstzulassungsjahr ±1, km ±25 % des eigenen Stands und höchstens 60 Tage alt. |
+| Marktkorridor | Ab 8 zählenden Vergleichsinseraten Median und mittlere Hälfte der Preise, ab 15 die auf km und Alter des eigenen Autos umgerechnete Mitte mit Band. Angebotspreise sind keine Verkaufspreise. |
+| Wertfaktor | Einer von acht aus den eigenen Daten berechneten Punkten (Scheckheft, HU, Unfallfreiheit, Halter, Profiltiefe, anstehende Arbeiten, Rückrufe, Ausstattung) mit Plus, Minus oder Unbekannt und Fundstelle. |
 | Notfallkarte | Kennzeichen, FIN, Versicherer, Hotlines; offline verfügbar. |
 
 ## Betrieb
