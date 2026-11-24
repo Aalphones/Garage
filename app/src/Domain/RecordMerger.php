@@ -48,6 +48,8 @@ final class RecordMerger
             'columns' => ['category', 'manufacturer', 'article_number', 'bought_on', 'price_cents', 'warranty_until', 'mount_state', 'storage_location', 'goes_with_sale'],
         ],
         'permits' => ['label' => 'Plakette', 'key' => ['kind', 'label'], 'columns' => ['number', 'valid_from', 'valid_until', 'price_cents']],
+        'fuel_logs' => ['label' => 'Tankung', 'key' => ['fueled_on', 'odometer_km'], 'columns' => ['liters', 'amount_cents', 'is_full', 'station', 'odometer_reading_id']],
+        'expenses' => ['label' => 'Ausgabe', 'key' => ['spent_on', 'category', 'amount_cents'], 'columns' => ['spread_months', 'note']],
     ];
 
     private OpenItemRepository $openItems;

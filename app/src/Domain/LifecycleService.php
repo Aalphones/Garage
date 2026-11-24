@@ -30,6 +30,8 @@ final class LifecycleService
         'contract_event' => 'contract_events',
         'accessory' => 'accessories',
         'permit' => 'permits',
+        'fuel' => 'fuel_logs',
+        'expense' => 'expenses',
     ];
 
     public const VEHICLE_STATUSES = ['aktiv', 'verkauft', 'stillgelegt'];
@@ -38,6 +40,7 @@ final class LifecycleService
     private const STATUS_DELETED = 'geloescht';
     private const NOTES_TABLE = 'notes';
     private const EVENTS_TABLE = 'events';
+    private const FUEL_TABLE = 'fuel_logs';
     private const LOCAL_TIMEZONE = 'Europe/Berlin';
     private const MAX_REASON = 200;
     private const REASON_EXAMPLE = '{"reason": "Doppelt erfasst"}';
@@ -137,6 +140,9 @@ final class LifecycleService
             if ($table === self::EVENTS_TABLE) {
                 $after['odometer_reading_ids'] = $this->readings->setStatusForEvent($id, self::STATUS_ACTIVE, self::STATUS_DELETED, $reason, $actor);
             }
+            if ($table === self::FUEL_TABLE) {
+                $after['odometer_reading_ids'] = $this->setFuelReadingStatus($record['row'], self::STATUS_ACTIVE, self::STATUS_DELETED, $reason, $actor);
+            }
             $this->recordRecordAudit($actor, 'record.delete', $table, $record, $after);
 
             return ['type' => $type, 'id' => $id, 'status' => self::STATUS_DELETED];
@@ -164,10 +170,28 @@ final class LifecycleService
             if ($table === self::EVENTS_TABLE) {
                 $after['odometer_reading_ids'] = $this->readings->setStatusForEvent($id, self::STATUS_DELETED, self::STATUS_ACTIVE, null, $actor);
             }
+            if ($table === self::FUEL_TABLE) {
+                $after['odometer_reading_ids'] = $this->setFuelReadingStatus($record['row'], self::STATUS_DELETED, self::STATUS_ACTIVE, null, $actor);
+            }
             $this->recordRecordAudit($actor, 'record.restore', $table, $record, $after);
 
             return ['type' => $type, 'id' => $id, 'status' => self::STATUS_ACTIVE];
         });
+    }
+
+    /**
+     * Der Kilometerstand einer Tankung (`odometer_reading_id`) folgt ihrem Status.
+     *
+     * @param array<string, mixed> $fuel
+     * @return list<int>
+     */
+    private function setFuelReadingStatus(array $fuel, string $fromStatus, string $toStatus, ?string $reason, Actor $actor): array
+    {
+        if ($fuel['odometer_reading_id'] === null) {
+            return [];
+        }
+
+        return $this->readings->setStatusForFuel((int) $fuel['odometer_reading_id'], (int) $fuel['id'], $fromStatus, $toStatus, $reason, $actor);
     }
 
     private static function today(): string

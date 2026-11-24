@@ -24,6 +24,8 @@ final class RecordRepository
         // ENUM-Reihenfolge der Kategorie, dann alphabetisch.
         'accessories' => 'category, name, id',
         'permits' => 'kind, label, id',
+        'fuel_logs' => 'fueled_on DESC, odometer_km DESC, id DESC',
+        'expenses' => 'spent_on DESC, id DESC',
     ];
 
     public function __construct(private readonly PDO $pdo)

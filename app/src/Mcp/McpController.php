@@ -17,6 +17,8 @@ use Garage\Domain\DossierService;
 use Garage\Domain\DueService;
 use Garage\Domain\EquipmentService;
 use Garage\Domain\EventService;
+use Garage\Domain\ExpenseService;
+use Garage\Domain\FuelService;
 use Garage\Domain\InboxService;
 use Garage\Domain\MeasurementService;
 use Garage\Domain\NoteService;
@@ -36,6 +38,7 @@ use Garage\Http\Request;
 use Garage\Http\Response;
 use Garage\Mcp\Tools\ChangeTools;
 use Garage\Mcp\Tools\ContractTools;
+use Garage\Mcp\Tools\CostTools;
 use Garage\Mcp\Tools\DamageTools;
 use Garage\Mcp\Tools\DocumentTools;
 use Garage\Mcp\Tools\DossierTools;
@@ -101,6 +104,8 @@ final class McpController
             'accessories' => new AccessoryService($pdo),
             'permits' => new PermitService($pdo),
             'papers' => new PaperService($pdo),
+            'fuel' => new FuelService($pdo),
+            'expenses' => new ExpenseService($pdo),
             'notes' => new NoteService($pdo),
             'openItems' => new OpenItemService($pdo),
             'changes' => new ChangeService($pdo),
@@ -423,6 +428,8 @@ final class McpController
         $registry->group('Verträge und Papiere');
         ContractTools::register($registry, $services);
         PaperTools::register($registry, $services);
+        $registry->group('Kosten');
+        CostTools::register($registry, $services);
         $registry->group('Notizen');
         NoteTools::register($registry, $services);
         $registry->group('Klärfälle und Verlauf');

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Garage\Domain;
 
 use DateTimeImmutable;
+use DateTimeZone;
 
 /**
  * Prüfer für Eingabewerte. Jeder wirft `invalid_value` mit Feld, Grund und Beispiel und liefert den normalisierten Wert
@@ -18,6 +19,7 @@ final class Validate
     private const SIGNED_EURO_PATTERN = '/^-?\d{1,7}([.,]\d{1,2})?$/';
     private const CONTROL_CHARACTERS = '/[\x00-\x1F\x7F]/u';
     private const URL_MAX = 500;
+    private const LOCAL_TIMEZONE = 'Europe/Berlin';
 
     public static function invalid(string $field, string $reason, string $example): DomainError
     {
@@ -30,6 +32,18 @@ final class Validate
         $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
         if ($date === false || $date->format('Y-m-d') !== $value) {
             throw self::invalid($field, 'Das Datum hat die Form YYYY-MM-DD.', $example);
+        }
+
+        return $value;
+    }
+
+    /** Ein Datum, das ein Mensch im Browser eingibt, liegt nie nach heute (deutsche Zeit); sonst ist es ein Tippfehler. */
+    public static function dateNotInFuture(string $field, mixed $raw, string $example, string $reason): string
+    {
+        $value = self::date($field, $raw, $example);
+        $today = (new DateTimeImmutable('now', new DateTimeZone(self::LOCAL_TIMEZONE)))->format('Y-m-d');
+        if ($value > $today) {
+            throw self::invalid($field, $reason, $example);
         }
 
         return $value;

@@ -321,6 +321,48 @@ final class OdometerRepository
     }
 
     /**
+     * Der Kilometerstand einer Tankung folgt ihr beim Löschen und Wiederherstellen. Gehört er auch zu einem Ereignis oder
+     * zu einer anderen aktiven Tankung, bleibt er unberührt.
+     *
+     * @return list<int> der geänderte Stand (leer oder einer)
+     */
+    public function setStatusForFuel(int $readingId, int $fuelId, string $fromStatus, string $toStatus, ?string $reason, Actor $actor): array
+    {
+        $garageIds = $actor->garageIds();
+        if ($garageIds === [] || $this->isSharedWithOthers($readingId, $fuelId, $garageIds)) {
+            return [];
+        }
+
+        $update = $this->pdo->prepare(
+            sprintf(
+                'UPDATE odometer_readings SET status = ?, status_reason = ?, updated_at = UTC_TIMESTAMP() WHERE id = ? AND status = ? AND garage_id IN (%s)',
+                implode(', ', array_fill(0, count($garageIds), '?'))
+            )
+        );
+        $update->execute([$toStatus, $reason, $readingId, $fromStatus, ...$garageIds]);
+
+        return $update->rowCount() === 0 ? [] : [$readingId];
+    }
+
+    /** @param list<int> $garageIds */
+    private function isSharedWithOthers(int $readingId, int $fuelId, array $garageIds): bool
+    {
+        $placeholders = implode(', ', array_fill(0, count($garageIds), '?'));
+        $statement = $this->pdo->prepare(
+            sprintf(
+                "SELECT 1 FROM odometer_readings r WHERE r.id = ? AND r.garage_id IN (%s) AND (
+                    r.event_id IS NOT NULL
+                    OR EXISTS (SELECT 1 FROM fuel_logs f WHERE f.odometer_reading_id = r.id AND f.id <> ? AND f.status = 'aktiv')
+                ) LIMIT 1",
+                $placeholders
+            )
+        );
+        $statement->execute([$readingId, ...$garageIds, $fuelId]);
+
+        return $statement->fetchColumn() !== false;
+    }
+
+    /**
      * @param list<array<string, mixed>> $rows
      * @return list<array{id: int, read_on: string, km: int}>
      */

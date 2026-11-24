@@ -10,7 +10,7 @@ Wünsche des Inhabers (2026-11-24): ein Plan für den ganzen Meilenstein; erst E
 |---|---|---|---|---|
 | 1 | Datenmodell und Entscheidungen (Migrationen 020–024, ADR-022 bis 025) | standard | sonnet | complete |
 | 2 | Verträge, Vorgänge, Plaketten, Zubehör: Dienste, Agenten-Werkzeuge, Löschen | heikel | opus | complete |
-| 3 | Tankbuch und Ausgaben: Dienste, Werkzeuge, Eingabe-Routen | standard | sonnet | pending |
+| 3 | Tankbuch und Ausgaben: Dienste, Werkzeuge, Eingabe-Routen | standard | sonnet | complete |
 | 4 | Wertermittlung: Korridor, Regression, Wertfaktoren | heikel | opus | pending |
 | 5 | Kostenrechnung: Blöcke, Verteilung, Umlage, pro km | heikel | opus | pending |
 | 6 | Stichtage, Notfallkarte-Daten, Kalender-Abo | heikel | opus | pending |
@@ -39,7 +39,7 @@ Alle schreibenden Werkzeuge tragen die Herkunftsfelder (`ProvenanceSchema`), mel
 | `upsert_contract` | write | Verträge | **kind**, **provider**, vehicle_id *oder* **garage_id**, contract_number, tariff, starts_on, main_due (`MM-TT`), notice_months, payment_interval, ends_on, allocation (nur Garage), hotline, member_number, note | `{contract_id, result, open_item_ids}` |
 | `record_contract_term` | write | Verträge | **contract_id**, **valid_from**, **valid_to**, **amount_eur**, coverage, sf_liability, sf_comprehensive, type_class_liability, type_class_partial, type_class_full, regional_class, declared_km_per_year, deductible_note | `{term_id, result, open_item_ids}` |
 | `record_contract_event` | write | Verträge | **contract_id**, **kind**, **occurred_on**, amount_eur, event_status, claim_number, damage_id, note | `{contract_event_id, result, open_item_ids}` |
-| `record_fuel` | write | Kosten | **vehicle_id**, **fueled_on**, **odometer_km**, **liters**, **amount_eur**, **is_full**, station | `{fuel_id, result, odometer: {reading_id, result, open_item_id?}, consumption_l_100km}` |
+| `record_fuel` | write | Kosten | **vehicle_id**, **fueled_on**, **odometer_km**, **liters**, **amount_eur**, **is_full**, station | `{fuel_id, result, odometer: {reading_id, result, open_item_id?}, consumption_l_100km, open_item_ids}` |
 | `record_expense` | write | Kosten | **vehicle_id**, **spent_on**, **category**, **amount_eur**, spread_months (1–36, Standard 1), note | `{expense_id, result, open_item_ids}` |
 | `get_cost_summary` | read | Kosten | vehicle_id *oder* garage_id, period (`12m` Standard, `seit_kauf`, `jahr:JJJJ`), group (`block` Standard, `monat`) | siehe Phase 5 |
 | `add_valuation` | write | Wert | **vehicle_id**, **valued_on**, **kind**, **amount_eur**, value_type, odometer_km, range_low_eur, range_high_eur, provider, note | `{valuation_id, result, open_item_ids}` |

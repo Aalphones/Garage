@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Garage\Api\AuthController;
+use Garage\Api\CostController;
 use Garage\Api\DeployController;
 use Garage\Api\DocumentController;
 use Garage\Api\DueController;
@@ -60,6 +61,10 @@ $router->add('POST', '/garage/api/vehicles/{id}/delete', static fn (array $param
 $router->add('POST', '/garage/api/vehicles/{id}/restore', static fn (array $parameters) => (new VehicleController($config))->restore($request, (int) $parameters['id']));
 $router->add('POST', '/garage/api/vehicles/{id}/print-link', static fn (array $parameters) => (new VehicleController($config))->printLink($request, (int) $parameters['id']));
 $router->add('POST', '/garage/api/vehicles/{id}/odometer', static fn (array $parameters) => (new VehicleController($config))->addOdometer($request, (int) $parameters['id']));
+$router->add('GET', '/garage/api/vehicles/{id}/fuel', static fn (array $parameters) => (new CostController())->fuel($request, (int) $parameters['id']));
+$router->add('POST', '/garage/api/vehicles/{id}/fuel', static fn (array $parameters) => (new CostController())->addFuel($request, (int) $parameters['id']));
+$router->add('GET', '/garage/api/vehicles/{id}/expenses', static fn (array $parameters) => (new CostController())->expenses($request, (int) $parameters['id']));
+$router->add('POST', '/garage/api/vehicles/{id}/expenses', static fn (array $parameters) => (new CostController())->addExpense($request, (int) $parameters['id']));
 $router->add('PATCH', '/garage/api/vehicles/{id}/facts', static fn (array $parameters) => (new VehicleController($config))->correctFact($request, (int) $parameters['id']));
 $router->add('PUT', '/garage/api/vehicles/{id}/notes', static fn (array $parameters) => (new VehicleController($config))->upsertNote($request, (int) $parameters['id']));
 $router->add('POST', '/garage/api/vehicles/{id}/cover', static fn (array $parameters) => (new VehicleController($config))->setCover($request, (int) $parameters['id']));

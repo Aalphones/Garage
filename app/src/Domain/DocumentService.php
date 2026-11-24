@@ -41,6 +41,8 @@ final class DocumentService
         'vorgang' => 'contract_events',
         'zubehoer' => 'accessories',
         'plakette' => 'permits',
+        'tankvorgang' => 'fuel_logs',
+        'ausgabe' => 'expenses',
     ];
     public const ROLES = ['beleg', 'foto', 'anhang', 'titelbild'];
 
