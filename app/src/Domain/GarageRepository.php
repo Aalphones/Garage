@@ -67,4 +67,46 @@ final class GarageRepository
 
         return $statement->fetchColumn() !== false;
     }
+
+    /** @return array{id: int, name: string, calendar_version: int}|null */
+    public function find(int $garageId, Actor $actor): ?array
+    {
+        if (!$actor->canRead($garageId)) {
+            return null;
+        }
+
+        $statement = $this->pdo->prepare('SELECT id, name, calendar_version FROM garages WHERE id = ?');
+        $statement->execute([$garageId]);
+        $row = $statement->fetch();
+        if ($row === false) {
+            return null;
+        }
+
+        return ['id' => (int) $row['id'], 'name' => (string) $row['name'], 'calendar_version' => (int) $row['calendar_version']];
+    }
+
+    /**
+     * Version des Kalender-Abos einer Garage; ohne Akteur, weil der Abruf des Abos keinen Nutzer kennt — die Version ist
+     * kein Fakt, sie prüft nur die Signatur des Links.
+     */
+    public function calendarVersion(int $garageId): ?int
+    {
+        $statement = $this->pdo->prepare('SELECT calendar_version FROM garages WHERE id = ?');
+        $statement->execute([$garageId]);
+        $version = $statement->fetchColumn();
+
+        return $version === false ? null : (int) $version;
+    }
+
+    /** Zählt die Version hoch und sperrt dabei die Zeile; liefert die neue Version. */
+    public function bumpCalendarVersion(int $garageId, Actor $actor): int
+    {
+        if (!$actor->isOwner($garageId)) {
+            throw new DomainError('forbidden', 'Den Kalender-Link erneuert nur der Inhaber der Garage.', ['garage_id' => $garageId]);
+        }
+
+        $this->pdo->prepare('UPDATE garages SET calendar_version = calendar_version + 1 WHERE id = ?')->execute([$garageId]);
+
+        return (int) $this->calendarVersion($garageId);
+    }
 }

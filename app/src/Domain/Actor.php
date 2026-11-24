@@ -23,6 +23,7 @@ final readonly class Actor
     public const VIA_MCP = 'mcp';
     public const VIA_OAUTH = 'oauth';
     public const VIA_DEPLOY = 'deploy';
+    public const VIA_CALENDAR = 'calendar';
 
     /**
      * @param list<string> $scopes
@@ -48,6 +49,15 @@ final readonly class Actor
         return new self(null, 'anonym', self::VIA_WEB, [], []);
     }
 
+    /**
+     * Abruf des Kalender-Abos ohne Anmeldung: die Signatur des Links berechtigt genau diese eine Garage, nur zum Lesen
+     * (ADR-024). Ohne Nutzer und ohne Schreibrecht.
+     */
+    public static function calendar(int $garageId): self
+    {
+        return new self(null, 'kalender:' . $garageId, self::VIA_CALENDAR, [Scopes::READ], [$garageId => self::ROLE_READONLY]);
+    }
+
     /** @param list<string> $scopes */
     public static function forUser(int $userId, string $via, string $name, array $scopes, PDO $pdo): self
     {
@@ -63,6 +73,11 @@ final readonly class Actor
     public function canRead(int $garageId): bool
     {
         return isset($this->roles[$garageId]);
+    }
+
+    public function isOwner(int $garageId): bool
+    {
+        return ($this->roles[$garageId] ?? null) === self::ROLE_OWNER;
     }
 
     public function canWrite(int $garageId): bool

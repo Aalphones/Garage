@@ -13,7 +13,7 @@ Wünsche des Inhabers (2026-11-24): ein Plan für den ganzen Meilenstein; erst E
 | 3 | Tankbuch und Ausgaben: Dienste, Werkzeuge, Eingabe-Routen | standard | sonnet | complete |
 | 4 | Wertermittlung: Korridor, Regression, Wertfaktoren | heikel | opus | complete |
 | 5 | Kostenrechnung: Blöcke, Verteilung, Umlage, pro km | heikel | opus | complete |
-| 6 | Stichtage, Notfallkarte-Daten, Kalender-Abo | heikel | opus | pending |
+| 6 | Stichtage, Notfallkarte-Daten, Kalender-Abo | heikel | opus | complete |
 | 7 | Akte, Fahrzeugliste, Prompts, Server-Anweisungen | standard | sonnet | pending |
 | 8 | Reiter Kosten mit Blättern Tankung und Ausgabe | standard | sonnet | pending |
 | 9 | Reiter Wert | standard | sonnet | pending |
@@ -59,7 +59,7 @@ Alle schreibenden Werkzeuge tragen die Herkunftsfelder (`ProvenanceSchema`), mel
 | GET | `garages/{id}/costs?period=` | Ausgabe von `get_cost_summary` für die Garage | `CostService::garageSummary` |
 | GET | `vehicles/{id}/value` | Ausgabe von `get_value_summary` | `ValueService::summary` |
 | GET | `vehicles/{id}/papers` | Ausgabe von `get_papers` | `PaperService::forVehicle` |
-| GET | `vehicles/{id}/deadlines` | `{deadlines:[{kind,title,date,status,explanation,ref}]}` | `DeadlineService::forVehicle` |
+| GET | `vehicles/{id}/deadlines` | `{deadlines:[{kind,title,date,status,days,explanation,level,ref}]}` | `DeadlineService::forVehicle` |
 | GET | `vehicles/{id}/emergency` | `{vehicle_id,label,plate,fin,insurer,breakdown,as_of}` | `PaperService::emergency` |
 | GET | `vehicles/{id}/fuel` | `{fuel:[…absteigend, mit consumption_l_100km]}` | `FuelService::list` |
 | GET | `vehicles/{id}/expenses` | `{expenses:[…absteigend]}` | `ExpenseService::list` |

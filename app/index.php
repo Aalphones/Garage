@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Garage\Api\AuthController;
+use Garage\Api\CalendarController;
 use Garage\Api\CostController;
 use Garage\Api\DeployController;
 use Garage\Api\DocumentController;
@@ -15,6 +16,7 @@ use Garage\Api\HealthController;
 use Garage\Api\InvitationController;
 use Garage\Api\MeController;
 use Garage\Api\OpenItemController;
+use Garage\Api\PaperController;
 use Garage\Api\PrintController;
 use Garage\Api\RecordController;
 use Garage\Api\TokenController;
@@ -68,6 +70,11 @@ $router->add('GET', '/garage/api/vehicles/{id}/expenses', static fn (array $para
 $router->add('POST', '/garage/api/vehicles/{id}/expenses', static fn (array $parameters) => (new CostController())->addExpense($request, (int) $parameters['id']));
 $router->add('GET', '/garage/api/vehicles/{id}/costs', static fn (array $parameters) => (new CostController())->costs($request, (int) $parameters['id']));
 $router->add('GET', '/garage/api/garages/{id}/costs', static fn (array $parameters) => (new CostController())->garageCosts($request, (int) $parameters['id']));
+$router->add('GET', '/garage/api/vehicles/{id}/papers', static fn (array $parameters) => (new PaperController())->papers($request, (int) $parameters['id']));
+$router->add('GET', '/garage/api/vehicles/{id}/deadlines', static fn (array $parameters) => (new PaperController())->deadlines($request, (int) $parameters['id']));
+$router->add('GET', '/garage/api/vehicles/{id}/emergency', static fn (array $parameters) => (new PaperController())->emergency($request, (int) $parameters['id']));
+$router->add('GET', '/garage/api/garages/{id}/calendar-link', static fn (array $parameters) => (new CalendarController())->link($request, (int) $parameters['id']));
+$router->add('POST', '/garage/api/garages/{id}/calendar-link/rotate', static fn (array $parameters) => (new CalendarController())->rotate($request, (int) $parameters['id']));
 $router->add('GET', '/garage/api/vehicles/{id}/value',static fn (array $parameters) => (new ValueController())->summary($request, (int) $parameters['id']));
 $router->add('PATCH', '/garage/api/vehicles/{id}/facts', static fn (array $parameters) => (new VehicleController($config))->correctFact($request, (int) $parameters['id']));
 $router->add('PUT', '/garage/api/vehicles/{id}/notes', static fn (array $parameters) => (new VehicleController($config))->upsertNote($request, (int) $parameters['id']));
@@ -116,6 +123,8 @@ $router->add('HEAD', '/garage/files/{slug}', static fn (array $parameters) => (n
 
 // Ohne Anmeldung: die Signatur im Pfad ist die Berechtigung (ADR-018).
 $router->add('GET', '/garage/akte/{slug}', static fn (array $parameters) => (new PrintController())->show($request, (string) $parameters['slug']));
+// Kalender-Abo ohne Anmeldung, die Signatur im Pfad ist die Berechtigung (ADR-024).
+$router->add('GET', '/garage/kalender/{slug}.ics', static fn (array $parameters) => (new CalendarController())->feed($request, (string) $parameters['slug']));
 
 $router->add('POST', '/garage/mcp', static fn () => (new McpController($config))->handle($request));
 

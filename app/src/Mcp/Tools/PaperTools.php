@@ -69,7 +69,7 @@ final class PaperTools
         $registry->add(new Tool(
             'get_papers',
             'Papiere lesen',
-            'Liefert die Papiere eines Fahrzeugs: contracts (eigene Verträge mit level fahrzeug, dann die der Garage mit level garage; je mit terms und events, neueste zuerst; Garagen-Verträge mit share: method, percent und eur_per_year = Anteil dieses Fahrzeugs heute), deadlines (Stichtage), permits, accessories und emergency (Notfalldaten). Beispiel: {"vehicle_id": 12}.',
+            'Liefert die Papiere eines Fahrzeugs: contracts (eigene Verträge mit level fahrzeug, dann die der Garage mit level garage; je mit terms und events, neueste zuerst; Garagen-Verträge mit share: method, percent und eur_per_year = Anteil dieses Fahrzeugs heute; jeder Vertrag mit check: status ok|warn|unbekannt, text, explanation — Steuer nachgerechnet, Fahrleistung gegen Prognose, Umlage — oder null), deadlines (Stichtage der nächsten 24 Monate: kind kuendigung|sonderkuendigung|faelligkeit|plakette|garantie, title, date, status warn|ok, days, explanation, level, ref), permits, accessories und emergency (Notfallkarte: plate, fin, insurer, breakdown, as_of). Beispiel: {"vehicle_id": 12}.',
             Schema::object(['vehicle_id' => Schema::integer('ID des Fahrzeugs aus list_vehicles')], ['vehicle_id']),
             Tool::annotations('Papiere lesen', 'R'),
             Scopes::READ,
