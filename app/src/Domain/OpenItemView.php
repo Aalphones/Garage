@@ -17,6 +17,7 @@ final class OpenItemView
 
     private VehicleRepository $vehicles;
     private RecordRepository $records;
+    private ContractRepository $contracts;
     private EventRepository $events;
     private OdometerRepository $readings;
     private TaskRepository $tasks;
@@ -25,6 +26,7 @@ final class OpenItemView
     {
         $this->vehicles = new VehicleRepository($pdo);
         $this->records = new RecordRepository($pdo);
+        $this->contracts = new ContractRepository($pdo);
         $this->events = new EventRepository($pdo);
         $this->readings = new OdometerRepository($pdo);
         $this->tasks = new TaskRepository($pdo);
@@ -80,7 +82,12 @@ final class OpenItemView
     {
         $field = $proposal['field'] ?? null;
         $value = $proposal['value'] ?? null;
-        $row = $this->records->find($table, $rowId, $actor);
+        // Die Vertragstabellen gehören nicht zu `RecordMerger::TABLES`; `RecordRepository` weist sie ab.
+        if (isset(ContractMerger::TABLES[$table])) {
+            $row = $this->contracts->findRow($table, $rowId, $actor);
+        } else {
+            $row = $this->records->find($table, $rowId, $actor);
+        }
         if (!is_string($field) || !is_string($value) || $row === null || !array_key_exists($field, $row)) {
             return ['current' => null, 'proposed' => null];
         }

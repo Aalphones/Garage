@@ -60,6 +60,28 @@ final class ContractRepository
     }
 
     /**
+     * Eine aktive Zeile aus irgendeiner Vertragstabelle, für die Gegenüberstellung eines Klärfalls.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function findRow(string $table, int $id, Actor $actor): ?array
+    {
+        self::assertTable($table);
+        $garageIds = $actor->garageIds();
+        if ($garageIds === []) {
+            return null;
+        }
+
+        $statement = $this->pdo->prepare(
+            sprintf("SELECT * FROM %s WHERE id = ? AND status = 'aktiv' AND garage_id IN (%s)", $table, self::placeholders($garageIds))
+        );
+        $statement->execute([$id, ...$garageIds]);
+        $row = $statement->fetch();
+
+        return $row === false ? null : $row;
+    }
+
+    /**
      * Verträge, die für ein Fahrzeug gelten: seine eigenen und die seiner Garage. Eigene zuerst.
      *
      * @return list<array<string, mixed>>
