@@ -80,6 +80,11 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 |---|---|
 | Vertrag (`contracts`) | Versicherung, Steuer, Club, Stellplatz, Finanzierung; hängt an einem Fahrzeug oder an der Garage. |
 | Beitragsperiode (`contract_terms`) | Zeitraum mit Betrag und Merkmalen wie SF-Klasse und Typklasse. |
+| Vorgang (`contract_events`) | Datiertes Ereignis an einem Vertrag: Beitragsrechnung, Änderung, Schadenmeldung, Regulierung, Rückstufung, Kündigung; mit Bearbeitungsstand. |
+| Tankbuch (`fuel_logs`) | Tankungen mit Datum, km, Litern und Betrag. Der Verbrauch wird beim Lesen zwischen zwei Volltankungen gerechnet, nie gespeichert. |
+| Ausgabe (`expenses`) | Sonstige Kosten wie Parken, Wäsche oder Bußgeld, wahlweise über bis zu 36 Monate verteilt. |
+| Zubehör (`accessories`) | Zubehörteil mit Kaufdatum, Preis, Garantie, Montagestand und der Angabe, ob es beim Verkauf mitgeht. |
+| Plakette (`permits`) | Plakette oder Vignette mit Gültigkeit und Preis; ihr Ablauf ist ein Stichtag. |
 | Umlage | Verteilung eines Garagen-Vertrags auf die aktiven Autos, tagesgenau: gleich (1 ÷ Zahl der an dem Tag aktiven Autos), nach km (Anteil an den km aller aktiven Autos im Monat) oder feste Anteile (`contract_allocations`). |
 | Block | Einer der vier Kostenblöcke: Fixkosten (`fix`: Vertragsperioden, Plaketten, HU über 24 Monate, Umlage), Betrieb (`run`: Tankungen, Zubehör, Ausgaben), Werkstatt (`shop`: Ereignisse außer Kauf und HU), Wertverlust (`loss`). |
 | Laufend | Kosten ohne Wertverlust (Fixkosten + Betrieb + Werkstatt). |
@@ -90,9 +95,8 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 | Vergleichsinserat (`market_listings`) | Angebot eines vergleichbaren Autos mit URL und Abrufdatum; der Agent sagt beim Ablegen, ob Motor und Getriebe passen. Es zählt mit passendem Antrieb, Erstzulassungsjahr ±1, km ±25 % des eigenen Stands und höchstens 60 Tage alt. |
 | Marktkorridor | Ab 8 zählenden Vergleichsinseraten Median und mittlere Hälfte der Preise, ab 15 die auf km und Alter des eigenen Autos umgerechnete Mitte mit Band. Angebotspreise sind keine Verkaufspreise. |
 | Wertfaktor | Einer von acht aus den eigenen Daten berechneten Punkten (Scheckheft, HU, Unfallfreiheit, Halter, Profiltiefe, anstehende Arbeiten, Rückrufe, Ausstattung) mit Plus, Minus oder Unbekannt und Fundstelle. |
-| Notfallkarte | Kennzeichen, FIN, Versicherer, Hotlines; offline verfügbar. |
 | Stichtag | Gerechneter Termin aus Verträgen und Papieren, nie gespeichert: Kündigung (Hauptfälligkeit − Kündigungsfrist − 1 Tag), Sonderkündigung (offene Beitragsrechnung über der Periode davor + 1 Monat), Steuer- und Club-Fälligkeit, Ablauf einer Plakette, Ende einer Garantie. Bis 30 Tage vorher `warn`. |
-| Notfallkarte | Kennzeichen, FIN, Versicherer mit Vertragsnummer und Telefon, Pannenhilfe mit Mitgliedsnummer und Telefon eines Fahrzeugs; oben im Reiter Papiere, offline ab Phase 11 (ADR-025). |
+| Notfallkarte | Kennzeichen, FIN, Versicherer mit Vertragsnummer und Telefon, Pannenhilfe mit Mitgliedsnummer und Telefon eines Fahrzeugs; oben im Reiter Papiere und offline aus dem Gerätecache (`notfall.html`), beim Abmelden gelöscht (ADR-025). |
 | Prüfzeile | Nachrechnung je Vertrag in den Papieren: Kfz-Steuer aus Hubraum, CO₂ und Erstzulassung gegen den Beitrag, vereinbarte Fahrleistung gegen die Kilometerprognose, Umlage-Rechenweg eines Garagen-Vertrags. |
 | Kalender-Abo | Geheimer Link je Garage auf eine `.ics`-Datei mit Fälligkeiten und Stichtagen der aktiven Autos; jede Rolle kann ihn kopieren, nur der Inhaber erneuert ihn, danach ist der alte Link tot. |
 

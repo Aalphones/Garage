@@ -1,6 +1,6 @@
 # Meilenstein 5 — Kosten, Verträge, Wert
 
-Stand: 2026-11-24 (freigegeben) · Entwurf: [`artifacts/entwurf-kosten-wert.html`](artifacts/entwurf-kosten-wert.html) (verbindlich, siehe [`artifacts/README.md`](artifacts/README.md))
+Stand: 2026-11-25 (abgeschlossen und archiviert; freigegeben 2026-11-24) · Entwurf: [`artifacts/entwurf-kosten-wert.html`](artifacts/entwurf-kosten-wert.html) (verbindlich, siehe [`artifacts/README.md`](artifacts/README.md))
 
 Die Akte rechnet, was ein Auto kostet und wert ist, und führt alles, was Papier und Fristen erzeugt: Verträge mit Beitragsperioden und Vorgängen, Umlage von Garagen-Verträgen (ADAC) auf die aktiven Autos, Tankbuch, sonstige Ausgaben, Zubehör, Plaketten, Bewertungen und Vergleichsinserate. Neu am Fahrzeug die Reiter Kosten, Wert und Papiere (mit Notfallkarte, auch offline), in der Garage der Unterhalt aller aktiven Autos, im Konto ein Kalender-Abo für Fälligkeiten und Stichtage.
 
@@ -20,13 +20,13 @@ Wünsche des Inhabers (2026-11-24): ein Plan für den ganzen Meilenstein; erst E
 | 10 | Reiter Papiere | standard | sonnet | complete |
 | 11 | Notfallkarte offline | heikel | opus | complete |
 | 12 | Garage, Übersicht, Konto | standard | sonnet | complete |
-| 13 | Doku-Abgleich und Abschluss | mechanisch | sonnet | pending |
+| 13 | Doku-Abgleich und Abschluss | mechanisch | sonnet | complete |
 
 Reihenfolge: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13. Abhängigkeiten: alles braucht 1; 5 braucht 2, 3 und 4 (Wertverlust aus dem Korridor); 6 braucht 2; 7 braucht 4, 5, 6; 8 braucht 3 und 5; 9 braucht 4; 10 braucht 2 und 6; 11 braucht 10; 12 braucht 5 und 6.
 
-Entscheidungen (entstehen in Phase 1): [ADR-022](../../decisions/022-kosten-und-vertraege.md) Kostenmodell, Verträge, Umlage · [ADR-023](../../decisions/023-wertermittlung.md) Korridor, Regression, Wertfaktoren · [ADR-024](../../decisions/024-stichtage-und-kalender-abo.md) Stichtage und Kalender-Abo · [ADR-025](../../decisions/025-tanken-ausgaben-notfallkarte.md) Eingaben Tanken/Ausgabe, Notfallkarte offline.
+Entscheidungen (entstehen in Phase 1): [ADR-022](../../../decisions/022-kosten-und-vertraege.md) Kostenmodell, Verträge, Umlage · [ADR-023](../../../decisions/023-wertermittlung.md) Korridor, Regression, Wertfaktoren · [ADR-024](../../../decisions/024-stichtage-und-kalender-abo.md) Stichtage und Kalender-Abo · [ADR-025](../../../decisions/025-tanken-ausgaben-notfallkarte.md) Eingaben Tanken/Ausgabe, Notfallkarte offline.
 
-Breakpoints, Handy-Regeln und Prüfbreiten gelten unverändert aus Meilenstein 4 ([Archiv-README](../../archive/2026-11/2026-11-18_oberflaeche/README.md) → „Breakpoints und Handy“).
+Breakpoints, Handy-Regeln und Prüfbreiten gelten unverändert aus Meilenstein 4 ([Archiv-README](../2026-11-18_oberflaeche/README.md) → „Breakpoints und Handy“).
 
 ## Kontrakt
 
@@ -76,16 +76,16 @@ Alle schreibenden Werkzeuge tragen die Herkunftsfelder (`ProvenanceSchema`), mel
 
 ## Finale AK
 
-- [ ] 1. Ein Agent erfasst per MCP Versicherung, Steuer und Club (Fahrzeug- oder Garagen-Vertrag) mit Beitragsperioden und Vorgängen, Tankungen, Ausgaben, Bewertungen, Vergleichsinserate, Zubehör und Plaketten; jedes der zwölf neuen Werkzeuge erkennt eine Wiederholung (`unveraendert`) und macht aus einem Widerspruch zu einem bestätigten Wert einen Klärfall.
-- [ ] 2. `get_cost_summary` liefert für Fahrzeug und Garage die vier Blöcke Fixkosten, Betrieb, Werkstatt, Wertverlust je Monat, laufend und mit Wertverlust, pro Monat und pro km, für 12 Monate, seit Kauf oder ein Kalenderjahr, und nennt fehlende Blöcke; Garagen-Verträge werden tagesgenau gleich, nach km oder nach festen Anteilen auf die aktiven Autos umgelegt; der Prüffall aus Phase 5 (Kfz-Steuer 134 €, 310 Tage = 113,81 €) stimmt.
-- [ ] 3. `get_value_summary` zeigt Ankerwerte, ab 8 passenden Inseraten Median und mittlere Hälfte, ab 15 den auf km und Alter umgerechneten Korridor, Inserate älter als 60 Tage zählen nicht; acht Wertfaktoren je mit Plus, Minus oder Unbekannt und Fundstelle.
-- [ ] 4. Stichtage (Kündigung = Hauptfälligkeit − Kündigungsfrist − 1 Tag, Sonderkündigung nach Beitragserhöhung, Steuer, Plaketten, Garantie) stehen am Fahrzeug und mit den Fälligkeiten im Kalender-Abo der Garage; der Abo-Link ist geheim, jede Rolle kann ihn kopieren, nur der Inhaber erneuert ihn, ein alter Link antwortet danach 404.
-- [ ] 5. Die Reiter Kosten, Wert und Papiere, die Garage (Unterhalt, Garagen-Verträge, Unterhalt und Wert je Karte), die Übersicht (Kosten und Wert, Stichtage) und das Konto (Kalender-Abo) entsprechen dem freigegebenen Entwurf in allen Stufen; am Handy (360 px) ohne waagerechtes Scrollen, hell und dunkel.
-- [ ] 6. Inhaber und Mitglieder tragen im Browser eine Tankung (mit km-Stand, Liter, Betrag, voll) und eine Ausgabe ein und löschen beides sowie Verträge, Vorgänge, Bewertungen, Inserate, Zubehör und Plaketten mit Rückgängig; `lesend` sieht keine dieser Aktionen und bekommt 403.
-- [ ] 7. Die Notfallkarte eines Fahrzeugs öffnet sich nach einmaligem Laden auch ohne Netz; nach dem Abmelden ist sie vom Gerät verschwunden.
-- [ ] 8. Akte (Markdown) und Druckansicht enthalten die Abschnitte Verträge, Kosten, Wert, Zubehör und Plaketten.
-- [ ] 9. Nutzer B sieht und ändert über keine neue Route und kein neues Werkzeug Daten von Nutzer A (404); Agenten-Tokens erreichen keine Browser-Route.
-- [ ] 10. `routes.md`, `models.md`, `code-map.md`, `glossary.md`, `PROJECT.md`, `GAPS.md`, `mcp/instructions.md` nachgezogen.
+- [x] 1. Ein Agent erfasst per MCP Versicherung, Steuer und Club (Fahrzeug- oder Garagen-Vertrag) mit Beitragsperioden und Vorgängen, Tankungen, Ausgaben, Bewertungen, Vergleichsinserate, Zubehör und Plaketten; jedes der zwölf neuen Werkzeuge erkennt eine Wiederholung (`unveraendert`) und macht aus einem Widerspruch zu einem bestätigten Wert einen Klärfall.
+- [x] 2. `get_cost_summary` liefert für Fahrzeug und Garage die vier Blöcke Fixkosten, Betrieb, Werkstatt, Wertverlust je Monat, laufend und mit Wertverlust, pro Monat und pro km, für 12 Monate, seit Kauf oder ein Kalenderjahr, und nennt fehlende Blöcke; Garagen-Verträge werden tagesgenau gleich, nach km oder nach festen Anteilen auf die aktiven Autos umgelegt; der Prüffall aus Phase 5 (Kfz-Steuer 134 €, 310 Tage = 113,81 €) stimmt.
+- [x] 3. `get_value_summary` zeigt Ankerwerte, ab 8 passenden Inseraten Median und mittlere Hälfte, ab 15 den auf km und Alter umgerechneten Korridor, Inserate älter als 60 Tage zählen nicht; acht Wertfaktoren je mit Plus, Minus oder Unbekannt und Fundstelle.
+- [x] 4. Stichtage (Kündigung = Hauptfälligkeit − Kündigungsfrist − 1 Tag, Sonderkündigung nach Beitragserhöhung, Steuer, Plaketten, Garantie) stehen am Fahrzeug und mit den Fälligkeiten im Kalender-Abo der Garage; der Abo-Link ist geheim, jede Rolle kann ihn kopieren, nur der Inhaber erneuert ihn, ein alter Link antwortet danach 404.
+- [x] 5. Die Reiter Kosten, Wert und Papiere, die Garage (Unterhalt, Garagen-Verträge, Unterhalt und Wert je Karte), die Übersicht (Kosten und Wert, Stichtage) und das Konto (Kalender-Abo) entsprechen dem freigegebenen Entwurf in allen Stufen; am Handy (360 px) ohne waagerechtes Scrollen, hell und dunkel.
+- [x] 6. Inhaber und Mitglieder tragen im Browser eine Tankung (mit km-Stand, Liter, Betrag, voll) und eine Ausgabe ein und löschen beides sowie Verträge, Vorgänge, Bewertungen, Inserate, Zubehör und Plaketten mit Rückgängig; `lesend` sieht keine dieser Aktionen und bekommt 403.
+- [x] 7. Die Notfallkarte eines Fahrzeugs öffnet sich nach einmaligem Laden auch ohne Netz; nach dem Abmelden ist sie vom Gerät verschwunden.
+- [x] 8. Akte (Markdown) und Druckansicht enthalten die Abschnitte Verträge, Kosten, Wert, Zubehör und Plaketten.
+- [x] 9. Nutzer B sieht und ändert über keine neue Route und kein neues Werkzeug Daten von Nutzer A (404); Agenten-Tokens erreichen keine Browser-Route.
+- [x] 10. `routes.md`, `models.md`, `code-map.md`, `glossary.md`, `PROJECT.md`, `GAPS.md`, `mcp/instructions.md` nachgezogen.
 
 ## Konfidenz-Ausweis
 
@@ -101,10 +101,40 @@ Fehlerklassen geprüft: `frameworks/css-architecture` → „Freiraum per Innena
 
 ## Summary
 
+Meilenstein 5 ist gebaut: Verträge mit Perioden, Umlage und Vorgängen, Tankbuch, Ausgaben, Zubehör, Plaketten, Bewertungen und Vergleichsinserate, Kosten- und Wertrechnung, Stichtage mit Kalender-Abo, Notfallkarte offline, die Reiter Kosten, Wert und Papiere sowie Unterhalt in der Garage. 12 neue Werkzeuge, zusammen 50. Abnahmestand: AK 1–4, 6, 8–10 am Code abgeglichen (AK 2 zusätzlich mit Prüffall aus Phase 5); AK 5 nur mit Testdaten in Headless-Edge; AK 7 nur am Code. Die CI prüft die PHP-Syntax; gegen PHP/MySQL ist nichts gelaufen.
+
 ## Files touched
+
+- `app/migrations/020`–`024`
+- `app/src/Api/` `CalendarController`, `CostController`, `PaperController`, `ValueController`; `app/src/Auth/CalendarLink.php`
+- `app/src/Domain/` Dienste, Repositories und reine Rechner für Verträge, Papiere, Stichtage, Kalender, Kosten und Wert; `DossierService`, `LifecycleService`, `OpenItemView`, `OpenItemEffect`
+- `app/src/Mcp/` `Tools/ContractTools`, `CostTools`, `PaperTools`, `ValueTools`, `Prompts`, `McpController`; `app/mcp/instructions.md`; `app/index.php`
+- `web/` `tab-costs`, `tab-value`, `tab-papers`, `cost-inputs`, `emergency`, `notfall`, `garage-costs`, `calendar`, `chart` (je `js/`), `notfall.html`, `sw.js`, Manifest, CSS
+- `docs/` `routes`, `models`, `code-map`, `glossary`, `PROJECT`, `knowledge/GAPS`, ADR-022 bis 025
 
 ## Commits
 
+39efa90 (Plan), d911f63 (Freigabe), b4d8727 (1), 1ecc4d8 (2), 48098b6 (3), 6dfa36e (4), 7016f9d (5), 78672b0 (6), 79fbff7 (7), 010e0b3 (8), 489c25a (9), e40a377 (10), e09d462 (11), 47c6f8f (12), dazu der Abschluss-Commit (13).
+
 ## Deviations from plan
 
+- Audit-Aktionen der Verträge heißen nach der Tabelle (`contracts.create|update|dispute`, `contract_terms.…`, `contract_allocations.…`, `contract_events.…`).
+- `record_fuel` und `add_market_listing` liefern zusätzlich `open_item_ids`.
+- Die Regression des Marktkorridors rechnet mit standardisierten Werten.
+- Der Teiler „pro Monat“ zählt nur aktive Tage.
+- Die Prüfzeile Kfz-Steuer rechnet den CO₂-Anteil ab Erstzulassung 2021 gestaffelt statt „2 € je g“.
+- Stichtage tragen zusätzlich `level`; die Kosten-Ausgabe zusätzlich `per_km` und `month_cents`.
+- Die Hülle im Service Worker hat drei Dateien mehr und wird einzeln gefüllt.
+- Oberfläche (AK 5): Linie „Marktmitte“ ohne Kaufpreis (AK statt Entwurf); der Entwurfssatz „steigt voraussichtlich … auf 114 €“ fehlt; zusätzlich Löschen in „Verträge der Garage“ und „Werte als Tabelle“.
+- Beim AK-Abgleich behoben (Phase 13): Ein offener Klärfall an einer Vertragstabelle hätte die Klärfall-Liste der Oberfläche abbrechen lassen, weil `OpenItemView` die Zeile über `RecordRepository` las; jetzt liest `ContractRepository::findRow`. Nicht zur Laufzeit belegt.
+
 ## Follow-ups
+
+Beim Inhaber nach dem Deploy (Einzelheiten in [`GAPS.md`](../../../knowledge/GAPS.md)):
+
+- Abnahme der Oberfläche gegen echte Daten, darunter ein Klärfall an einem Vertrag auf der Klärfall-Seite.
+- Notfallkarte offline am Handy (Prüfschritte in `phase-11-notfallkarte-offline.md`).
+- Kalender-Abo in Google und Apple; `.ics` im Validator auf icalendar.org.
+- Markdown-Akte des Golf (vier neue Abschnitte).
+- `status_since` verkaufter oder stillgelegter Autos nachtragen.
+- Offen aus Meilenstein 3 und 4: Browser-Abnahme der Oberfläche, `get_dossier` gegen den Stand vor Phase 8 von Meilenstein 4, Handy-Test Teilen-Ziel, Claude-Web-Test des Widgets, Verprobungs-Matrix, echte Verbindung aus claude.ai/ChatGPT.
