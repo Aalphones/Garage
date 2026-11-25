@@ -1,6 +1,6 @@
 # Meilenstein 6 — Einladungen in der Oberfläche, Migration der beiden Akten
 
-Stand: 2026-11-25 (Entwurf zur Freigabe)
+Stand: 2026-11-25 (freigegeben)
 
 Inhaber laden Menschen selbst in ihre Garage ein, sehen und ändern Mitglieder und helfen bei vergessenem Passwort mit einem Rücksetz-Link — alles im Konto, ohne Deploy-Token. Danach baut ein Agent die Akten von Golf Sportsvan und Clio III per MCP in der Live-Garage auf und gleicht sie mit den alten Markdown-Akten ab.
 
