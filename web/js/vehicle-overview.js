@@ -335,7 +335,7 @@ function pencilButton(label, onClick) {
 }
 
 /** `edit`: Funktion, die das Blatt zum Korrigieren öffnet, oder `null` für Zeilen ohne Korrektur (Spezifikation, Ausstattung, Zulassung). */
-function factActions(context, edit) {
+export function factActions(context, edit) {
     return {
         canWrite: context.vehicle.permissions.write,
         edit,
@@ -360,7 +360,7 @@ function editAction(context, field, entry) {
     return () => openFactSheet(context.vehicleId, { field, label: FIELD_LABELS[field], current: entry.value, inputKind }, context.reloadVehicle);
 }
 
-function factRow(label, valueText, source, confidence, detail, disputedItemId, actions) {
+export function factRow(label, valueText, source, confidence, detail, disputedItemId, actions) {
     const fact = element('div', undefined, disputedItemId === undefined ? 'fact' : 'fact disputed');
     fact.appendChild(element('span', label, 'k'));
     const value = element('span', undefined, 'v');
@@ -386,7 +386,7 @@ function factRow(label, valueText, source, confidence, detail, disputedItemId, a
     return fact;
 }
 
-function entryDetail(entry, vehicleId) {
+export function entryDetail(entry, vehicleId) {
     return { actor: entry.actor, recordedAt: entry.recorded_at, sourceUrl: entry.source_url, vehicleId };
 }
 

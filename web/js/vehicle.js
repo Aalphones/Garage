@@ -9,6 +9,7 @@ import { renderBook } from './tab-book.js';
 import { renderCosts } from './tab-costs.js';
 import { renderDocs } from './tab-docs.js';
 import { renderMeasure } from './tab-measure.js';
+import { renderPapers } from './tab-papers.js';
 import { renderParts } from './tab-parts.js';
 import { renderPlan } from './tab-plan.js';
 import { renderTires } from './tab-tires.js';
@@ -29,6 +30,7 @@ const TABS = [
     { key: 'belege', label: 'Belege' },
     { key: 'kosten', label: 'Kosten' },
     { key: 'wert', label: 'Wert' },
+    { key: 'papiere', label: 'Papiere' },
 ];
 const ADDRESS = /^#(\d+)\/([a-z]+)$/;
 
@@ -156,6 +158,7 @@ async function showPanel(tab) {
         belege: renderDocs,
         kosten: renderCosts,
         wert: renderValue,
+        papiere: renderPapers,
     };
     await renderers[tab.key](panel, context);
 }

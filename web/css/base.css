@@ -548,3 +548,31 @@ a.more::after, .oi-h .nm::after, button.est::after { content: ''; position: abso
 .cols > .sec { min-width: 0; }
 /* In einem kurzen Blatt würde die schwebende Liste oben abgeschnitten; im Fluss wächst das Blatt mit. */
 .sheet .field.choice .dd [role=listbox] { position: static; margin-top: .3rem; }
+
+/* ===== Meilenstein 5: Papiere ===== */
+.ecard { border: 1px solid var(--line); border-left: 4px solid var(--primary); border-radius: var(--radius-card); background: var(--grad-surface); padding: .8rem .9rem; display: grid; gap: .5rem; }
+.ecard .hd { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.ecard .hd b { margin-right: auto; overflow-wrap: anywhere; }
+.ecard dl, .ctr dl { display: grid; grid-template-columns: minmax(6.5rem, auto) 1fr; gap: .2rem .9rem; margin: 0; font-size: 14px; }
+.ecard dt, .ctr dt { color: var(--muted); font-size: 13px; }
+.ecard dd, .ctr dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.ctr dd { font-weight: 400; }
+.ecard a[href^='tel'] { color: var(--primary); display: inline-flex; align-items: center; min-height: var(--touch); }
+.ecard .gap { color: var(--warn); }
+.contracts { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); }
+.ctr { border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--grad-surface); padding: .9rem; display: grid; gap: .6rem; align-content: start; grid-template-columns: minmax(0, 1fr); min-width: 0; }
+.ctr .hd { display: flex; gap: .2rem .6rem; align-items: baseline; flex-wrap: wrap; }
+.ctr .hd b { overflow-wrap: anywhere; }
+.ctr .hd .r { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ctr .kindtag { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.ctr.missing { border-style: dashed; border-color: var(--border); background: none; }
+.ctr p { margin: 0; }
+.ctr .banner { margin: 0; }
+.ctr .chk { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; font-size: 13.5px; border-top: 1px solid var(--line); padding-top: .55rem; }
+.ctr .chk .st { white-space: normal; }
+.ctr details > summary { cursor: pointer; font-size: 13.5px; color: var(--primary); min-height: var(--touch); display: flex; align-items: center; }
+.ctr .tbl { font-size: 13px; margin-top: .3rem; }
+.ctr .tbl th, .ctr .tbl td { padding-left: .5rem; padding-right: .5rem; }
+.ctr .ft { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.ctr .ft .btn { margin-left: auto; }
+button.row .s { text-align: left; }

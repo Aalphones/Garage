@@ -92,6 +92,7 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 | Wertfaktor | Einer von acht aus den eigenen Daten berechneten Punkten (Scheckheft, HU, Unfallfreiheit, Halter, Profiltiefe, anstehende Arbeiten, Rückrufe, Ausstattung) mit Plus, Minus oder Unbekannt und Fundstelle. |
 | Notfallkarte | Kennzeichen, FIN, Versicherer, Hotlines; offline verfügbar. |
 | Stichtag | Gerechneter Termin aus Verträgen und Papieren, nie gespeichert: Kündigung (Hauptfälligkeit − Kündigungsfrist − 1 Tag), Sonderkündigung (offene Beitragsrechnung über der Periode davor + 1 Monat), Steuer- und Club-Fälligkeit, Ablauf einer Plakette, Ende einer Garantie. Bis 30 Tage vorher `warn`. |
+| Notfallkarte | Kennzeichen, FIN, Versicherer mit Vertragsnummer und Telefon, Pannenhilfe mit Mitgliedsnummer und Telefon eines Fahrzeugs; oben im Reiter Papiere, offline ab Phase 11 (ADR-025). |
 | Prüfzeile | Nachrechnung je Vertrag in den Papieren: Kfz-Steuer aus Hubraum, CO₂ und Erstzulassung gegen den Beitrag, vereinbarte Fahrleistung gegen die Kilometerprognose, Umlage-Rechenweg eines Garagen-Vertrags. |
 | Kalender-Abo | Geheimer Link je Garage auf eine `.ics`-Datei mit Fälligkeiten und Stichtagen der aktiven Autos; jede Rolle kann ihn kopieren, nur der Inhaber erneuert ihn, danach ist der alte Link tot. |
 

@@ -17,7 +17,7 @@ Wünsche des Inhabers (2026-11-24): ein Plan für den ganzen Meilenstein; erst E
 | 7 | Akte, Fahrzeugliste, Prompts, Server-Anweisungen | standard | sonnet | complete |
 | 8 | Reiter Kosten mit Blättern Tankung und Ausgabe | standard | sonnet | complete |
 | 9 | Reiter Wert | standard | sonnet | complete |
-| 10 | Reiter Papiere | standard | sonnet | pending |
+| 10 | Reiter Papiere | standard | sonnet | complete |
 | 11 | Notfallkarte offline | heikel | opus | pending |
 | 12 | Garage, Übersicht, Konto | standard | sonnet | pending |
 | 13 | Doku-Abgleich und Abschluss | mechanisch | sonnet | pending |
