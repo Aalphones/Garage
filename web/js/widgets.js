@@ -25,6 +25,19 @@ export function plate(text, isLarge = false) {
     return sign;
 }
 
+/** Abschnitt eines Reiters mit Überschrift; `head` nimmt Knöpfe auf. */
+export function section(title, hint) {
+    const node = element('div', undefined, 'sec');
+    const head = element('div', undefined, 'sec-h');
+    head.appendChild(element('h2', title));
+    if (hint !== undefined) {
+        head.appendChild(element('span', hint, 'muted small'));
+    }
+    node.appendChild(head);
+
+    return { node, head };
+}
+
 /** Wort mit farbigem Punkt (`.st`); die Farbe allein trägt den Zustand nie. */
 export function stateWord(className, text) {
     return element('span', text, className);

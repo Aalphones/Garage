@@ -1,13 +1,13 @@
 // Reiter „Kosten“: Zeitraum, Kennzahlen, Säulen je Monat, Kosten pro km, Blöcke, Tankbuch und sonstige Ausgaben. Alles Gerechnete kommt vom Server.
 import { request } from './api.js';
-import { lineChart, stackedBars } from './chart.js';
+import { lineChart, onChartActivate, stackedBars } from './chart.js';
 import { EXPENSE_CATEGORIES, openExpenseSheet, openFuelSheet } from './cost-inputs.js';
 import { actionButton, clearChildren, element, formatDay, link } from './dom.js';
 import * as icons from './icons.js';
 import { badge, tipText } from './provenance.js';
 import { deleteRecord } from './record-delete.js';
 import { isNarrow, readView, storeView, viewSwitch } from './view-switch.js';
-import { emptyBlock, errorBlock, formatEuro, formatKm } from './widgets.js';
+import { emptyBlock, errorBlock, formatEuro, formatKm, section } from './widgets.js';
 
 const PERIOD_KEY = 'garage.kosten.zeitraum';
 const FUEL_VIEW_KEY = 'garage.ansicht.tankbuch';
@@ -53,18 +53,6 @@ function periodOptions() {
         { value: 'jahr:' + year, label: String(year) },
         { value: 'jahr:' + (year - 1), label: String(year - 1) },
     ];
-}
-
-function section(title, hint) {
-    const node = element('div', undefined, 'sec');
-    const head = element('div', undefined, 'sec-h');
-    head.appendChild(element('h2', title));
-    if (hint !== undefined) {
-        head.appendChild(element('span', hint, 'muted small'));
-    }
-    node.appendChild(head);
-
-    return { node, head };
 }
 
 /** Geschätzter oder gerechneter Wert; Tippen zeigt den Rechenweg. */
@@ -199,23 +187,6 @@ function monthName(month) {
     return monthDate(month).toLocaleDateString('de-DE', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
 
-/** Tippen oder Enter auf ein Diagrammelement, das `selector` trifft. */
-function onActivate(chart, selector, activate) {
-    chart.addEventListener('click', (event) => {
-        const target = event.target.closest(selector);
-        if (target !== null) {
-            activate(target);
-        }
-    });
-    chart.addEventListener('keydown', (event) => {
-        const target = event.target.closest(selector);
-        if (target !== null && (event.key === 'Enter' || event.key === ' ')) {
-            event.preventDefault();
-            activate(target);
-        }
-    });
-}
-
 function legend() {
     const row = element('div', undefined, 'legend');
     for (const block of BLOCKS) {
@@ -240,7 +211,7 @@ function monthSection(costs) {
         chart.insertAdjacentHTML('afterbegin', stackedBars({ months, series, ariaLabel: 'Kosten je Monat, gestapelt nach Block; Werte in der Liste Blöcke', containerWidth: chart.clientWidth }));
         chart.appendChild(legend());
     };
-    onActivate(chart, 'rect[data-series]', (segment) => {
+    onChartActivate(chart, 'rect[data-series]', (segment) => {
         const row = costs.months[Number(segment.dataset.month)];
         const block = BLOCKS.find((entry) => entry.key === segment.dataset.series);
         tipText(segment, monthName(row.month), block.label + ': ' + euroFromCents(row[block.key]) + ' · Monat gesamt ' + euroFromCents(row.full_cents));
@@ -270,7 +241,7 @@ function perKmSection(series) {
         chart.insertAdjacentHTML('afterbegin', lineChart({ points, yLabel: '€', ariaLabel: 'Kosten pro km im Verlauf', containerWidth: chart.clientWidth, minSpan: PER_KM_MIN_SPAN_EURO }));
         chart.appendChild(caption);
     };
-    onActivate(chart, 'g[data-point]', (point) => {
+    onChartActivate(chart, 'g[data-point]', (point) => {
         const entry = series[Number(point.dataset.point)];
         tipText(point, monthName(entry.month), formatEuro(Number(entry.per_km_full_cents)) + ' je km: ' + euroFromCents(entry.full_cents) + ' ÷ ' + formatKm(entry.km)
             + ' km (' + formatDay(entry.from) + '–' + formatDay(entry.to) + ')');

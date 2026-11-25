@@ -1,6 +1,7 @@
 // Kleine Eingaben im Browser (ADR-021): Kilometerstand, Stammdaten-Wert korrigieren, Notiz, Titelbild. Nur für Rollen mit Schreibrecht aufrufen.
 import { ApiError, request } from './api.js';
 import { element, hideError, showError } from './dom.js';
+import { dropdown } from './dropdown.js';
 import { openSheet } from './sheet.js';
 import { toast } from './toast.js';
 
@@ -155,14 +156,38 @@ async function saveOdometer(vehicleId, form, onSaved) {
     return true;
 }
 
+/** Wie `fieldBlock`, mit gestalteter Auswahl; `control.value` trägt die Wahl, leer heißt noch keine. */
+function choiceBlock(idPrefix, labelText, choices, current) {
+    const field = element('div', undefined, 'field choice');
+    field.appendChild(element('span', labelText, 'field-title'));
+    const control = { value: String(current) };
+    dropdown(field, {
+        label: labelText,
+        options: [{ value: '', label: 'Bitte wählen' }, ...choices],
+        value: control.value,
+        onChange: (value) => {
+            control.value = value;
+        },
+    });
+    const error = element('p', undefined, 'error');
+    error.id = idPrefix + '-error';
+    error.setAttribute('role', 'alert');
+    error.tabIndex = -1;
+    error.hidden = true;
+    field.appendChild(error);
+
+    return {
+        field,
+        control,
+        fail: (message) => showError(error, message),
+        clear: () => hideError(error),
+    };
+}
+
 // --- Stammdaten-Wert korrigieren --------------------------------------------------------------------------------------
 
-/**
- * `field`: Feldname aus der Akte; `label`: Anzeigename; `current`: aktueller Wert (Zahl oder Text); `inputKind`: `'text'`, `'date'` oder `'int'`.
- * Strittige Felder bekommen keinen Stift, die API lehnt sie mit 409 ab.
- */
-export function openFactSheet(vehicleId, { field, label, current, inputKind }, onSaved) {
-    const body = element('div');
+/** Textfeld für `'text'`, `'date'` und `'int'`; Enter speichert. */
+function factInput(label, current, inputKind) {
     const input = textInput(String(current));
     if (inputKind === 'date') {
         input.type = 'date';
@@ -172,9 +197,24 @@ export function openFactSheet(vehicleId, { field, label, current, inputKind }, o
         input.pattern = '[0-9]*';
     }
     input.required = true;
-    const valueField = fieldBlock('fact-value', label, input);
-    body.append(valueField.field, hint('Dein Wert ersetzt den bisherigen sofort (Herkunft: Nutzer, bestätigt). Der alte Wert bleibt im Verlauf.'));
     submitOnEnter(input);
+
+    return fieldBlock('fact-value', label, input);
+}
+
+/**
+ * `field`: Feldname aus der Akte; `label`: Anzeigename; `current`: aktueller Wert (Zahl oder Text); `inputKind`: `'text'`, `'date'`,
+ * `'int'` oder `'choice'` (dann `choices`: `[{ value, label }]`). Strittige Felder bekommen keinen Stift, die API lehnt sie mit 409 ab.
+ */
+export function openFactSheet(vehicleId, { field, label, current, inputKind, choices }, onSaved) {
+    const body = element('div');
+    let valueField;
+    if (inputKind === 'choice') {
+        valueField = choiceBlock('fact-value', label, choices, current);
+    } else {
+        valueField = factInput(label, current, inputKind);
+    }
+    body.append(valueField.field, hint('Dein Wert ersetzt den bisherigen sofort (Herkunft: Nutzer, bestätigt). Der alte Wert bleibt im Verlauf.'));
 
     openSheet({
         title: label + ' korrigieren',
@@ -184,7 +224,7 @@ export function openFactSheet(vehicleId, { field, label, current, inputKind }, o
             {
                 label: 'Wert speichern',
                 role: 'primary',
-                onClick: () => saveFact(vehicleId, { field, label, inputKind, input, valueField }, onSaved),
+                onClick: () => saveFact(vehicleId, { field, label, inputKind, valueField }, onSaved),
             },
         ],
     });
@@ -192,7 +232,7 @@ export function openFactSheet(vehicleId, { field, label, current, inputKind }, o
 
 async function saveFact(vehicleId, form, onSaved) {
     form.valueField.clear();
-    const text = form.input.value.trim();
+    const text = form.valueField.control.value.trim();
     if (text === '') {
         form.valueField.fail('Bitte einen Wert eintragen.');
 

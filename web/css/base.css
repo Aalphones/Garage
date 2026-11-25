@@ -533,3 +533,18 @@ a.more::after, .oi-h .nm::after, button.est::after { content: ''; position: abso
   .facts.posts .fact { grid-template-columns: 1fr 6.8rem; }
 }
 .grid2 .field input { margin-top: 0; }
+
+/* ===== Meilenstein 5: Wert ===== */
+.vf { display: inline-grid; place-items: center; width: 1.45rem; height: 1.45rem; border-radius: 50%; font-weight: 700; font-size: 13px; border: 1.5px solid var(--border); color: var(--muted); flex: none; }
+.vf.plus { color: var(--primary); border-color: var(--primary); }
+.vf.minus { color: var(--bad); border-color: var(--bad); }
+.vf.unk { color: var(--warn); border-color: var(--warn); border-style: dashed; }
+.row .t.vfrow { display: flex; gap: .6rem; align-items: center; }
+.tbl tr.old td { color: var(--muted); }
+.tbl tr.old td:first-child { text-decoration: line-through; }
+.tbl tr.old td:first-child a { color: inherit; }
+.chart .legend i.band { background: color-mix(in oklab, var(--primary) 30%, transparent); border: 0; }
+.chart .legend i.dot { border: 0; border-radius: 50%; }
+.cols > .sec { min-width: 0; }
+/* In einem kurzen Blatt würde die schwebende Liste oben abgeschnitten; im Fluss wächst das Blatt mit. */
+.sheet .field.choice .dd [role=listbox] { position: static; margin-top: .3rem; }

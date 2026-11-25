@@ -12,6 +12,7 @@ import { renderMeasure } from './tab-measure.js';
 import { renderParts } from './tab-parts.js';
 import { renderPlan } from './tab-plan.js';
 import { renderTires } from './tab-tires.js';
+import { renderValue } from './tab-value.js';
 import { mountVehicleActions } from './vehicle-actions.js';
 import { renderOverview } from './vehicle-overview.js';
 import { emptyBlock, errorBlock, plate, skeletons, STATUS_LABELS, stateWord } from './widgets.js';
@@ -27,6 +28,7 @@ const TABS = [
     { key: 'teile', label: 'Teile' },
     { key: 'belege', label: 'Belege' },
     { key: 'kosten', label: 'Kosten' },
+    { key: 'wert', label: 'Wert' },
 ];
 const ADDRESS = /^#(\d+)\/([a-z]+)$/;
 
@@ -153,6 +155,7 @@ async function showPanel(tab) {
         teile: renderParts,
         belege: renderDocs,
         kosten: renderCosts,
+        wert: renderValue,
     };
     await renderers[tab.key](panel, context);
 }
