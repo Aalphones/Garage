@@ -8,6 +8,11 @@ const DUE_STATES = {
     ok: { className: 'st ok', label: 'in Ordnung' },
 };
 
+const DAYS_PER_WEEK = 7;
+const DAYS_PER_MONTH = 30.44;
+const WEEKS_FROM_DAYS = 31;
+const MONTHS_FROM_DAYS = 70;
+
 export const STATUS_LABELS = { aktiv: 'aktiv', verkauft: 'verkauft', stillgelegt: 'stillgelegt', geloescht: 'gelöscht' };
 
 /** Kennzeichen-Schild; ohne Text gibt es kein Schild (`null`). */
@@ -55,6 +60,34 @@ export function formatKm(value) {
 
 export function formatEuro(value) {
     return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+}
+
+/** Gerundet auf ganze Euro, für geschätzte Werte. */
+export function formatWholeEuro(value) {
+    return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+}
+
+/** Mittlere Hälfte eines Marktkorridors („11.200–12.500 €“). */
+export function formatCorridor(corridor) {
+    return Math.round(corridor.low_cents / 100).toLocaleString('de-DE') + '–' + formatWholeEuro(corridor.high_cents / 100);
+}
+
+/** Abstand bis zu einem Stichtag in Worten. */
+export function remainingText(days) {
+    if (days === 0) {
+        return 'heute';
+    }
+    if (days === 1) {
+        return 'morgen';
+    }
+    if (days < WEEKS_FROM_DAYS) {
+        return 'in ' + days + ' Tagen';
+    }
+    if (days < MONTHS_FROM_DAYS) {
+        return 'in ' + Math.round(days / DAYS_PER_WEEK) + ' Wochen';
+    }
+
+    return 'in ' + Math.round(days / DAYS_PER_MONTH) + ' Monaten';
 }
 
 export function skeletons(count = 2) {

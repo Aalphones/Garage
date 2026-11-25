@@ -5,9 +5,10 @@ import { KIND_LABELS, openItemBody } from './openitem-view.js';
 import * as icons from './icons.js';
 import { badge, tipText } from './provenance.js';
 import { openFactSheet, openNoteSheet, openOdometerSheet } from './vehicle-inputs.js';
-import { dueWord, errorBlock, formatEuro, formatKm, stateWord } from './widgets.js';
+import { dueWord, errorBlock, formatCorridor, formatEuro, formatKm, formatWholeEuro, remainingText, stateWord } from './widgets.js';
 
 const DUE_ROWS = 4;
+const DEADLINE_ROWS = 2;
 const INTEGER_FIELDS = ['leistung_kw', 'hubraum_ccm', 'co2_g_km', 'leergewicht_kg', 'zul_gesamtgewicht_kg', 'listenneupreis_eur', 'schluesselanzahl'];
 const PRIMARY_FIELDS = ['marke', 'modell', 'variante', 'fin', 'erstzulassung', 'kraftstoff', 'leistung_kw', 'farbe'];
 
@@ -197,6 +198,71 @@ function eventSection(context, result) {
     }
     const list = element('div', undefined, 'list');
     list.appendChild(row('#' + context.vehicleId + '/scheckheft', latest.title, latest.gross_eur === null ? null : formatEuro(latest.gross_eur), [document.createTextNode(parts.join(' · '))]));
+    wrapper.appendChild(list);
+
+    return wrapper;
+}
+
+function costRow(context, costs) {
+    const parts = [];
+    if (costs.per_km_full_cents !== null) {
+        parts.push(formatEuro(Number(costs.per_km_full_cents)) + '/km');
+    }
+    parts.push('letzte 12 Monate');
+    const sub = [element('span', parts.join(' · '))];
+    if (costs.missing.length > 0) {
+        sub.push(element('span', 'ohne ' + costs.missing.join(', '), 'gap'));
+    }
+
+    return row('#' + context.vehicleId + '/kosten', 'Unterhalt', '≈ ' + formatWholeEuro(costs.month_full_cents / 100) + '/Monat', sub);
+}
+
+function valueRow(context, corridor) {
+    const href = '#' + context.vehicleId + '/wert';
+    if (corridor.median_cents === null) {
+        return row(href, 'Wert', '–', [document.createTextNode('noch kein Marktkorridor')]);
+    }
+
+    return row(href, 'Wert', '≈ ' + formatCorridor(corridor), [document.createTextNode('Marktmitte aus ' + corridor.counting + ' Inseraten · Angebotspreise')]);
+}
+
+/** Ohne einen einzigen Kostenposten entfällt der Abschnitt (`null`). */
+function costValueSection(context, costs, value) {
+    const error = costs.error ?? value.error;
+    if (error !== null) {
+        const failed = section('Kosten und Wert');
+        failed.appendChild(errorBlock(error.message, context.reload));
+
+        return failed;
+    }
+    if (Object.values(costs.value.posts).every((posts) => posts.length === 0)) {
+        return null;
+    }
+    const wrapper = section('Kosten und Wert');
+    const list = element('div', undefined, 'list');
+    list.append(costRow(context, costs.value), valueRow(context, value.value.corridor));
+    wrapper.appendChild(list);
+
+    return wrapper;
+}
+
+/** Die nächsten Stichtage; ohne Stichtag entfällt der Abschnitt (`null`). */
+function deadlineSection(context, result) {
+    if (result.error === null && result.value.deadlines.length === 0) {
+        return null;
+    }
+    const href = '#' + context.vehicleId + '/papiere';
+    const wrapper = section('Stichtage', 'Papiere', href);
+    if (result.error !== null) {
+        wrapper.appendChild(errorBlock(result.error.message, context.reload));
+
+        return wrapper;
+    }
+    const list = element('div', undefined, 'list');
+    for (const deadline of result.value.deadlines.slice(0, DEADLINE_ROWS)) {
+        const state = stateWord(deadline.status === 'warn' ? 'st warn' : 'st ok', remainingText(deadline.days));
+        list.appendChild(row(href, deadline.title, state, [document.createTextNode(formatDay(deadline.date))]));
+    }
     wrapper.appendChild(list);
 
     return wrapper;
@@ -480,11 +546,14 @@ function factSection(context) {
  */
 export async function renderOverview(panel, context) {
     const base = 'vehicles/' + context.vehicleId;
-    const [due, events, notes, damages] = await Promise.all([
+    const [due, events, notes, damages, costs, value, deadlines] = await Promise.all([
         settle(request('GET', base + '/due')),
         settle(request('GET', base + '/events')),
         settle(request('GET', base + '/notes')),
         settle(request('GET', base + '/damages')),
+        settle(request('GET', base + '/costs')),
+        settle(request('GET', base + '/value')),
+        settle(request('GET', base + '/deadlines')),
     ]);
     clearChildren(panel);
 
@@ -504,9 +573,17 @@ export async function renderOverview(panel, context) {
     const left = element('div');
     left.appendChild(dueSection(context, due));
     left.appendChild(eventSection(context, events));
+    const costValue = costValueSection(context, costs, value);
+    if (costValue !== null) {
+        left.appendChild(costValue);
+    }
     const right = element('div');
     right.appendChild(openHost);
     right.appendChild(noteSection(context, notes));
+    const upcoming = deadlineSection(context, deadlines);
+    if (upcoming !== null) {
+        right.appendChild(upcoming);
+    }
     right.appendChild(damageSection(context, damages));
     columns.append(left, right);
 

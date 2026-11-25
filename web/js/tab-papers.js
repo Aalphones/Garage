@@ -7,14 +7,10 @@ import { badge, tipText } from './provenance.js';
 import { deleteRecord } from './record-delete.js';
 import { entryDetail, factActions, factRow } from './vehicle-overview.js';
 import { openFactSheet } from './vehicle-inputs.js';
-import { emptyBlock, errorBlock, formatEuro, formatKm, section, stateWord } from './widgets.js';
+import { emptyBlock, errorBlock, formatEuro, formatKm, remainingText, section, stateWord } from './widgets.js';
 
 const DAY_MS = 86_400_000;
 const WARN_DAYS = 30;
-const DAYS_PER_WEEK = 7;
-const DAYS_PER_MONTH = 30.44;
-const WEEKS_FROM_DAYS = 31;
-const MONTHS_FROM_DAYS = 70;
 const FULL_YEAR_DAYS = [365, 366];
 const KIND_INSURANCE = 'versicherung';
 const KIND_TAX = 'steuer';
@@ -25,7 +21,7 @@ const CO2_LABEL = 'CO₂ (g/km)';
 const ALLOCATION_KM = 'km';
 const EMERGENCY_PAGE = '/garage/notfall.html';
 
-const CONTRACT_LABELS = {
+export const CONTRACT_LABELS = {
     versicherung: 'Kfz-Versicherung',
     steuer: 'Kfz-Steuer',
     club: 'Automobilclub',
@@ -33,7 +29,7 @@ const CONTRACT_LABELS = {
     finanzierung: 'Finanzierung',
     sonstiges: 'Sonstiger Vertrag',
 };
-const EVENT_LABELS = {
+export const EVENT_LABELS = {
     beitragsrechnung: 'Beitragsrechnung',
     aenderung: 'Änderung',
     schadenmeldung: 'Schadenmeldung',
@@ -41,7 +37,7 @@ const EVENT_LABELS = {
     rueckstufung: 'Rückstufung',
     kuendigung: 'Kündigung',
 };
-const EVENT_STATES = {
+export const EVENT_STATES = {
     offen: { className: 'st warn', label: 'offen' },
     in_bearbeitung: { className: 'st warn', label: 'in Bearbeitung' },
     erledigt: { className: 'st ok', label: 'erledigt' },
@@ -72,23 +68,6 @@ function todayIso() {
 
 function daysUntil(date) {
     return Math.round((Date.parse(date) - Date.parse(todayIso())) / DAY_MS);
-}
-
-function remainingText(days) {
-    if (days === 0) {
-        return 'heute';
-    }
-    if (days === 1) {
-        return 'morgen';
-    }
-    if (days < WEEKS_FROM_DAYS) {
-        return 'in ' + days + ' Tagen';
-    }
-    if (days < MONTHS_FROM_DAYS) {
-        return 'in ' + Math.round(days / DAYS_PER_WEEK) + ' Wochen';
-    }
-
-    return 'in ' + Math.round(days / DAYS_PER_MONTH) + ' Monaten';
 }
 
 /** `MM-TT` → `TT.MM.` */

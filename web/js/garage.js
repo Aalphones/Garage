@@ -2,12 +2,13 @@
 import { ApiError, request } from './api.js';
 import { actionButton, clearChildren, element, formatDay, link } from './dom.js';
 import { storeEmergency } from './emergency.js';
+import { garageCostBlock, loadGarageCosts, resetGarageCosts } from './garage-costs.js';
 import * as icons from './icons.js';
 import { requireSession } from './session.js';
-import { mountShell } from './shell.js';
+import { mountShell, scroller } from './shell.js';
 import { registerWorker } from './share.js';
 import { toast } from './toast.js';
-import { dueWord, emptyBlock, errorBlock, formatKm, plate, skeletons, stateWord } from './widgets.js';
+import { dueWord, emptyBlock, errorBlock, formatCorridor, formatKm, formatWholeEuro, plate, skeletons, stateWord } from './widgets.js';
 
 registerWorker();
 mountShell({ active: 'garage' });
@@ -141,6 +142,26 @@ function kmLine(vehicle) {
     return definition;
 }
 
+function costLine(costs) {
+    const definition = element('dd', '≈ ' + formatWholeEuro(costs.month_full_cents / 100) + '/Monat');
+    if (costs.missing.length > 0) {
+        definition.appendChild(element('div', 'ohne ' + costs.missing.join(', '), 'small gap'));
+    }
+
+    return definition;
+}
+
+function valueLine(value) {
+    const definition = element('dd');
+    if (value === null) {
+        definition.appendChild(element('span', 'noch kein Korridor', 'muted none'));
+    } else {
+        definition.textContent = '≈ ' + formatCorridor(value);
+    }
+
+    return definition;
+}
+
 function carCard(vehicle) {
     const isRetired = vehicle.status !== 'aktiv';
     const card = element('a', undefined, isRetired ? 'car retired' : 'car');
@@ -174,6 +195,9 @@ function carCard(vehicle) {
     const meta = element('dl', undefined, 'meta');
     meta.appendChild(metaBlock('km heute', kmLine(vehicle)));
     meta.appendChild(metaBlock('Nächste Fälligkeit', nextDueLine(vehicle)));
+    if (vehicle.costs !== null) {
+        meta.append(metaBlock('Unterhalt', costLine(vehicle.costs)), metaBlock('Wert', valueLine(vehicle.value)));
+    }
     inner.appendChild(meta);
     const foot = element('div', undefined, 'foot');
     if (vehicle.open_items > 0) {
@@ -303,6 +327,38 @@ function render() {
         }
     }
     content.appendChild(section);
+    if (activeFilter !== DELETED_FILTER.key) {
+        appendCostBlocks();
+    }
+}
+
+/** Je Garage Unterhalt und Garagen-Verträge; gezeichnet wird erst in der Seite, weil das Diagramm die Breite misst. */
+function appendCostBlocks() {
+    for (const garage of garages) {
+        const block = garageCostBlock(garage, { showName: garages.length > 1, onChanged: () => reloadCosts(garage.id) });
+        content.appendChild(block.node);
+        block.mount();
+    }
+}
+
+/** Nach Löschen oder Wiederherstellen an einem Garagen-Vertrag: erst neu laden, dann in einem Zug zeichnen, damit die Seite nicht springt. */
+async function reloadCosts(garageId) {
+    try {
+        garages = (await request('GET', 'vehicles')).garages;
+    } catch (error) {
+        toast(failureText(error, 'Die Garage konnte nicht neu geladen werden.'));
+
+        return;
+    }
+    resetGarageCosts();
+    const changed = garages.find((garage) => garage.id === garageId);
+    if (changed !== undefined) {
+        // Ein Fehler erscheint beim Zeichnen im Abschnitt selbst.
+        await loadGarageCosts(changed).catch(() => {});
+    }
+    const position = scroller().scrollTop;
+    render();
+    scroller().scrollTop = position;
 }
 
 function summarizeOverdue(dueItems) {
@@ -322,6 +378,7 @@ async function load() {
             request('GET', 'inbox?status=neu'),
         ]);
         garages = vehicleData.garages;
+        resetGarageCosts();
         deletedVehicles = null;
         totals = {
             overdue: summarizeOverdue(dueData.items),

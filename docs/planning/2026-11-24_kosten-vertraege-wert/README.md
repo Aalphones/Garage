@@ -19,7 +19,7 @@ Wünsche des Inhabers (2026-11-24): ein Plan für den ganzen Meilenstein; erst E
 | 9 | Reiter Wert | standard | sonnet | complete |
 | 10 | Reiter Papiere | standard | sonnet | complete |
 | 11 | Notfallkarte offline | heikel | opus | complete |
-| 12 | Garage, Übersicht, Konto | standard | sonnet | pending |
+| 12 | Garage, Übersicht, Konto | standard | sonnet | complete |
 | 13 | Doku-Abgleich und Abschluss | mechanisch | sonnet | pending |
 
 Reihenfolge: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13. Abhängigkeiten: alles braucht 1; 5 braucht 2, 3 und 4 (Wertverlust aus dem Korridor); 6 braucht 2; 7 braucht 4, 5, 6; 8 braucht 3 und 5; 9 braucht 4; 10 braucht 2 und 6; 11 braucht 10; 12 braucht 5 und 6.

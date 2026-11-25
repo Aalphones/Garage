@@ -47,7 +47,7 @@ Keine weiteren Daten im Gerät: Konto-Daten liegen weder in `localStorage` noch 
 - Mobil zuerst: 360 px Breite ohne waagerechtes Scrollen, Hauptaktion in Daumenreichweite, hell und dunkel.
 - Herkunft sichtbar: jeder Wert mit Herkunfts-Abzeichen; geschätzte Werte mit „≈" und Rechenweg.
 - Leere Zustände nennen den nächsten Schritt statt einer leeren Tabelle.
-- Das Access-Token liegt nur im Arbeitsspeicher, nie in `localStorage`. Anzeige-Einstellungen (Ansicht je Liste, Thema) liegen in `localStorage` unter `garage.*` (`garage.theme`, `garage.view.<liste>`, `garage.ansicht.tankbuch`, `garage.kosten.zeitraum`), nie Daten oder Tokens.
+- Das Access-Token liegt nur im Arbeitsspeicher, nie in `localStorage`. Anzeige-Einstellungen (Ansicht je Liste, Thema) liegen in `localStorage` unter `garage.*` (`garage.theme`, `garage.view.<liste>`, `garage.ansicht.tankbuch`, `garage.kosten.zeitraum`, `garage.ansicht.unterhalt`), nie Daten oder Tokens.
 - Alle Pfade zur API absolut mit Präfix `/garage/api/` (ADR-001).
 - Druckansicht funktioniert ohne Skript.
 - Sprunglink zum Inhalt, sichtbare Fokusrahmen, Kontrast mindestens WCAG AA, Alt-Text, genau eine `h1` pro Seite.

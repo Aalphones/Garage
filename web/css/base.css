@@ -576,3 +576,27 @@ a.more::after, .oi-h .nm::after, button.est::after { content: ''; position: abso
 .ctr .ft { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
 .ctr .ft .btn { margin-left: auto; }
 button.row .s { text-align: left; }
+
+/* ===== Meilenstein 5: Garage, Übersicht, Konto ===== */
+/* Karten einer Reihe sind gleich hoch (Raster); der Fuß bleibt unten. */
+.car .in { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
+.car .foot { margin-top: auto; }
+.car .meta .gap { color: var(--warn); font-weight: 400; }
+.car .meta .none { font-weight: 400; }
+.row .s .gap { color: var(--warn); }
+.sw.rest { background: var(--muted); }
+.chart details > summary { cursor: pointer; font-size: 13.5px; color: var(--primary); min-height: var(--touch); display: flex; align-items: center; }
+.chart details .tbl { font-size: 13px; }
+.chart details .tscroll .tbl { min-width: 20rem; }
+.row .s details { flex-basis: 100%; }
+.row .s details > summary { cursor: pointer; color: var(--primary); min-height: var(--touch); display: flex; align-items: center; }
+.row .s details .list { color: var(--text); }
+.chart details .tbl td:first-child { white-space: nowrap; }
+/* Knöpfe ohne Klasse bringen Abstand und runde Ecken mit; im Umschalter füllen sie die Gruppe. */
+.tb .seg button { margin: 0; border-radius: 0; }
+.cal-actions { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; }
+.cal-actions .btn { margin: 0; }
+.cal-link { flex-basis: 100%; overflow-wrap: anywhere; }
+@media (max-width: 575px) {
+  .cal-row .cal-actions { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; }
+}

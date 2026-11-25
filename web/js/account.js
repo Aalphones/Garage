@@ -1,5 +1,6 @@
 // Einstieg für index.html: Sitzung wiederherstellen, dann Anmeldeformular oder Konto zeigen.
 import { logout, request, restore } from './api.js';
+import { setupCalendar } from './calendar.js';
 import { clearChildren, element } from './dom.js';
 import { dropdown } from './dropdown.js';
 import { setupGrants } from './grant.js';
@@ -34,6 +35,7 @@ const garageEmpty = document.getElementById('garage-empty');
 const logoutButton = document.getElementById('logout');
 const tokens = setupTokens();
 const grants = setupGrants();
+const calendar = setupCalendar();
 const HOME = '/garage/garage.html';
 
 function showLogin(message) {
@@ -60,7 +62,7 @@ async function showAccount() {
     loginSection.hidden = true;
     accountSection.hidden = false;
     statusLine.textContent = '';
-    await Promise.all([tokens.load(), grants.load()]);
+    await Promise.all([calendar.load(me.garages), tokens.load(), grants.load()]);
 }
 
 // Nach der Anmeldung beginnt die Arbeit in der Garage; das Konto erreicht man über die Navigation.
@@ -75,10 +77,12 @@ logoutButton.addEventListener('click', async () => {
         showLogin('Die Abmeldung auf dem Server ist fehlgeschlagen: ' + error.message);
         tokens.clear();
         grants.clear();
+        calendar.clear();
         return;
     }
     tokens.clear();
     grants.clear();
+    calendar.clear();
     showLogin('Abgemeldet.');
 });
 
