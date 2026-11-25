@@ -4,12 +4,12 @@ import { buildUploadForm, prepareFile } from './capture.js';
 import { actionButton, clearChildren, element, hideError, link, showError } from './dom.js';
 import { attachedWords, documentDate, documentTitle, renderDocuments, TYPE_LABELS } from './document-list.js';
 import { loadContext, requireSession } from './session.js';
-import { registerShareWorker } from './share.js';
+import { registerWorker } from './share.js';
 import { mountShell } from './shell.js';
 import { hideToast, toast } from './toast.js';
 import { setCoverPhoto } from './vehicle-inputs.js';
 
-registerShareWorker();
+registerWorker();
 
 const DETAIL_HASH = /^#beleg\/(\d+)$/;
 const DISCARD_REASON = 'In der Oberfläche verworfen';

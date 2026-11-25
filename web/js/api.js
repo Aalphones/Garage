@@ -1,4 +1,6 @@
 // Aufrufe der Web-API. Das Access-Token lebt nur in dieser Variable, nie in localStorage; die Sitzung hält der Refresh-Cookie.
+import { clearEmergencies } from './emergency.js';
+
 const API_BASE = '/garage/api/';
 const RENEW_BEFORE_MS = 60_000;
 
@@ -191,10 +193,12 @@ export async function restore() {
     return session.user;
 }
 
+/** Die Notfallkarten auf dem Gerät gehen mit, auch wenn der Server die Abmeldung ablehnt; die Hülle bleibt (keine Daten). */
 export async function logout() {
     try {
         await send('POST', 'auth/logout', undefined, { 'X-Garage': '1' });
     } finally {
         session = null;
+        await clearEmergencies();
     }
 }

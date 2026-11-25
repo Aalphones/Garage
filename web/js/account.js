@@ -5,11 +5,11 @@ import { dropdown } from './dropdown.js';
 import { setupGrants } from './grant.js';
 import { setupLogin } from './login.js';
 import { mountShell } from './shell.js';
-import { registerShareWorker } from './share.js';
+import { registerWorker } from './share.js';
 import { setMode, storedMode } from './theme.js';
 import { setupTokens } from './token.js';
 
-registerShareWorker();
+registerWorker();
 mountShell({ active: 'konto' });
 
 dropdown(document.getElementById('theme-select'), {

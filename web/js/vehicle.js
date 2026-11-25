@@ -4,6 +4,7 @@ import { clearChildren, element, link } from './dom.js';
 import * as icons from './icons.js';
 import { mountCameraButton } from './capture-fab.js';
 import { requireSession } from './session.js';
+import { registerWorker } from './share.js';
 import { mountShell, scroller } from './shell.js';
 import { renderBook } from './tab-book.js';
 import { renderCosts } from './tab-costs.js';
@@ -18,6 +19,7 @@ import { mountVehicleActions } from './vehicle-actions.js';
 import { renderOverview } from './vehicle-overview.js';
 import { emptyBlock, errorBlock, plate, skeletons, STATUS_LABELS, stateWord } from './widgets.js';
 
+registerWorker();
 mountShell({ active: 'garage' });
 
 const TABS = [

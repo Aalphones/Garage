@@ -1,14 +1,15 @@
 // Einstieg für garage.html: Kennzahlen, Status-Filter und je Garage eine Gruppe Fahrzeugkarten.
 import { ApiError, request } from './api.js';
 import { actionButton, clearChildren, element, formatDay, link } from './dom.js';
+import { storeEmergency } from './emergency.js';
 import * as icons from './icons.js';
 import { requireSession } from './session.js';
 import { mountShell } from './shell.js';
-import { registerShareWorker } from './share.js';
+import { registerWorker } from './share.js';
 import { toast } from './toast.js';
 import { dueWord, emptyBlock, errorBlock, formatKm, plate, skeletons, stateWord } from './widgets.js';
 
-registerShareWorker();
+registerWorker();
 mountShell({ active: 'garage' });
 
 const FILTERS = [
@@ -19,6 +20,7 @@ const FILTERS = [
 ];
 const DELETED_FILTER = { key: 'geloescht', label: 'Gelöscht' };
 const OWNER_ROLE = 'inhaber';
+const ACTIVE_STATUS = 'aktiv';
 const DAY_MS = 86_400_000;
 const EMPTY_HINT = 'Sag deinem Agenten im Chat: „Leg meinen Golf in GARAGE an“ und gib ihm ein Foto vom Fahrzeugschein.';
 
@@ -333,6 +335,15 @@ async function load() {
         return;
     }
     render();
+    refreshEmergencies();
+}
+
+/** Hält die Notfallkarten auf dem Gerät aktuell (ADR-025); ein Fehler kostet nur die Aktualität, nicht die Seite. */
+function refreshEmergencies() {
+    const active = allVehicles().filter((vehicle) => vehicle.status === ACTIVE_STATUS);
+    for (const vehicle of active) {
+        request('GET', 'vehicles/' + vehicle.id + '/emergency').then(storeEmergency).catch(() => {});
+    }
 }
 
 /** Nach „Fahrzeug löschen“ auf der Fahrzeugseite: Leiste mit Rückgängig (die Seite hat dafür gewechselt). */

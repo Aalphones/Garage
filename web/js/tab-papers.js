@@ -1,6 +1,7 @@
 // Reiter „Papiere“: Notfallkarte, Stichtage, Verträge mit Prüfzeile, Plaketten, Zubehör, Schlüssel und Papiere. Stichtage, Anteile und Prüfzeilen rechnet der Server.
 import { request } from './api.js';
-import { actionButton, clearChildren, element, formatDay } from './dom.js';
+import { actionButton, clearChildren, element, formatDay, link } from './dom.js';
+import { emergencyCard, storeEmergency } from './emergency.js';
 import * as icons from './icons.js';
 import { badge, tipText } from './provenance.js';
 import { deleteRecord } from './record-delete.js';
@@ -22,6 +23,7 @@ const EVENT_DONE = 'erledigt';
 const CO2_FIELD = 'co2_g_km';
 const CO2_LABEL = 'CO₂ (g/km)';
 const ALLOCATION_KM = 'km';
+const EMERGENCY_PAGE = '/garage/notfall.html';
 
 const CONTRACT_LABELS = {
     versicherung: 'Kfz-Versicherung',
@@ -114,52 +116,20 @@ function whyButton(title, explanation) {
 
 // --- Notfallkarte, Stichtage ----------------------------------------------------------------------------------------
 
-function phoneLine(number) {
-    const line = element('div');
-    const anchor = element('a', number);
-    anchor.href = 'tel:' + number.replace(/[^+\d]/g, '');
-    line.appendChild(anchor);
-
-    return line;
-}
-
-function emergencyEntry(list, term, text, phone) {
-    list.appendChild(element('dt', term));
-    const definition = element('dd');
-    definition.appendChild(text === null ? element('span', 'nicht erfasst', 'muted') : document.createTextNode(text));
-    if (phone !== null && phone !== undefined) {
-        definition.appendChild(phoneLine(phone));
+/** Erst wenn die Karte im Gerätecache liegt, sagt die Seite „offline“ und bietet `notfall.html` an. */
+async function markOffline(card, stored, vehicleId) {
+    if (!(await stored)) {
+        return;
     }
-    list.appendChild(definition);
+    card.querySelector('.hd').appendChild(stateWord('st ok', 'offline auf diesem Gerät'));
+    card.appendChild(link('Notfallkarte öffnen', EMERGENCY_PAGE + '#' + vehicleId, 'small'));
 }
 
-function emergencySection(emergency) {
+function emergencySection(emergency, stored) {
     const { node } = section('Notfallkarte');
-    const card = element('div', undefined, 'ecard');
-    const head = element('div', undefined, 'hd');
-    head.appendChild(element('b', emergency.label));
-    card.appendChild(head);
-
-    const list = element('dl');
-    emergencyEntry(list, 'Kennzeichen', emergency.plate, null);
-    emergencyEntry(list, 'FIN', emergency.fin, null);
-    const { insurer, breakdown } = emergency;
-    if (insurer === null) {
-        list.appendChild(element('dt', 'Versicherer'));
-        const definition = element('dd');
-        definition.appendChild(element('span', 'fehlt — Police im Chat an GARAGE geben', 'gap'));
-        list.appendChild(definition);
-    } else {
-        emergencyEntry(list, 'Versicherer', joined([insurer.provider, insurer.contract_number]), insurer.hotline);
-    }
-    if (breakdown === null) {
-        emergencyEntry(list, 'Pannenhilfe', null, null);
-    } else {
-        const member = breakdown.member_number === null ? null : 'Mitglied ' + breakdown.member_number;
-        emergencyEntry(list, 'Pannenhilfe', joined([breakdown.provider, member]), breakdown.hotline);
-    }
-    card.append(list, element('div', 'Stand ' + formatDay(emergency.as_of), 'muted small'));
+    const card = emergencyCard(emergency);
     node.appendChild(card);
+    markOffline(card, stored, emergency.vehicle_id);
 
     return node;
 }
@@ -586,6 +556,8 @@ export async function renderPapers(container, context) {
 
         return;
     }
+    // Auch ohne sichtbare Papiere: Kennzeichen und FIN gehören auf die Karte im Gerät.
+    const stored = storeEmergency(papers.emergency);
     clearChildren(container);
     if (hasNoPapers(context, papers)) {
         container.appendChild(emptyBlock(icons.car, 'Noch keine Papiere', 'Gib deinem Agenten Police, Steuerbescheid oder ADAC-Ausweis im Chat — er legt Verträge mit Stichtagen an.'));
@@ -594,7 +566,7 @@ export async function renderPapers(container, context) {
     }
 
     const top = element('div', undefined, 'cols');
-    top.append(emergencySection(papers.emergency), deadlineSection(papers.deadlines));
+    top.append(emergencySection(papers.emergency, stored), deadlineSection(papers.deadlines));
 
     const bottom = element('div', undefined, 'cols');
     bottom.append(

@@ -3,11 +3,11 @@ import { request } from './api.js';
 import { setupCapture } from './capture.js';
 import { actionButton, clearChildren, element, formatClock, formatMoment, hideError, link, showError } from './dom.js';
 import { loadContext, requireSession } from './session.js';
-import { registerShareWorker, takeSharedFiles } from './share.js';
+import { registerWorker, takeSharedFiles } from './share.js';
 import { mountShell } from './shell.js';
 import { toast } from './toast.js';
 
-registerShareWorker();
+registerWorker();
 
 const statusLine = document.getElementById('status');
 const content = document.getElementById('content');

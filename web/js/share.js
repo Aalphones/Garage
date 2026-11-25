@@ -1,10 +1,11 @@
-// Teilen-Ziel (Android): Service Worker anmelden und geteilte Dateien aus dem Cache holen.
+// Service Worker anmelden (Teilen-Ziel, Hülle der Notfallkarte) und geteilte Dateien aus dem Cache holen.
+// Gehört zur Hülle der Notfallkarte — darf nichts importieren, sonst lädt notfall.html offline nicht.
 const WORKER_URL = '/garage/sw.js';
 const WORKER_SCOPE = '/garage/';
 const SHARE_CACHE = 'garage-geteilt';
 
-/** Fehler bleiben still: ohne Service Worker fehlt nur das Teilen-Ziel. */
-export function registerShareWorker() {
+/** Fehler bleiben still: ohne Service Worker fehlen nur Teilen-Ziel und Notfallkarte ohne Netz. */
+export function registerWorker() {
     if (navigator.serviceWorker === undefined) {
         return;
     }
