@@ -74,9 +74,11 @@ final class CostService
         $garage = $this->garageInput($vehicle['garage_id'], $today, $actor);
         $range = CostCalculator::range($periodKey, $today, $garage['fleet'][$vehicleId]['active']['from'] ?? null);
 
-        $result = CostCalculator::vehicle($range, $this->vehicleInput($vehicle, $actor), $garage['fleet'], $garage['contracts']);
+        $input = $this->vehicleInput($vehicle, $actor);
+        $result = CostCalculator::vehicle($range, $input, $garage['fleet'], $garage['contracts']);
 
-        return CostCalculator::presentVehicle($result, $range, $groupKey);
+        return CostCalculator::presentVehicle($result, $range, $groupKey)
+            + ['per_km' => CostCalculator::perKmSeries($range, $input, $garage['fleet'], $garage['contracts'])];
     }
 
     /**

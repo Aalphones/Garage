@@ -24,10 +24,10 @@ function niceStep(rawStep) {
 }
 
 /** Wertebereich mit `GRID_LINES + 1` gleichen Abschnitten auf runden Schritten. */
-function yScale(values) {
+function yScale(values, minSpan) {
     const low = Math.min(...values);
     const high = Math.max(...values);
-    const step = niceStep(Math.max(high - low, 1) / (GRID_LINES + 1));
+    const step = niceStep(Math.max(high - low, minSpan) / (GRID_LINES + 1));
     const min = Math.floor(low / step) * step;
 
     return { min, max: min + step * (GRID_LINES + 1), step };
@@ -56,17 +56,17 @@ function polyline(coordinates, extraAttributes) {
 }
 
 /**
- * `{ points, forecast, yLabel, ariaLabel, containerWidth }` → SVG-String. `points`/`forecast`: `[{ time (ms), value, label, title? }]`. Viewbox 640×220 ab 600 px Containerbreite, sonst 340×200.
+ * `{ points, forecast, yLabel, ariaLabel, containerWidth, minSpan }` → SVG-String; `minSpan` ist die kleinste Spanne der y-Achse. `points`/`forecast`: `[{ time (ms), value, label, title? }]`. Viewbox 640×220 ab 600 px Containerbreite, sonst 340×200.
  * Jeder echte Punkt ist ein `<g data-point="<Index>" tabindex="0" role="button">` mit `<title>`; der Aufrufer hängt das Popover an.
  */
-export function lineChart({ points, forecast = [], yLabel, ariaLabel, containerWidth = WIDE_MIN_CONTAINER_PX }) {
+export function lineChart({ points, forecast = [], yLabel, ariaLabel, containerWidth = WIDE_MIN_CONTAINER_PX, minSpan = 1 }) {
     const isNarrow = containerWidth < WIDE_MIN_CONTAINER_PX;
     const layout = isNarrow ? NARROW : WIDE;
     const all = [...points, ...forecast];
     const times = all.map((point) => point.time);
     const firstTime = Math.min(...times);
     const timeSpan = Math.max(...times) - firstTime;
-    const scale = yScale(all.map((point) => point.value));
+    const scale = yScale(all.map((point) => point.value), minSpan);
     const plotWidth = layout.width - PADDING.left - PADDING.right;
     const plotHeight = layout.height - PADDING.top - PADDING.bottom;
 
@@ -104,4 +104,74 @@ export function lineChart({ points, forecast = [], yLabel, ariaLabel, containerW
     });
 
     return '<svg viewBox="0 0 ' + layout.width + ' ' + layout.height + '" role="img" aria-label="' + escapeXml(ariaLabel) + '">' + markup + '</svg>';
+}
+
+// --- Gestapelte Säulen -----------------------------------------------------------------------------------------
+
+const BARS_NARROW = { width: 340, height: 190, maxLabels: 7, minLabelStep: 2 };
+const BARS_WIDE = { maxWidth: 900, height: 210, maxLabels: 13, minLabelStep: 1 };
+const BARS_PADDING = { left: 52, right: 8, top: 12, bottom: 24 };
+const BAR_FILL_RATIO = 0.64;
+const BAR_GAP = 2;
+const BAR_FONT_SIZE = 12;
+
+/** Runde Obergrenze, deren Hälfte auch rund ist. */
+function barMaximum(totals) {
+    const highest = Math.max(...totals, 0);
+    if (highest <= 0) {
+        return 2;
+    }
+
+    return niceStep(highest / 2) * 2;
+}
+
+/**
+ * `{ months, series, ariaLabel, containerWidth }` → SVG-String. `months`: Beschriftungen; `series`: `[{ key, label, color, values }]`,
+ * von unten nach oben gestapelt, `color` als CSS-Farbe. Nur Werte über 0 werden gezeichnet. Jedes Segment trägt
+ * `data-month="<Index>" data-series="<key>"`; der Aufrufer hängt das Popover an.
+ */
+export function stackedBars({ months, series, ariaLabel, containerWidth = WIDE_MIN_CONTAINER_PX }) {
+    const isNarrow = containerWidth < WIDE_MIN_CONTAINER_PX;
+    const layout = isNarrow ? BARS_NARROW : { ...BARS_WIDE, width: Math.min(Math.round(containerWidth), BARS_WIDE.maxWidth) };
+    const totals = months.map((month, index) => series.reduce((total, entry) => total + Math.max(entry.values[index], 0), 0));
+    const maximum = barMaximum(totals);
+    const plotWidth = layout.width - BARS_PADDING.left - BARS_PADDING.right;
+    const plotHeight = layout.height - BARS_PADDING.top - BARS_PADDING.bottom;
+    const slot = plotWidth / months.length;
+    const vertical = (value) => BARS_PADDING.top + (1 - value / maximum) * plotHeight;
+
+    let grid = '';
+    for (const value of [0, maximum / 2, maximum]) {
+        const lineY = vertical(value).toFixed(1);
+        grid += '<line x1="' + BARS_PADDING.left + '" x2="' + (layout.width - BARS_PADDING.right) + '" y1="' + lineY + '" y2="' + lineY + '" stroke="var(--line)"/>';
+        grid += '<text x="' + (BARS_PADDING.left - 6) + '" y="' + (Number(lineY) + 4) + '" text-anchor="end" font-size="' + BAR_FONT_SIZE + '" fill="var(--muted)">'
+            + escapeXml(formatTick(value, maximum / 2) + ' €') + '</text>';
+    }
+
+    let bars = '';
+    months.forEach((month, index) => {
+        let stacked = 0;
+        for (const entry of series) {
+            const value = entry.values[index];
+            if (value <= 0) {
+                continue;
+            }
+            const bottom = vertical(stacked);
+            stacked += value;
+            const top = vertical(stacked);
+            const title = escapeXml(month + ' · ' + entry.label + ': ' + value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }));
+            bars += '<rect x="' + (BARS_PADDING.left + index * slot + (slot * (1 - BAR_FILL_RATIO)) / 2).toFixed(1) + '" y="' + top.toFixed(1)
+                + '" width="' + (slot * BAR_FILL_RATIO).toFixed(1) + '" height="' + Math.max(0, bottom - top).toFixed(1)
+                + '" fill="' + escapeXml(entry.color) + '" stroke="var(--surface)" stroke-width="' + BAR_GAP
+                + '" data-month="' + index + '" data-series="' + escapeXml(entry.key) + '" tabindex="0" role="button" aria-label="' + title + '"><title>' + title + '</title></rect>';
+        }
+    });
+
+    const labelStep = Math.max(layout.minLabelStep, Math.ceil(months.length / layout.maxLabels));
+    let labels = '';
+    for (let index = 0; index < months.length; index += labelStep) {
+        labels += '<text x="' + (BARS_PADDING.left + index * slot + slot / 2).toFixed(1) + '" y="' + (layout.height - 6) + '" text-anchor="middle" font-size="' + BAR_FONT_SIZE + '" fill="var(--muted)">' + escapeXml(months[index]) + '</text>';
+    }
+
+    return '<svg viewBox="0 0 ' + layout.width + ' ' + layout.height + '" role="group" aria-label="' + escapeXml(ariaLabel) + '">' + grid + '<g class="bars">' + bars + '</g>' + labels + '</svg>';
 }

@@ -6,6 +6,7 @@ import { mountCameraButton } from './capture-fab.js';
 import { requireSession } from './session.js';
 import { mountShell, scroller } from './shell.js';
 import { renderBook } from './tab-book.js';
+import { renderCosts } from './tab-costs.js';
 import { renderDocs } from './tab-docs.js';
 import { renderMeasure } from './tab-measure.js';
 import { renderParts } from './tab-parts.js';
@@ -25,6 +26,7 @@ const TABS = [
     { key: 'reifen', label: 'Reifen' },
     { key: 'teile', label: 'Teile' },
     { key: 'belege', label: 'Belege' },
+    { key: 'kosten', label: 'Kosten' },
 ];
 const ADDRESS = /^#(\d+)\/([a-z]+)$/;
 
@@ -140,6 +142,7 @@ async function showPanel(tab) {
         onOpenItemsChanged: updateOverviewCount,
         reload: () => showPanel(tab),
         reloadVehicle,
+        hasTab: (key) => TABS.some((entry) => entry.key === key),
     };
     const renderers = {
         uebersicht: renderOverview,
@@ -149,6 +152,7 @@ async function showPanel(tab) {
         reifen: renderTires,
         teile: renderParts,
         belege: renderDocs,
+        kosten: renderCosts,
     };
     await renderers[tab.key](panel, context);
 }

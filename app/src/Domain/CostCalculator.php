@@ -166,6 +166,47 @@ final class CostCalculator
     }
 
     /**
+     * Kosten pro km mit Wertverlust je Monat des Zeitraums: Fenster sind die 12 Monate bis zum Monatsende (im letzten
+     * Monat bis zum Ende des Zeitraums); bei kürzerer Haltedauer beginnt es mit dem Aktiv-Zeitraum. Monate mit weniger
+     * als zwei Monaten Haltedauer oder ohne gefahrene km fehlen — dort verzerrt der erste Posten den Wert.
+     *
+     * @param array{key: string, from: string, to: string, note: string|null} $range
+     * @param array{vehicle_id: int, label: string, is_electric: bool, posts: list<array<string, mixed>>} $vehicle
+     * @param array<int, array<string, mixed>> $fleet
+     * @param list<array<string, mixed>> $garageContracts
+     * @return list<array{month: string, from: string, to: string, full_cents: int, km: int, per_km_full_cents: string}>
+     */
+    public static function perKmSeries(array $range, array $vehicle, array $fleet, array $garageContracts): array
+    {
+        $ownWindow = self::windowOf($fleet[$vehicle['vehicle_id']] ?? ['active' => null], $range);
+        if ($ownWindow === null) {
+            return [];
+        }
+
+        $series = [];
+        foreach (self::monthsOf($ownWindow['from'], $ownWindow['to']) as $month) {
+            $end = min(self::monthEnd($month . '-01'), $ownWindow['to']);
+            $rolling = ['key' => self::PERIOD_12_MONTHS, 'from' => DueCalculator::addDays(DueCalculator::addMonths($end, -12), 1), 'to' => $end, 'note' => null];
+            $result = self::vehicle($rolling, $vehicle, $fleet, $garageContracts);
+            $window = $result['active'];
+            if ($window === null || $window['from'] > DueCalculator::addMonths($end, -2) || $result['km'] === null || $result['km'] <= 0) {
+                continue;
+            }
+            $fullCents = (int) array_sum(array_column($result['entries'], 'cents'));
+            $series[] = [
+                'month' => $month,
+                'from' => $window['from'],
+                'to' => $window['to'],
+                'full_cents' => $fullCents,
+                'km' => $result['km'],
+                'per_km_full_cents' => number_format($fullCents / 100 / $result['km'], 2, '.', ''),
+            ];
+        }
+
+        return $series;
+    }
+
+    /**
      * Ausgabe der Garage: Summe der Fahrzeuge, die im Zeitraum aktiv waren (mit umgelegten Anteilen), dazu je Fahrzeug die
      * Monatswerte für das gestapelte Diagramm und die Garagen-Verträge mit dem Anteil von heute.
      *
@@ -572,6 +613,9 @@ final class CostCalculator
         $running = $blockCents[self::BLOCK_FIX] + $blockCents[self::BLOCK_RUN] + $blockCents[self::BLOCK_SHOP];
         $full = $running + $blockCents[self::BLOCK_LOSS];
         $monthCount = $days / self::DAYS_PER_MONTH;
+        foreach ($blocks as $block => $figure) {
+            $blocks[$block]['month_cents'] = $monthCount > 0 ? (int) round($figure['cents'] / $monthCount) : 0;
+        }
         $perKm = null;
         if ($km !== null && $km > 0) {
             $perKm = number_format($full / 100 / $km, 2, '.', '');

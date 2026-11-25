@@ -493,3 +493,43 @@ pre.text { margin: 0; font: inherit; font-size: .875rem; white-space: pre-wrap; 
 /* Phase 5: kleine Links und der Kilometer-Knopf bekommen am Handy eine 44-px-Trefferfläche */
 a.more, .oi-h .nm, button.est { position: relative; }
 a.more::after, .oi-h .nm::after, button.est::after { content: ''; position: absolute; inset: -12px -6px; }
+
+/* ===== Meilenstein 5: Kosten ===== */
+.sw { display: inline-block; width: .7rem; height: .7rem; border-radius: 3px; flex: none; }
+.sw.s1 { background: var(--s1); } .sw.s2 { background: var(--s2); } .sw.s3 { background: var(--s3); } .sw.s4 { background: var(--s4); }
+.chart .legend span { display: inline-flex; align-items: center; gap: .35rem; }
+.chart .legend .sw { width: .7rem; height: .7rem; }
+.chart .cap { font-size: 12.5px; color: var(--muted); margin: .4rem 0 0; }
+.chart .bars rect { cursor: pointer; }
+.chart .bars rect:hover { opacity: .8; }
+.chart .bars rect:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.kpi .v button.est { color: var(--text); }
+.xrow .name { display: flex; gap: .5rem; align-items: center; }
+.xrow .detail { grid-column: 1 / -1; display: flex; gap: .6rem; flex-wrap: wrap; }
+.facts.posts .fact { grid-template-columns: minmax(6.5rem, 11rem) 1fr 6.8rem; }
+.fact .v .missing { color: var(--warn); font-weight: 600; }
+.del { border: 0; background: none; color: var(--muted); width: var(--touch); height: var(--touch); display: inline-grid; place-items: center; border-radius: 50%; cursor: pointer; margin: -.6rem -.5rem -.6rem 0; flex: none; }
+.del:hover { color: var(--bad); background: var(--raised); }
+.del svg { width: 16px; height: 16px; }
+.row .s .del { margin-left: auto; }
+.toggle { display: flex; align-items: center; gap: .7rem; min-height: var(--touch); margin-top: .8rem; cursor: pointer; position: relative; }
+.toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.toggle .tr { width: 2.6rem; height: 1.5rem; border-radius: 999px; background: var(--raised); border: 1px solid var(--border); position: relative; flex: none; transition: background var(--t-fast); }
+.toggle .tr::after { content: ''; position: absolute; top: 2px; left: 2px; width: 1.1rem; height: 1.1rem; border-radius: 50%; background: var(--muted); transition: transform var(--t-fast); }
+.toggle input:checked + .tr { background: color-mix(in oklab, var(--primary) 30%, var(--surface)); border-color: var(--primary); }
+.toggle input:checked + .tr::after { transform: translateX(1.1rem); background: var(--primary); }
+.toggle input:focus-visible + .tr { outline: 2px solid var(--focus); outline-offset: 2px; }
+.toggle .lbl { font-weight: 600; font-size: 14px; }
+.toggle .lbl small { display: block; font-weight: 400; color: var(--muted); font-size: 12.5px; }
+.grid2 { display: grid; gap: 0 .8rem; grid-template-columns: 1fr 1fr; }
+.grid2 .field { min-width: 0; align-content: start; }
+.grid2 .field input { min-width: 0; width: 100%; }
+.field .field-title { font-size: 13px; font-weight: 600; }
+.field .dd { display: block; }
+.field .dd > button { width: 100%; justify-content: space-between; min-height: var(--touch); }
+.field .dd [role=listbox] { left: 0; right: auto; }
+@media (max-width: 575px) {
+  .grid2 { grid-template-columns: 1fr; }
+  .facts.posts .fact { grid-template-columns: 1fr 6.8rem; }
+}
+.grid2 .field input { margin-top: 0; }

@@ -15,7 +15,7 @@ Wünsche des Inhabers (2026-11-24): ein Plan für den ganzen Meilenstein; erst E
 | 5 | Kostenrechnung: Blöcke, Verteilung, Umlage, pro km | heikel | opus | complete |
 | 6 | Stichtage, Notfallkarte-Daten, Kalender-Abo | heikel | opus | complete |
 | 7 | Akte, Fahrzeugliste, Prompts, Server-Anweisungen | standard | sonnet | complete |
-| 8 | Reiter Kosten mit Blättern Tankung und Ausgabe | standard | sonnet | pending |
+| 8 | Reiter Kosten mit Blättern Tankung und Ausgabe | standard | sonnet | complete |
 | 9 | Reiter Wert | standard | sonnet | pending |
 | 10 | Reiter Papiere | standard | sonnet | pending |
 | 11 | Notfallkarte offline | heikel | opus | pending |
@@ -50,6 +50,8 @@ Alle schreibenden Werkzeuge tragen die Herkunftsfelder (`ProvenanceSchema`), mel
 | `get_papers` | read | Papiere | **vehicle_id** | `{contracts:[…mit terms, events, allocations], deadlines:[…], permits:[…], accessories:[…], emergency:{…}}` |
 
 `attach_document` kennt neue Ziele: `vertrag` (contracts), `vorgang` (contract_events), `ausgabe` (expenses), `tankvorgang` (fuel_logs), `zubehoer` (accessories), `plakette` (permits), `bewertung` (valuations). Neue Prompts: `marktwert_recherche`, `verkaufsakte`.
+
+`get_cost_summary` bzw. `GET vehicles/{id}/costs` liefert am Fahrzeug zusätzlich `per_km:[{month,from,to,full_cents,km,per_km_full_cents}]` (je Monatsende die letzten 12 Monate, bei kürzerer Haltedauer ab Beginn, ohne die ersten zwei Haltemonate) und je Block `month_cents` (Phase 8).
 
 ### Browser-API (`/garage/api/…`, JWT über `ApiAuth::user`, fremd/unbekannt → 404, Fehler über `ApiErrors::respond`)
 

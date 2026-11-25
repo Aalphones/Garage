@@ -15,6 +15,8 @@
   --grad-head: linear-gradient(90deg, #0C2421 0%, #090C0C 85%);
   --grad-hi: linear-gradient(90deg, color-mix(in oklab, #43D6C5 22%, transparent) 0%, transparent 100%);
   --grad-primary: linear-gradient(135deg, #43D6C5 0%, #6FD39A 100%);
+  /* Reihenfarben der Kosten-Blöcke, je Thema gegen die Kartenfläche geprüft; nur für Reihen, nie für Zustände */
+  --s1: #3987e5; --s2: #d55181; --s3: #9085e9; --s4: #199e70;
 }
 :root[data-theme='light'] {
   color-scheme: light;
@@ -31,6 +33,7 @@
   --grad-head: linear-gradient(90deg, #E3EEEA 0%, #F3F6F2 85%);
   --grad-hi: linear-gradient(90deg, color-mix(in oklab, #0A6E65 14%, transparent) 0%, transparent 100%);
   --grad-primary: linear-gradient(135deg, #0A6E65 0%, #0B7D5E 100%);
+  --s1: #2a78d6; --s2: #e87ba4; --s3: #6250d6; --s4: #1baf7a;
 }
 :root {
   --radius-card: 14px; --radius-control: 999px; --radius-field: 10px;

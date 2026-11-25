@@ -19,7 +19,7 @@ export function readView(storageKey, allowed, fallback) {
     return allowed.includes(stored) ? stored : fallback;
 }
 
-function storeView(storageKey, value) {
+export function storeView(storageKey, value) {
     try {
         localStorage.setItem(storageKey, value);
     } catch {
