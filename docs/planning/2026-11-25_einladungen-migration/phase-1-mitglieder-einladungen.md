@@ -35,6 +35,6 @@ Rating: heikel (Rechte, Cross-Modul-Kontrakt) · Modell: opusplan
 
 - Status: complete (2026-11-26).
 - Über den Plan hinaus: Wer die Inhaber-Rolle verliert, dessen offene Einladungen der Garage werden widerrufen (Entscheidung des Inhabers). Router um `{userId}` und `{invitationId}` erweitert. `Api\BodyField` aus `InvitationController` herausgezogen, `Domain\GarageAccess` neu. Die Admin-Route liefert zusätzlich `id`.
-- Syntaxprüfung: lokal kein PHP, Docker nicht erreichbar → CI nach dem Push.
+- Syntaxprüfung: lokal kein PHP, Docker nicht erreichbar → CI nach dem Push: grün (00e62c1).
 - Nicht ausgeführt: die Routen liefen nie gegen eine Datenbank; die Rechte-Fälle (fremde Garage, Nicht-Inhaber, letzter Inhaber, widerrufene Einladung) sind nur am Code geprüft.
 
