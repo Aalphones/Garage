@@ -27,7 +27,7 @@ Rating: heikel (Konto-Übernahme möglich, wenn die Rechte-Regel falsch sitzt) �
 - [x] `ApiErrors`: `reset_not_found` → 404, `reset_used`/`reset_expired` → 410.
 - [x] Audit: `password.reset_create`, `password.reset_accept`.
 - [x] `docs/routes.md` nachziehen.
-- [ ] `php -l` bzw. CI-Ergebnis in `## Report-Back`.
+- [x] `php -l` bzw. CI-Ergebnis in `## Report-Back`.
 
 ## Report-Back
 
@@ -35,4 +35,4 @@ Rating: heikel (Konto-Übernahme möglich, wenn die Rechte-Regel falsch sitzt) �
 - Die Login-Bremse zählt `reset_not_found`, `reset_used` und `reset_expired`; ein zu kurzes Passwort zählt nicht.
 - Mitgeändert: `logoutAll` läuft in einer laufenden Transaktion mit und beendet auch Refresh-Tokens im 30-Sekunden-Kulanzfenster.
 - Bleibt offen: ein schon ausgestelltes Access-JWT gilt bis zu seinem Ablauf weiter (15 Minuten, ADR-006).
-- Keine Route gegen eine Datenbank ausgeführt. Lokal kein PHP; Syntax prüft die CI.
+- Keine Route gegen eine Datenbank ausgeführt. Lokal kein PHP; CI-Syntaxprüfung nach dem Push: grün (b53d999).
