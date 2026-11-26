@@ -18,10 +18,33 @@
         <h1>GARAGE</h1>
         <p id="status" role="status">Einladung wird geprüft …</p>
 
+        <p id="exit" hidden><a id="exit-link" class="button" href="/garage/">Zur Anmeldung</a></p>
+
         <section id="invitation" aria-labelledby="invitation-heading" hidden>
             <h2 id="invitation-heading">Einladung annehmen</h2>
             <p id="invitation-summary"></p>
-            <form id="invitation-form" method="post" action="/garage/einladung.html">
+
+            <div id="join" hidden>
+                <p id="join-error" class="error" role="alert" tabindex="-1" hidden></p>
+                <button id="join-button" type="button"></button>
+            </div>
+
+            <div id="ways" class="button-row" hidden>
+                <button id="way-new" type="button" aria-controls="invitation-form" aria-expanded="false">Neues Konto anlegen</button>
+                <button id="way-existing" type="button" aria-controls="login-form" aria-expanded="false">Ich habe schon ein Konto</button>
+            </div>
+
+            <form id="login-form" method="post" action="/garage/einladung.html" aria-label="Anmelden und beitreten" hidden>
+                <label for="login-email">E-Mail</label>
+                <input id="login-email" name="email" type="email" autocomplete="username" required>
+                <label for="login-password">Passwort</label>
+                <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+                <p id="login-error" class="error" role="alert" tabindex="-1" hidden></p>
+                <button type="submit">Anmelden und beitreten</button>
+                <p class="hint">Passwort vergessen? Bitte den Inhaber deiner Garage um einen Link.</p>
+            </form>
+
+            <form id="invitation-form" method="post" action="/garage/einladung.html" aria-label="Neues Konto anlegen" hidden>
                 <label for="invitation-name">Dein Name</label>
                 <input id="invitation-name" name="name" type="text" autocomplete="name" maxlength="120" required>
                 <label for="invitation-email">E-Mail</label>

@@ -439,6 +439,7 @@ button[disabled] { opacity: .5; cursor: default; }
 .plain-list { margin: 0; padding: 0; list-style: none; }
 .plain-list li { padding: .75rem 0; border-top: 1px solid var(--line); }
 .button-row { display: flex; flex-wrap: wrap; gap: 0 .75rem; }
+.button-row > button[aria-expanded='true'] { border-color: var(--primary); background: var(--surface); }
 .compare { margin: .5rem 0 0; overflow-wrap: anywhere; white-space: pre-line; }
 .details { margin: 1rem 0; }
 .details dt { margin-top: .5rem; font-size: .875rem; color: var(--muted); }

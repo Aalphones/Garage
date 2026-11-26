@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <meta name="referrer" content="no-referrer">
+    <title>Neues Passwort – GARAGE</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/garage/css/tokens.css">
+    <link rel="stylesheet" href="/garage/css/base.css">
+    <script type="module" src="/garage/js/theme.js"></script>
+</head>
+<body class="noshell">
+    <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+    <div class="content">
+    <main id="inhalt" class="narrow">
+        <h1>GARAGE</h1>
+        <p id="status" role="status">Link wird geprüft …</p>
+
+        <p id="exit" hidden><a class="button" href="/garage/">Zur Anmeldung</a></p>
+
+        <section id="reset" aria-labelledby="reset-heading" hidden>
+            <h2 id="reset-heading">Neues Passwort</h2>
+            <p class="hint">Nach dem Speichern bist du hier angemeldet. Anmeldungen in anderen Browsern enden.</p>
+            <form id="reset-form" method="post" action="/garage/passwort.html">
+                <label for="reset-password">Neues Passwort</label>
+                <input id="reset-password" name="password" type="password" autocomplete="new-password" minlength="12" required aria-describedby="reset-password-hint">
+                <small id="reset-password-hint">Mindestens 12 Zeichen.</small>
+                <label for="reset-repeat">Passwort wiederholen</label>
+                <input id="reset-repeat" name="repeat" type="password" autocomplete="new-password" minlength="12" required>
+                <p id="reset-error" class="error" role="alert" tabindex="-1" hidden></p>
+                <button type="submit">Passwort speichern</button>
+            </form>
+        </section>
+    </main>
+    </div>
+    <script type="module" src="/garage/js/password.js"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-// Anmeldeformular, das index.html und zustimmung.html teilen: E-Mail und Passwort an die API, bei Erfolg `onLoggedIn(user)`.
+// Anmeldeformular, das index.html, zustimmung.html und einladung.html teilen: E-Mail und Passwort an die API, bei Erfolg `onLoggedIn(user)`.
 import { login } from './api.js';
 import { hideError, showError } from './dom.js';
 
