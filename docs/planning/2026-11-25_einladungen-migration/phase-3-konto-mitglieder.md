@@ -22,11 +22,13 @@ Rating: standard · Modell: sonnet
 
 ## Checkliste
 
-- [ ] Markup in `web/index.html` (Container `#member-groups`, Fehlerzeile, Reveal `#member-reveal`).
-- [ ] Neues Modul `web/js/member.js` mit `setupMembers()` → `{ load(garages) }` (Muster `token.js`), Blätter über `sheet.js`.
-- [ ] `account.js`: `setupMembers` einbinden, in `Promise.all` laden.
-- [ ] Stil nur über bestehende Klassen und Tokens aus `web/css/tokens.css`; neue Regeln, falls nötig, in die vorhandene Konto-Stilstelle (nicht neue Farbwerte).
-- [ ] `docs/code-map.md`: `member.js` in der `js/`-Zeile.
-- [ ] `node --check web/js/member.js web/js/account.js`.
+- [x] Markup in `web/index.html` (Container `#member-groups`, Fehlerzeile, Reveal `#member-reveal`).
+- [x] Neues Modul `web/js/member.js` mit `setupMembers()` → `{ load(garages) }` (Muster `token.js`), Blätter über `sheet.js`.
+- [x] `account.js`: `setupMembers` einbinden, in `Promise.all` laden.
+- [x] Stil nur über bestehende Klassen und Tokens aus `web/css/tokens.css`; neue Regeln, falls nötig, in die vorhandene Konto-Stilstelle (nicht neue Farbwerte).
+- [x] `docs/code-map.md`: `member.js` in der `js/`-Zeile.
+- [x] `node --check web/js/member.js web/js/account.js`.
 
 ## Report-Back
+
+Fertig (2026-11-26). `node --check` grün. Darstellung mit Attrappen-API in Edge bei 360 px geprüft (dunkel und hell, kein waagerechtes Scrollen); Blätter, Link-Anzeige, Teilen und die echten Routen sind nicht durchgeklickt.

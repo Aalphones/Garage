@@ -10,7 +10,7 @@ Wünsche des Inhabers (2026-11-25): Rücksetz-Link erzeugt der Inhaber (kein Mai
 |---|---|---|---|---|
 | 1 | Mitglieder und Einladungen: Migration 025, ADR-026, Dienst und Routen | heikel | opusplan | complete |
 | 2 | Passwort-Rücksetzung: Dienst und Routen | heikel | opusplan | complete |
-| 3 | Konto: Abschnitt „Mitglieder“ mit Einladen, Rolle, Entfernen, Rücksetz-Link | standard | sonnet | pending |
+| 3 | Konto: Abschnitt „Mitglieder“ mit Einladen, Rolle, Entfernen, Rücksetz-Link | standard | sonnet | complete |
 | 4 | Seiten `einladung.html` (bestehendes Konto) und `passwort.html` | standard | sonnet | pending |
 | 5 | Migration Golf Sportsvan (Live-Garage, MCP) | heikel | opusplan | pending |
 | 6 | Migration Clio III (Live-Garage, MCP) | standard | sonnet | pending |
