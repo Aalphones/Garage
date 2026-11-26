@@ -45,6 +45,23 @@
             <ul id="garage-list" class="plain-list"></ul>
             <p id="garage-empty" hidden>Du bist noch in keiner Garage. Eine Einladung legt sie an.</p>
 
+            <h3 id="member-heading" tabindex="-1">Mitglieder</h3>
+            <p class="hint">Wer in deinen Garagen mitliest und mitschreibt.</p>
+            <div id="member-roles"></div>
+            <p id="member-error" class="error" role="alert" tabindex="-1" hidden></p>
+            <div id="member-reveal" class="reveal" role="status" tabindex="-1" hidden>
+                <strong id="member-reveal-title"></strong>
+                <small id="member-reveal-note"></small>
+                <code id="member-link" class="secret"></code>
+                <div class="button-row">
+                    <button id="member-copy" type="button">Kopieren</button>
+                    <button id="member-share" type="button" hidden>Teilen</button>
+                </div>
+                <small id="member-copy-status"></small>
+            </div>
+            <div id="member-groups"></div>
+            <p id="member-empty" hidden>Du bist in keiner Garage, deshalb gibt es hier keine Mitglieder. Eine Einladung legt eine an.</p>
+
             <h3>Feste Zugänge</h3>
             <p class="hint">Ein fester Zugang ist ein Schlüssel für ein Programm, das keine Anmeldung per Browser kann, etwa Claude Code. Er gilt nur für deine Garagen.</p>
             <p id="token-list-error" class="error" role="alert" tabindex="-1" hidden></p>

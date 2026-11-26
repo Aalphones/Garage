@@ -5,6 +5,7 @@ import { clearChildren, element } from './dom.js';
 import { dropdown } from './dropdown.js';
 import { setupGrants } from './grant.js';
 import { setupLogin } from './login.js';
+import { setupMembers } from './member.js';
 import { mountShell } from './shell.js';
 import { registerWorker } from './share.js';
 import { setMode, storedMode } from './theme.js';
@@ -36,6 +37,7 @@ const logoutButton = document.getElementById('logout');
 const tokens = setupTokens();
 const grants = setupGrants();
 const calendar = setupCalendar();
+const members = setupMembers(reloadGarages);
 const HOME = '/garage/garage.html';
 
 function showLogin(message) {
@@ -62,7 +64,14 @@ async function showAccount() {
     loginSection.hidden = true;
     accountSection.hidden = false;
     statusLine.textContent = '';
-    await Promise.all([calendar.load(me.garages), tokens.load(), grants.load()]);
+    await Promise.all([calendar.load(me.garages), members.load(me.garages), tokens.load(), grants.load()]);
+}
+
+// Nach „Garage verlassen“ stimmen Garagenliste, Kalender-Links und Mitglieder nicht mehr.
+async function reloadGarages() {
+    const me = await request('GET', 'me');
+    renderGarages(me.garages);
+    await Promise.all([calendar.load(me.garages), members.load(me.garages)]);
 }
 
 // Nach der Anmeldung beginnt die Arbeit in der Garage; das Konto erreicht man über die Navigation.
@@ -78,11 +87,13 @@ logoutButton.addEventListener('click', async () => {
         tokens.clear();
         grants.clear();
         calendar.clear();
+        members.clear();
         return;
     }
     tokens.clear();
     grants.clear();
     calendar.clear();
+    members.clear();
     showLogin('Abgemeldet.');
 });
 

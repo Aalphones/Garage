@@ -600,3 +600,9 @@ button.row .s { text-align: left; }
 @media (max-width: 575px) {
   .cal-row .cal-actions { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; }
 }
+
+/* ===== Meilenstein 6: Konto, Mitglieder ===== */
+.member-group li { overflow-wrap: anywhere; }
+.member-group h5 { margin: 1rem 0 .25rem; font-size: .875rem; }
+.member-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+.role-help { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; align-items: center; }
