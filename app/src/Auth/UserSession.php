@@ -122,7 +122,7 @@ final class UserSession
 
     public function logoutAll(int $userId): void
     {
-        Transaction::run($this->pdo, function () use ($userId): void {
+        Transaction::join($this->pdo, function () use ($userId): void {
             $this->tokens->revokeAllUserRefresh($userId);
             $this->audit->record($this->actorFor($userId), 'auth.logout_all', 'user:' . $userId);
         });

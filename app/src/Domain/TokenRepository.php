@@ -72,11 +72,15 @@ final class TokenRepository
         $statement->execute([$family]);
     }
 
-    /** Nur die Sitzungen dieses Nutzers; Sitzungen anderer Nutzer bleiben unberührt. */
+    /**
+     * Nur die Sitzungen dieses Nutzers; Sitzungen anderer Nutzer bleiben unberührt. Trifft auch gerade rotierte Tokens:
+     * im Kulanzfenster bekämen sie sonst noch ein Access-JWT.
+     */
     public function revokeAllUserRefresh(int $userId): void
     {
         $statement = $this->pdo->prepare(
-            'UPDATE tokens SET revoked = 1, expires_at = UTC_TIMESTAMP() WHERE user_id = ? AND kind = ? AND revoked = 0'
+            'UPDATE tokens SET revoked = 1, expires_at = UTC_TIMESTAMP()
+             WHERE user_id = ? AND kind = ? AND (revoked = 0 OR expires_at > UTC_TIMESTAMP())'
         );
         $statement->execute([$userId, self::KIND_USER_REFRESH]);
     }
