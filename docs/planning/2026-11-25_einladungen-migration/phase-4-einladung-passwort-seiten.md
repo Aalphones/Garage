@@ -18,10 +18,14 @@ Rating: standard · Modell: sonnet
 
 ## Checkliste
 
-- [ ] `einladung.html`/`invitation.js` erweitern.
-- [ ] `passwort.html`, `password.js` neu.
-- [ ] Anmeldeseite `index.html`: Satz unter dem Formular „Passwort vergessen? Bitte den Inhaber deiner Garage um einen Link.“
-- [ ] `docs/code-map.md` (Seite und Modul), `docs/routes.md` (Seite, falls Seiten dort geführt werden).
-- [ ] `node --check` auf beide Module.
+- [x] `einladung.html`/`invitation.js` erweitern.
+- [x] `passwort.html`, `password.js` neu.
+- [x] Anmeldeseite `index.html`: Satz unter dem Formular „Passwort vergessen? Bitte den Inhaber deiner Garage um einen Link.“
+- [x] `docs/code-map.md` (Seite und Modul), `docs/routes.md` (Seite, falls Seiten dort geführt werden). `routes.md` führt keine Seiten; nachgezogen sind `code-map.md` und `conventions/frontend.md`.
+- [x] `node --check` auf beide Module.
 
 ## Report-Back
+
+Status: complete. `node --check` grün. Beide Seiten im Headless-Edge bei 360 px mit nachgestellter API durchgeklickt (Wahl, Anmelden und Beitreten, Wiederholen nach 500, `already_member`, 410, ohne Token, ungleiche Passwörter, 429, Erfolg, 404), kein waagerechtes Scrollen, hell und dunkel angesehen. Gegen die echten Routen nie ausgeführt.
+
+Ist eine Sitzung da, bietet die Seite nach AK 1 nur „Beitreten als <Name>“ — ein Wechsel auf ein anderes Konto geht nur über Abmelden im Konto und erneutes Öffnen des Links. `sw.js` blieb unverändert: die Cache-Liste enthält keine der Seiten.
