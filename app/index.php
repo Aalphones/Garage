@@ -18,6 +18,7 @@ use Garage\Api\MeController;
 use Garage\Api\MemberController;
 use Garage\Api\OpenItemController;
 use Garage\Api\PaperController;
+use Garage\Api\PasswordResetController;
 use Garage\Api\PrintController;
 use Garage\Api\RecordController;
 use Garage\Api\TokenController;
@@ -49,6 +50,10 @@ $router->add('POST', '/garage/api/garages/{id}/invitations', static fn (array $p
 $router->add('DELETE', '/garage/api/garages/{id}/invitations/{invitationId}', static fn (array $parameters) => (new MemberController())->revokeInvitation($request, (int) $parameters['id'], (int) $parameters['invitationId']));
 $router->add('PATCH', '/garage/api/garages/{id}/members/{userId}', static fn (array $parameters) => (new MemberController())->changeRole($request, (int) $parameters['id'], (int) $parameters['userId']));
 $router->add('DELETE', '/garage/api/garages/{id}/members/{userId}', static fn (array $parameters) => (new MemberController())->remove($request, (int) $parameters['id'], (int) $parameters['userId']));
+
+$router->add('POST', '/garage/api/garages/{id}/members/{userId}/password-reset', static fn (array $parameters) => (new PasswordResetController())->create($request, (int) $parameters['id'], (int) $parameters['userId']));
+$router->add('POST', '/garage/api/password-reset/preview', static fn () => (new PasswordResetController())->preview($request));
+$router->add('POST', '/garage/api/password-reset/accept', static fn () => (new PasswordResetController())->accept($request));
 
 $router->add('POST', '/garage/api/auth/login', static fn () => (new AuthController())->login($request));
 $router->add('POST', '/garage/api/auth/refresh', static fn () => (new AuthController())->refresh($request));

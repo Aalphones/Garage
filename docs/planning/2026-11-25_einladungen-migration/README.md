@@ -9,7 +9,7 @@ Wünsche des Inhabers (2026-11-25): Rücksetz-Link erzeugt der Inhaber (kein Mai
 | Phase | Inhalt | Rating | Modell | Status |
 |---|---|---|---|---|
 | 1 | Mitglieder und Einladungen: Migration 025, ADR-026, Dienst und Routen | heikel | opusplan | complete |
-| 2 | Passwort-Rücksetzung: Dienst und Routen | heikel | opusplan | pending |
+| 2 | Passwort-Rücksetzung: Dienst und Routen | heikel | opusplan | complete |
 | 3 | Konto: Abschnitt „Mitglieder“ mit Einladen, Rolle, Entfernen, Rücksetz-Link | standard | sonnet | pending |
 | 4 | Seiten `einladung.html` (bestehendes Konto) und `passwort.html` | standard | sonnet | pending |
 | 5 | Migration Golf Sportsvan (Live-Garage, MCP) | heikel | opusplan | pending |

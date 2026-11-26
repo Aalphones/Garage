@@ -20,13 +20,19 @@ Rating: heikel (Konto-Übernahme möglich, wenn die Rechte-Regel falsch sitzt) �
 
 ## Checkliste
 
-- [ ] `app/src/Domain/PasswordResetRepository.php` (`insert`, `findByHash` mit Sperre, `markUsed`, `invalidateOpen(int $userId)`).
-- [ ] `app/src/Domain/PasswordResetService.php` (`create`, `preview`, `accept`); Passwortprüfung aus `InvitationService::assertValidAccount` in eine gemeinsame statische Prüfung ziehen (z. B. `Validate::password`), beide Dienste rufen sie.
-- [ ] `UserRepository::updatePassword(int $userId, string $hash)`.
-- [ ] `app/src/Api/PasswordResetController.php`, Routen in `app/index.php`.
-- [ ] `ApiErrors`: `reset_not_found` → 404, `reset_used`/`reset_expired` → 410.
-- [ ] Audit: `password.reset_create`, `password.reset_accept`.
-- [ ] `docs/routes.md` nachziehen.
+- [x] `app/src/Domain/PasswordResetRepository.php` (`insert`, `findByHash` mit Sperre, `markUsed`, `invalidateOpen(int $userId)`).
+- [x] `app/src/Domain/PasswordResetService.php` (`create`, `preview`, `accept`); Passwortprüfung aus `InvitationService::assertValidAccount` in eine gemeinsame statische Prüfung ziehen (z. B. `Validate::password`), beide Dienste rufen sie.
+- [x] `UserRepository::updatePassword(int $userId, string $hash)`.
+- [x] `app/src/Api/PasswordResetController.php`, Routen in `app/index.php`.
+- [x] `ApiErrors`: `reset_not_found` → 404, `reset_used`/`reset_expired` → 410.
+- [x] Audit: `password.reset_create`, `password.reset_accept`.
+- [x] `docs/routes.md` nachziehen.
 - [ ] `php -l` bzw. CI-Ergebnis in `## Report-Back`.
 
 ## Report-Back
+
+- Rechte-Regel strenger als die Akzeptanzkriterien: `preview`/`accept` prüfen sie erneut (Finding aus Phase 1), dazu: Ersteller nicht gesperrt, Ziel-Konto in mindestens einer Garage. Diese Fälle und ein gesperrtes Konto antworten beim Einlösen mit 410 `reset_used`.
+- Die Login-Bremse zählt `reset_not_found`, `reset_used` und `reset_expired`; ein zu kurzes Passwort zählt nicht.
+- Mitgeändert: `logoutAll` läuft in einer laufenden Transaktion mit und beendet auch Refresh-Tokens im 30-Sekunden-Kulanzfenster.
+- Bleibt offen: ein schon ausgestelltes Access-JWT gilt bis zu seinem Ablauf weiter (15 Minuten, ADR-006).
+- Keine Route gegen eine Datenbank ausgeführt. Lokal kein PHP; Syntax prüft die CI.

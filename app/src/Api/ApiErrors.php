@@ -21,6 +21,7 @@ final class ApiErrors
         'forbidden' => 403,
         'not_found' => 404,
         'invitation_not_found' => 404,
+        'reset_not_found' => 404,
         'ticket_not_found' => 404,
         'ticket_used' => 410,
         'ticket_expired' => 410,
@@ -43,6 +44,8 @@ final class ApiErrors
         'request_expired' => 410,
         'invitation_used' => 410,
         'invitation_expired' => 410,
+        'reset_used' => 410,
+        'reset_expired' => 410,
         'too_many_attempts' => 429,
     ];
 

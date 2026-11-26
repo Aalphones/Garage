@@ -1,6 +1,6 @@
 # 026 — Mitglieder, Einladungen aus der Oberfläche, Passwort-Rücksetzung
 
-**Status:** Akzeptiert (2026-11-26) — Meilenstein 6; erweitert [ADR-006](006-konten-per-einladung-sitzung-je-nutzer.md). Die Passwort-Rücksetzung wird in Phase 2 des Meilensteins gebaut.
+**Status:** Akzeptiert (2026-11-26) — Meilenstein 6; erweitert [ADR-006](006-konten-per-einladung-sitzung-je-nutzer.md).
 
 ## Kontext
 
@@ -19,7 +19,7 @@ Bisher entsteht eine Einladung nur mit dem Deploy-Token, Mitgliedschaften lassen
 - **Mindestens ein Inhaber:** Herabstufen und Entfernen sperren in ihrer Transaktion zuerst die Inhaber-Zeilen (`SELECT … FOR UPDATE`) und prüfen den Handelnden danach erneut.
 - **Verliert jemand die Inhaber-Rolle** (herabgestuft, entfernt, selbst gegangen), werden die offenen Einladungen dieser Garage, die diese Person erzeugt hat, in derselben Transaktion widerrufen (Option b). Sonst käme sie mit einem aufgehobenen Link wieder herein, auch als Inhaber.
 - **Entfernen löscht die Zeile** in `garage_members` und schreibt einen Audit-Eintrag: eine Mitgliedschaft ist kein Fakt mit Herkunft. Rollen werden bei jeder Anfrage neu gelesen, der Zugriff endet sofort.
-- **Passwort-Rücksetzung (Option b):** ein Inhaber erzeugt für ein Mitglied einen einmaligen Link (`gpwr_`, nur als SHA-256 gespeichert, 24 Stunden). Nur für Konten, deren Garagen alle der Anfragende als Inhaber verwaltet — sonst könnte der Inhaber einer Garage ein Konto übernehmen, das auch eine fremde sieht. Das neue Passwort beendet alle Browser-Sitzungen; feste Zugänge und verbundene Apps bleiben, sie sind im Konto einzeln widerrufbar.
+- **Passwort-Rücksetzung (Option b):** ein Inhaber erzeugt für ein Mitglied einen einmaligen Link (`gpwr_`, nur als SHA-256 gespeichert, 24 Stunden). Nur für Konten, deren Garagen alle der Anfragende als Inhaber verwaltet — sonst könnte der Inhaber einer Garage ein Konto übernehmen, das auch eine fremde sieht. Das neue Passwort beendet alle Browser-Sitzungen; feste Zugänge und verbundene Apps bleiben, sie sind im Konto einzeln widerrufbar. Die Rechte-Regel gilt beim Erzeugen und erneut beim Ansehen und Einlösen: der Link ist ungültig, sobald der Ersteller nicht mehr alle Garagen des Kontos als Inhaber verwaltet, Ersteller oder Konto gesperrt sind oder das Konto in keiner Garage mehr ist.
 
 ## Konsequenzen
 

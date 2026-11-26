@@ -33,6 +33,25 @@ final class UserRepository
         return $this->hydrate($statement->fetch());
     }
 
+    /**
+     * Sperrt die Zeile bis zum Ende der Transaktion.
+     *
+     * @return array{id: int, email: string, name: string, password_hash: string, status: string}|null
+     */
+    public function findByIdForUpdate(int $userId): ?array
+    {
+        $statement = $this->pdo->prepare('SELECT id, email, name, password_hash, status FROM users WHERE id = ? FOR UPDATE');
+        $statement->execute([$userId]);
+
+        return $this->hydrate($statement->fetch());
+    }
+
+    public function updatePassword(int $userId, string $passwordHash): void
+    {
+        $statement = $this->pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
+        $statement->execute([$passwordHash, $userId]);
+    }
+
     public function insert(string $email, string $name, string $passwordHash): int
     {
         $statement = $this->pdo->prepare(
