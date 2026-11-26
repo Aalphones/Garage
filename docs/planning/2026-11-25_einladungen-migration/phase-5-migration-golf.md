@@ -24,15 +24,39 @@ Kein Code. Die Session arbeitet mit den MCP-Werkzeugen `garage` gegen die Live-G
 
 ## Checkliste
 
-- [ ] Ressourcen und Prompt lesen, `list_vehicles`, `get_vehicle` nach Anlage.
-- [ ] Akte ganz lesen; Belegliste aus beiden Ordnern mit Dateiname → Belegart aufstellen (in `## Report-Back`).
-- [ ] Fahrzeug anlegen, Stammdaten aus dem Fahrzeugschein-Beleg (falls vorhanden, sonst Akte → `wahrscheinlich`).
-- [ ] Je Datei: `request_upload` → `curl -F "file=@<Pfad>" <upload_url>` → `store_document` mit `ticket_id`, `doc_type`, `text`. Dubletten meldet der SHA-256.
-- [ ] Rechnung für Rechnung: `validate_service_event`, dann `record_service_event` mit Rechnungsnummer, Positionen mit `task_key`, `attach_document`.
-- [ ] Regeln (`upsert_task_rule`), Messwerte (`record_measurement`, ein Aufruf je Tag), Reifen, Teile.
-- [ ] Verträge: `upsert_contract`, `record_contract_term` je Beitragsperiode aus den Versicherungs-PDFs, Steuer als Vertrag mit Bescheid.
-- [ ] Kaufpreis `add_valuation`, Notiz `upsert_note`.
-- [ ] Klärfälle per `open_item`; Klärfälle, die Schreibwerkzeuge selbst melden, nur notieren.
-- [ ] `get_dossier` gegen die Akte abgleichen, Abweichungen nachtragen oder als Klärfall anlegen, Ergebnis in `FINDINGS.md` (`- [ ] → Phase 6: …` für alles, was die Clio-Migration anders machen soll).
+- [x] Ressourcen und Prompt lesen, `list_vehicles`, `get_vehicle` nach Anlage.
+- [x] Akte ganz lesen; Belegliste aus beiden Ordnern mit Dateiname → Belegart aufstellen (in `## Report-Back`).
+- [x] Fahrzeug anlegen, Stammdaten aus dem Fahrzeugschein-Beleg (falls vorhanden, sonst Akte → `wahrscheinlich`).
+- [x] Je Datei: `request_upload` → `curl -F "file=@<Pfad>" <upload_url>` → `store_document` mit `ticket_id`, `doc_type`, `text`. Dubletten meldet der SHA-256.
+- [x] Rechnung für Rechnung: `validate_service_event`, dann `record_service_event` mit Rechnungsnummer, Positionen mit `task_key`, `attach_document`.
+- [x] Regeln (`upsert_task_rule`), Messwerte (`record_measurement`, ein Aufruf je Tag), Reifen, Teile.
+- [x] Verträge: `upsert_contract`, `record_contract_term` je Beitragsperiode aus den Versicherungs-PDFs, Steuer als Vertrag mit Bescheid.
+- [x] Kaufpreis `add_valuation`, Notiz `upsert_note`.
+- [x] Klärfälle per `open_item`; Klärfälle, die Schreibwerkzeuge selbst melden, nur notieren.
+- [x] `get_dossier` gegen die Akte abgleichen, Abweichungen nachtragen oder als Klärfall anlegen, Ergebnis in `FINDINGS.md` (`- [ ] → Phase 6: …` für alles, was die Clio-Migration anders machen soll).
 
 ## Report-Back
+
+Stand 2026-11-26: Fahrzeug 49 in Garage 54, 15 Dokumente zugeordnet (`list_documents` offen: leer), Klärfälle #71–#82, Abgleich in `FINDINGS.md`.
+
+| Datei (ohne Endung) | Belegart | Dokument |
+|---|---|---|
+| 202509 Fahrzeugschein | fahrzeugschein | 48 |
+| 20260108 Fahrzeugschein | fahrzeugschein | 49 |
+| 202412 Inspektion | rechnung | 50 |
+| 202603 Auftrag Inspektion | sonstiges | 51 |
+| 202603 Inspektion | rechnung | 52 |
+| 202605 HU AU | hu_bericht | 53 |
+| 202610 Ölwechsel Rechnung | rechnung | 54 |
+| 202610 Ölwechsel | sonstiges | 55 |
+| 202601 KFZ Steuer | bescheid | 56 |
+| 202602 Crit Air Zertifikat | sonstiges (nur Bestellbestätigung) | 57 |
+| 202510 Angebot | sonstiges (Seiten 6–8 nicht ausgewertet) | 58 |
+| 202510 EVB Nummer | sonstiges | 59 |
+| 202602 Versicherungsschein | police | 60 |
+| 20260331 Versicherungsschein | police | 61 |
+| 202610 Jahresbeitrag Golf | rechnung | 62 |
+
+Alle 8 Regeln haben eine Fälligkeit. `rule_uncertain`: `oelwechsel` (flexibel, Höchstwerte) und `dsg_oel` (unbelegt; dadurch seit 18.04.2025 als überfällig gezeigt, siehe Klärfall #76).
+
+Unsicher erfasst: Tag der Beitragsrechnung (nur „Oktober 2026“ gedruckt), Montagedatum des Reifensatzes, Kauftag.

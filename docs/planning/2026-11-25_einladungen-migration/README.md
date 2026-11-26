@@ -12,7 +12,7 @@ Wünsche des Inhabers (2026-11-25): Rücksetz-Link erzeugt der Inhaber (kein Mai
 | 2 | Passwort-Rücksetzung: Dienst und Routen | heikel | opusplan | complete |
 | 3 | Konto: Abschnitt „Mitglieder“ mit Einladen, Rolle, Entfernen, Rücksetz-Link | standard | sonnet | complete |
 | 4 | Seiten `einladung.html` (bestehendes Konto) und `passwort.html` | standard | sonnet | complete |
-| 5 | Migration Golf Sportsvan (Live-Garage, MCP) | heikel | opusplan | pending |
+| 5 | Migration Golf Sportsvan (Live-Garage, MCP) | heikel | opusplan | complete |
 | 6 | Migration Clio III (Live-Garage, MCP) | standard | sonnet | pending |
 | 7 | Doku-Abgleich und Abschluss | mechanisch | sonnet | pending |
 
