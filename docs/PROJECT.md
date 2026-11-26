@@ -62,13 +62,13 @@ Grob; Detail-Phasen macht der jeweilige Plan. Jeder Meilenstein endet mit einer 
 3. **Belege und Fotos (erledigt 2026-11-18, 38 Tools, Server-Ablauf auf Strato per curl und im Browser belegt, Mandanten-Liste mit 86 Prüfungen grün; offen beim Inhaber: Handy-Test Teilen-Ziel, Claude-Web-Test des Widgets, Verprobungs-Matrix, siehe `knowledge/GAPS.md`):** Dokumente, Anhänge, Upload-Tickets, Eingang; Weg A (Chat) und Weg B (Eingang) an echten Clients verproben.
 4. **Oberfläche (erledigt 2026-11-24, ungeprüft zur Laufzeit: kein PHP, kein Browser-Lauf nach Phase 5; offen beim Inhaber: Abnahme im Browser auf Handy und Desktop, siehe `knowledge/GAPS.md`):** Gestaltung „Dark Botanical“ (ADR-017), Garage, Fahrzeug mit sieben Reitern, Scheckheft-Lücken (ADR-020), Klärfälle, Löschen und Status durch Menschen (ADR-019), kleine Eingaben (ADR-021), Druckansicht, Kamera-Knopf.
 5. **Kosten, Verträge, Wert (erledigt 2026-11-25, 50 Werkzeuge; PHP-Syntax in CI grün, nichts gegen PHP/MySQL gelaufen, Oberfläche nur mit Testdaten im Browser; offen beim Inhaber: Abnahme nach Deploy, Kalender-Abo in Google/Apple, Notfallkarte offline am Handy, siehe `knowledge/GAPS.md`):** Verträge mit Beitragsperioden, Umlage, Tankbuch, Ausgaben, Zubehör, Plaketten, Bewertungen und Vergleichsinserate, Kosten- und Wert-Ansicht, iCal-Feed.
-6. **Einladungen in der Oberfläche, Migration der beiden bestehenden Akten.**
+6. **Einladungen in der Oberfläche, Migration der beiden bestehenden Akten (erledigt 2026-11-26; PHP-Syntax in CI grün, die neuen Routen nie gegen eine Datenbank gelaufen, die Oberfläche nur mit Test-Daten bei 360 px; Migration 025 wirkt live erst nach Deploy samt Migrationslauf; Golf und Clio stehen in der Live-Garage, 19 Klärfälle waren am 2026-11-26 offen, siehe `knowledge/GAPS.md`):** Mitglieder und Einladungen durch Inhaber, Beitritt mit bestehendem Konto, Passwort-Rücksetzung per Link (ADR-026), Akten von Golf Sportsvan und Clio III per MCP erfasst.
 
 ## Offene Fragen
 
 Aus dem Konzept (→ „Offene Entscheidungen"), Empfehlung jeweils dort:
 
-- Belege und Datenschutz bei fremden Nutzern: Impressum, Datenschutzerklärung, Löschkonzept; eigene Domain, sobald Fremde Konten bekommen.
+- Belege und Datenschutz bei fremden Nutzern: Impressum, Datenschutzerklärung, Löschkonzept; eigene Domain, sobald Fremde Konten bekommen. Seit Meilenstein 6 laden Inhaber ohne Deploy-Token ein, Fremde können damit ohne Zutun des Betreibers ein Konto bekommen.
 - PDFs für Agenten: Original plus erkannter Text (empfohlen) oder Seitenbilder.
 - Belegweg auf dem Handy: welcher Weg Standard wird, entscheidet die Verprobungs-Matrix des Inhabers ([Plan Meilenstein 3, Follow-ups](archive/2026-11/2026-11-17_belege-und-fotos/README.md)).
 - Gemeinsamer Kern mit DISPATCH nach Meilenstein 3 ([ADR-005](decisions/005-kern-aus-dispatch-kopiert.md)).

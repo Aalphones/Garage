@@ -1,6 +1,6 @@
 # Meilenstein 6 — Einladungen in der Oberfläche, Migration der beiden Akten
 
-Stand: 2026-11-25 (freigegeben)
+Stand: 2026-11-26 (abgeschlossen und archiviert; freigegeben 2026-11-25)
 
 Inhaber laden Menschen selbst in ihre Garage ein, sehen und ändern Mitglieder und helfen bei vergessenem Passwort mit einem Rücksetz-Link — alles im Konto, ohne Deploy-Token. Danach baut ein Agent die Akten von Golf Sportsvan und Clio III per MCP in der Live-Garage auf und gleicht sie mit den alten Markdown-Akten ab.
 
@@ -13,12 +13,12 @@ Wünsche des Inhabers (2026-11-25): Rücksetz-Link erzeugt der Inhaber (kein Mai
 | 3 | Konto: Abschnitt „Mitglieder“ mit Einladen, Rolle, Entfernen, Rücksetz-Link | standard | sonnet | complete |
 | 4 | Seiten `einladung.html` (bestehendes Konto) und `passwort.html` | standard | sonnet | complete |
 | 5 | Migration Golf Sportsvan (Live-Garage, MCP) | heikel | opusplan | complete |
-| 6 | Migration Clio III (Live-Garage, MCP) | standard | sonnet | pending |
-| 7 | Doku-Abgleich und Abschluss | mechanisch | sonnet | pending |
+| 6 | Migration Clio III (Live-Garage, MCP) | standard | sonnet | complete |
+| 7 | Doku-Abgleich und Abschluss | mechanisch | sonnet | complete |
 
 Reihenfolge: 1 → 2 → 3 → 4 → 5 → 6 → 7. Abhängigkeiten: 2 braucht 1 (Migration 025); 3 braucht 1 und 2; 4 braucht 1 und 2; 5 und 6 brauchen nur die schon live laufenden Werkzeuge aus Meilenstein 1–5 und hängen nicht an 1–4; 6 braucht 5 (Erfahrungen aus `FINDINGS.md`); 7 braucht alles.
 
-Entscheidungen: [ADR-026](../../decisions/026-mitglieder-einladungen-passwort.md) (entsteht in Phase 1).
+Entscheidungen: [ADR-026](../../../decisions/026-mitglieder-einladungen-passwort.md) (entsteht in Phase 1).
 
 ## Kontrakt
 
@@ -58,10 +58,36 @@ Tokens: Einladung `ginv_` (besteht), Rücksetzung `gpwr_` + 64 Hex, beide nur al
 
 ## Summary
 
+Inhaber verwalten Mitglieder und Einladungen im Konto und erzeugen Rücksetz-Links; wer ein Konto hat, tritt einer weiteren Garage ohne zweites Konto bei. Golf Sportsvan (15 Dokumente, Klärfälle #71–#82) und Clio III (32 Dokumente, 28 Ereignisse, Klärfälle #83–#99) stehen in Garage 54 der Live-Garage.
+
+Finale AK, Abgleich am 2026-11-26: 1–4 am Code nachvollzogen (`MemberService`, `InvitationService`, `PasswordResetService`, `GarageAccess`, `member.js`, `invitation.js`, `password.js`; alle Kontrakt-Routen in `app/index.php` und `docs/routes.md`), nicht zur Laufzeit. 5 nach den Report-Backs und dem Abgleich in `FINDINGS.md`; selbst geprüft nur die offenen Klärfälle (19: #79, #80, #83–#99).
+
 ## Files touched
+
+- Datenbank: `app/migrations/025_members.sql`
+- API und Domäne: `app/index.php`, `app/src/Api/` (`MemberController`, `PasswordResetController`, `BodyField` neu; `InvitationController`, `ApiErrors`), `app/src/Domain/` (`MemberService`, `PasswordResetService`, `PasswordResetRepository`, `GarageAccess` neu; `InvitationService`, `InvitationRepository`, `GarageRepository`, `TokenRepository`, `UserRepository`, `Validate`), `app/src/Auth/UserSession.php`, `app/src/Http/Router.php`
+- Oberfläche: `web/passwort.html`, `web/js/member.js`, `web/js/password.js` neu; `web/index.html`, `web/einladung.html`, `web/css/base.css`, `web/js/account.js`, `web/js/invitation.js`, `web/js/login.js`
+- Doku: `docs/PROJECT.md`, `docs/routes.md`, `docs/models.md`, `docs/code-map.md`, `docs/glossary.md`, `docs/knowledge/GAPS.md`, `docs/conventions/frontend.md`, ADR-006, ADR-026
 
 ## Commits
 
+- `b93e58d`, `a6ef559`, `00e62c1` — Phase 1 (Migration 025, Mitglieder und Einladungen)
+- `f790f55`, `6c85e6f`, `b53d999` — Phase 2 (Passwort-Rücksetzung)
+- `1bb37ba` — Phase 3 (Mitglieder im Konto)
+- `bccc2e1` — Phase 4 (Beitritt, Passwortseite)
+- `935aadc`, `658bd55`, `8ad92b2`, `6cd39e1`, `39946e6`, `879a169` — Stand und CI-Ergebnisse (Phasen 5 und 6 ohne Code)
+
 ## Deviations from plan
 
+- Wer die Inhaber-Rolle verliert, dessen offene Einladungen werden widerrufen (Entscheidung des Inhabers).
+- Rücksetz-Link: Die Rechte-Regel gilt auch beim Ansehen und Einlösen.
+- „Abmelden überall“ beendet auch Refresh-Tokens im 30-Sekunden-Kulanzfenster (Fix).
+- Clio: nur die ersten 3 von 28 Ereignissen liefen vorab durch `validate_service_event`; Rechnungssummen stattdessen aus den Positionen nachgerechnet. Kein Steuerbescheid, daher kein Steuervertrag (#96); kein Garagen-Vertrag, keiner belegt.
+
 ## Follow-ups
+
+- Deploy mit Migrationslauf (025), sonst fehlen live die neuen Spalten und die Tabelle.
+- Offene Klärfälle entscheidet der Inhaber in der Oberfläche.
+- Nicht zur Laufzeit belegt und beim Migrieren beobachtete Auffälligkeiten: `docs/knowledge/GAPS.md` (Einträge vom 2026-11-26).
+- Ein schon ausgestelltes Access-JWT gilt nach einer Rücksetzung noch bis zu 15 Minuten (ADR-006).
+- Mit bestehender Sitzung bietet `einladung.html` nur „Beitreten als …“; Kontowechsel geht über Abmelden und erneutes Öffnen des Links.

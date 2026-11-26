@@ -16,7 +16,9 @@ Rating: mechanisch · Modell: sonnet
 
 ## Checkliste
 
-- [ ] Doku abgleichen wie oben.
-- [ ] Archivieren, `STATE.md`, Commit.
+- [x] Doku abgleichen wie oben.
+- [x] Archivieren, `STATE.md`, Commit.
 
 ## Report-Back
+
+Abgeschlossen 2026-11-26. Ergänzt: Meilenstein 6 in `PROJECT.md`, zwei Glossar-Begriffe, Lücken in `GAPS.md`. Routen per Skript abgeglichen: alle 87 aus `app/index.php` stehen in `routes.md`; `models.md` und `code-map.md` waren aus den Phasen 1–4 aktuell. Meilenstein 7 ist in `PROJECT.md` nicht beschrieben; `STATE.md` sagt das.

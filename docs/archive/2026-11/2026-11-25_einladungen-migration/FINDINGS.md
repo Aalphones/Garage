@@ -13,8 +13,8 @@ Format: `- [ ] → Phase N: <Erkenntnis>` (erledigt: `[x]`, mit Commit oder Klä
 - [x] → Phase 6: Das Feld `source` kennt keine „Fahrzeugakte“. Reine Akten-Werte als `nutzer`/`agent` mit `wahrscheinlich` bzw. `unsicher` erfassen und eine Notiz „Herkunft der Erfassung“ mit Akte und Stand anlegen. Auch Angaben ohne eigenes Feld (Typschlüssel, Bremsbeläge „i.O.“) mitnehmen.
 - [x] → Phase 6: Messwerte nehmen höchstens zwei Nachkommastellen an (Lambda genauer in die Notiz). Bei einem Versicherungs-Nachtrag die Beitragsperiode teilen und die zeitanteiligen Beträge aus dem Nachtrag rechnen.
 - [x] → Phase 6: `task_key` nur an Positionen vergeben, für die auch eine Regel angelegt wird. Upload-Tickets gelten kurz; je Datei `request_upload` → `curl` → `store_document`.
-- [ ] → Phase 7: Die Akte aus `get_dossier` bewertet „Keine Lücke im Scheckheft“ trotz 40 Monaten ohne Eintrag (08/2021–12/2024) und „Halterzahl nicht eingetragen“, obwohl der Abschnitt Zulassung „Halterzahl: 2“ zeigt. Beides in `docs/knowledge/GAPS.md` aufnehmen.
-- [ ] → Phase 7: Nach einem Nachtrag zeigt die Vertragsübersicht als Beitrag/Jahr einen aus der laufenden Teilperiode hochgerechneten Wert (406,66 €), der Nachtrag nennt 408,30 €. In `docs/knowledge/GAPS.md` aufnehmen.
+- [x] → Phase 7: Die Akte aus `get_dossier` bewertet „Keine Lücke im Scheckheft“ trotz 40 Monaten ohne Eintrag (08/2021–12/2024) und „Halterzahl nicht eingetragen“, obwohl der Abschnitt Zulassung „Halterzahl: 2“ zeigt. Beides in `docs/knowledge/GAPS.md` aufnehmen. (in GAPS.md, 2026-11-26)
+- [x] → Phase 7: Nach einem Nachtrag zeigt die Vertragsübersicht als Beitrag/Jahr einen aus der laufenden Teilperiode hochgerechneten Wert (406,66 €), der Nachtrag nennt 408,30 €. In `docs/knowledge/GAPS.md` aufnehmen. (in GAPS.md, 2026-11-26)
 
 ## Abgleich `get_dossier` gegen `golf-sportsvan.md` (Phase 5, 2026-11-26)
 
@@ -69,6 +69,6 @@ Stammdaten, Rechnungsdetails, Teile, Spezifikationen, Reifenhistorie und Verträ
 
 In GARAGE zusätzlich aus Belegen, nicht in der Akte: Versicherung mit Beitragsperioden (HUK 655/620777-T, Vorvertrag 509/407411-H), HU-Bremswerte, Batteriewerte 2020–2026, Zulassung (Fahrzeugschein 31.07.2017). Garagen-Vertrag (ADAC/Schutzbrief): weder in Akte noch Beleg.
 
-- [ ] → Phase 7: Die Klärfälle #84 und #86 melden einen Widerspruch bei „event_id“ (81 gegen 82), wenn zwei Messwerte desselben Tages an verschiedenen Ereignissen hängen. Das ist kein fachlicher Widerspruch; in `docs/knowledge/GAPS.md` aufnehmen.
-- [ ] → Phase 7: Das Dossier bewertet „Lücke im Scheckheft: Zündkerzen“, obwohl Ereignis 75 (29.01.2025) sie enthält, und „Halterzahl nicht eingetragen“, obwohl die Zulassung „Halterzahl: 1“ zeigt. Beides in `docs/knowledge/GAPS.md` aufnehmen.
-- [ ] → Phase 7: `upsert_task_rule` mit anderem Intervall überschreibt die alte Regel ohne Rückfrage (Ergebnis `aktualisiert`); beim Zahnriemen versehentlich 72 statt 60 Monate gesetzt und zurückkorrigiert. In `docs/knowledge/GAPS.md` aufnehmen.
+- [x] → Phase 7: Die Klärfälle #84 und #86 melden einen Widerspruch bei „event_id“ (81 gegen 82), wenn zwei Messwerte desselben Tages an verschiedenen Ereignissen hängen. Das ist kein fachlicher Widerspruch; in `docs/knowledge/GAPS.md` aufnehmen. (in GAPS.md, 2026-11-26)
+- [x] → Phase 7: Das Dossier bewertet „Lücke im Scheckheft: Zündkerzen“, obwohl Ereignis 75 (29.01.2025) sie enthält, und „Halterzahl nicht eingetragen“, obwohl die Zulassung „Halterzahl: 1“ zeigt. Beides in `docs/knowledge/GAPS.md` aufnehmen. (in GAPS.md, 2026-11-26)
+- [x] → Phase 7: `upsert_task_rule` mit anderem Intervall überschreibt die alte Regel ohne Rückfrage (Ergebnis `aktualisiert`); beim Zahnriemen versehentlich 72 statt 60 Monate gesetzt und zurückkorrigiert. In `docs/knowledge/GAPS.md` aufnehmen. (in GAPS.md, 2026-11-26)

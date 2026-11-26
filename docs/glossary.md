@@ -10,6 +10,8 @@ Ein Begriff, eine Bedeutung. Code und Tabellen englisch, Erklärungen deutsch. N
 | Garage (`garages`) | Mandant: ein Haushalt oder Fuhrpark, dem Fahrzeuge und Verträge gehören. Jede Faktenzeile trägt `garage_id`. |
 | Mitglied (`garage_members`) | Zuordnung Nutzer ↔ Garage mit Rolle: Inhaber, Mitglied, lesend. |
 | Einladung (`invitations`) | Link mit Token, über den jemand Mitglied einer Garage wird; nie Abgleich über die E-Mail. |
+| Mitglied entfernen | Löschen der Zeile in `garage_members` durch einen Inhaber oder das Mitglied selbst („Garage verlassen“), mit Audit-Eintrag; der Zugriff endet mit der nächsten Anfrage, offene Einladungen der Person in dieser Garage werden widerrufen. Das Konto bleibt; der letzte Inhaber lässt sich nicht entfernen (ADR-026). |
+| Rücksetz-Link (`password_resets`) | 24 Stunden gültiger Einmal-Link (`gpwr_`), mit dem ein Mitglied ein neues Passwort setzt; erzeugt ihn ein Inhaber, der alle Garagen des Ziel-Kontos als Inhaber verwaltet. Gespeichert nur als SHA-256; Einlösen beendet alle Browser-Sitzungen, feste Zugänge und verbundene Apps bleiben (ADR-026). |
 | Akteur | Wer gerade handelt (Nutzer, Agent mit Token, Deploy) samt erlaubten `garage_id`s; jede Abfrage bekommt ihn mit. |
 | Scope | Recht eines Tokens: `garage:read`, `garage:write`, `garage:files`. |
 | CIMD | Client ID Metadata Document: eine KI-App weist sich mit einer URL zu ihren Metadaten aus, statt sich zu registrieren. |
