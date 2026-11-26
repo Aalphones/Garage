@@ -16,6 +16,7 @@ GARAGE ist mehrnutzerfähig, soll aber nicht offen registrierbar sein: Fahrzeugd
 
 ## Konsequenzen
 
+- Meilenstein 6 erweitert diese Entscheidung um Einladungen aus der Oberfläche, Mitgliederverwaltung, Beitreten mit bestehendem Konto und Passwort-Rücksetzung: [ADR-026](026-mitglieder-einladungen-passwort.md).
 - Wer sein Passwort vergisst, hat bis Meilenstein 6 keinen Weg zurück ohne neue Einladung.
 - `GARAGE_JWT_SECRET` (mindestens 64 Zeichen) ist Pflicht; ohne ihn antworten alle Anmelde-Routen mit 503.
 - Ein Nutzer wird nie gelöscht, nur auf `gesperrt` gesetzt; dafür gibt es noch keine Oberfläche.

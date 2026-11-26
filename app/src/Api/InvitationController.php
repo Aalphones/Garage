@@ -11,11 +11,12 @@ use Garage\Domain\InvitationService;
 use Garage\Http\Request;
 use Garage\Http\Response;
 
-/** Einladungen: anlegen mit dem Deploy-Token, ansehen und annehmen mit dem Einladungs-Token im Body (ADR-006). */
+/**
+ * Einladungen: anlegen mit dem Deploy-Token, ansehen und annehmen mit dem Einladungs-Token im Body (ADR-006), beitreten
+ * zusätzlich mit Anmeldung (ADR-026). Einladen aus der Oberfläche: `MemberController`.
+ */
 final class InvitationController
 {
-    private const DEFAULT_DAYS = 7;
-
     public function create(Request $request): never
     {
         $actor = ApiAuth::deployOnly($request);
@@ -27,7 +28,7 @@ final class InvitationController
                 BodyField::optionalString($body, 'garage_name'),
                 BodyField::requiredString($body, 'role'),
                 BodyField::optionalString($body, 'email'),
-                BodyField::optionalInt($body, 'days') ?? self::DEFAULT_DAYS,
+                BodyField::optionalInt($body, 'days') ?? InvitationService::DEFAULT_DAYS,
                 $actor
             );
         } catch (DomainError $error) {
@@ -65,6 +66,19 @@ final class InvitationController
         }
 
         AuthController::respondWithSession($result);
+    }
+
+    public function join(Request $request): never
+    {
+        $actor = ApiAuth::user($request);
+
+        try {
+            $result = $this->service()->join(BodyField::requiredString($request->json(), 'token'), $actor);
+        } catch (DomainError $error) {
+            ApiErrors::respond($error);
+        }
+
+        Response::json($result);
     }
 
     private function service(): InvitationService

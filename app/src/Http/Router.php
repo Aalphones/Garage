@@ -5,16 +5,20 @@ declare(strict_types=1);
 namespace Garage\Http;
 
 /**
- * Pfad-Router mit den Platzhaltern `{id}` (Ziffern, kommt als int), `{slug}` (Buchstaben, Ziffern, Punkt, Unterstrich,
+ * Pfad-Router mit den Platzhaltern `{id}`, `{userId}`, `{invitationId}` (Ziffern, kommen als int), `{slug}` (Buchstaben, Ziffern, Punkt, Unterstrich,
  * Bindestrich — signierte Links sind base64url mit Punkt) und `{type}` (Kleinbuchstaben und Unterstrich, Art eines Datensatzes).
  */
 final class Router
 {
     private const PLACEHOLDERS = [
         '{id}' => '(?P<id>[0-9]+)',
+        '{userId}' => '(?P<userId>[0-9]+)',
+        '{invitationId}' => '(?P<invitationId>[0-9]+)',
         '{slug}' => '(?P<slug>[A-Za-z0-9._-]+)',
         '{type}' => '(?P<type>[a-z_]{1,20})',
     ];
+
+    private const NUMERIC_PARAMETERS = ['id', 'userId', 'invitationId'];
 
     /** @var list<array{method: string, regex: string, handler: callable}> */
     private array $routes = [];
@@ -69,7 +73,7 @@ final class Router
             if (!is_string($name)) {
                 continue;
             }
-            $parameters[$name] = $name === 'id' ? (int) $value : $value;
+            $parameters[$name] = in_array($name, self::NUMERIC_PARAMETERS, true) ? (int) $value : $value;
         }
 
         return $parameters;

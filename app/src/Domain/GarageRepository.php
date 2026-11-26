@@ -8,6 +8,8 @@ use PDO;
 
 final class GarageRepository
 {
+    private const MEMBER_QUERY = 'SELECT m.user_id, u.name, u.email, m.role, m.created_at FROM garage_members m JOIN users u ON u.id = m.user_id';
+
     public function __construct(private readonly PDO $pdo)
     {
     }
@@ -26,6 +28,68 @@ final class GarageRepository
             'INSERT INTO garage_members (garage_id, user_id, role, created_at) VALUES (?, ?, ?, UTC_TIMESTAMP())'
         );
         $statement->execute([$garageId, $userId, $role]);
+    }
+
+    /** @return list<array{user_id: int, name: string, email: string, role: string, since: string}> */
+    public function members(int $garageId): array
+    {
+        $statement = $this->pdo->prepare(self::MEMBER_QUERY . ' WHERE m.garage_id = ? ORDER BY m.created_at, m.user_id');
+        $statement->execute([$garageId]);
+
+        return array_map(self::hydrateMember(...), $statement->fetchAll());
+    }
+
+    /** @return array{user_id: int, name: string, email: string, role: string, since: string}|null */
+    public function member(int $garageId, int $userId): ?array
+    {
+        $statement = $this->pdo->prepare(self::MEMBER_QUERY . ' WHERE m.garage_id = ? AND m.user_id = ?');
+        $statement->execute([$garageId, $userId]);
+        $row = $statement->fetch();
+        if ($row === false) {
+            return null;
+        }
+
+        return self::hydrateMember($row);
+    }
+
+    /**
+     * Nur in einer Transaktion sinnvoll: die Sperre hält bis zu deren Ende.
+     *
+     * @return list<int>
+     */
+    public function ownerIdsForUpdate(int $garageId): array
+    {
+        $statement = $this->pdo->prepare('SELECT user_id FROM garage_members WHERE garage_id = ? AND role = ? FOR UPDATE');
+        $statement->execute([$garageId, Actor::ROLE_OWNER]);
+
+        return array_map('intval', $statement->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    public function changeRole(int $garageId, int $userId, string $role): void
+    {
+        $statement = $this->pdo->prepare('UPDATE garage_members SET role = ? WHERE garage_id = ? AND user_id = ?');
+        $statement->execute([$role, $garageId, $userId]);
+    }
+
+    public function removeMember(int $garageId, int $userId): void
+    {
+        $statement = $this->pdo->prepare('DELETE FROM garage_members WHERE garage_id = ? AND user_id = ?');
+        $statement->execute([$garageId, $userId]);
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array{user_id: int, name: string, email: string, role: string, since: string}
+     */
+    private static function hydrateMember(array $row): array
+    {
+        return [
+            'user_id' => (int) $row['user_id'],
+            'name' => (string) $row['name'],
+            'email' => (string) $row['email'],
+            'role' => (string) $row['role'],
+            'since' => (string) $row['created_at'],
+        ];
     }
 
     /** @return array<int, string> garage_id => Rolle */

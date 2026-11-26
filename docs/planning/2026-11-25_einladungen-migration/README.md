@@ -8,7 +8,7 @@ Wünsche des Inhabers (2026-11-25): Rücksetz-Link erzeugt der Inhaber (kein Mai
 
 | Phase | Inhalt | Rating | Modell | Status |
 |---|---|---|---|---|
-| 1 | Mitglieder und Einladungen: Migration 025, ADR-026, Dienst und Routen | heikel | opusplan | pending |
+| 1 | Mitglieder und Einladungen: Migration 025, ADR-026, Dienst und Routen | heikel | opusplan | complete |
 | 2 | Passwort-Rücksetzung: Dienst und Routen | heikel | opusplan | pending |
 | 3 | Konto: Abschnitt „Mitglieder“ mit Einladen, Rolle, Entfernen, Rücksetz-Link | standard | sonnet | pending |
 | 4 | Seiten `einladung.html` (bestehendes Konto) und `passwort.html` | standard | sonnet | pending |
@@ -51,6 +51,7 @@ Tokens: Einladung `ginv_` (besteht), Rücksetzung `gpwr_` + 64 Hex, beide nur al
 - Mitgliederliste sehen alle Mitglieder, offene Einladungen nur Inhaber — Mitglieder sollen wissen, wer mitliest; Einladungs-Links sind Inhabersache.
 - Neue Garagen per Einladung bleiben beim Deploy-Token — die Oberfläche lädt nur in eine bestehende Garage ein.
 - Entfernen löscht die Zeile in `garage_members` und schreibt einen Audit-Eintrag — eine Mitgliedschaft ist kein Fakt mit Herkunft; die Rollen werden bei jeder Anfrage neu gelesen (`Actor::forUser` → `rolesFor`), der Zugriff endet sofort.
+- Verliert jemand die Inhaber-Rolle (herabgestuft, entfernt, selbst gegangen), werden die offenen Einladungen dieser Garage, die diese Person erzeugt hat, in derselben Transaktion widerrufen (Entscheidung des Inhabers, 2026-11-26) — sonst käme sie mit einem aufgehobenen Link wieder herein.
 - Rücksetz-Link gilt 24 h und nur für Konten, deren Garagen alle vom Anfragenden verwaltet werden — sonst könnte der Inhaber von Garage B ein Konto übernehmen, das auch Garage A sieht.
 - Die Rücksetzung beendet Browser-Sitzungen (`logoutAll`), lässt feste Zugänge und verbundene Apps stehen — die sind im Konto einzeln widerrufbar, und ein vergessenes Passwort heißt nicht, dass Claude Code abgeklemmt werden soll.
 - Die Migration nimmt die Werte aus den Markdown-Akten, prüft sie am Beleg und setzt die Herkunft danach: am PDF belegt → `bestaetigt`, nur in der Akte → `wahrscheinlich`, unbelegte Regel → `unsicher`.

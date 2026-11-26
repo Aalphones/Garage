@@ -15,6 +15,7 @@ use Garage\Api\UploadController;
 use Garage\Api\HealthController;
 use Garage\Api\InvitationController;
 use Garage\Api\MeController;
+use Garage\Api\MemberController;
 use Garage\Api\OpenItemController;
 use Garage\Api\PaperController;
 use Garage\Api\PrintController;
@@ -41,6 +42,13 @@ $router->add('POST', '/garage/api/deploy', static fn () => (new DeployController
 $router->add('POST', '/garage/api/admin/invitations', static fn () => (new InvitationController())->create($request));
 $router->add('POST', '/garage/api/invitations/preview', static fn () => (new InvitationController())->preview($request));
 $router->add('POST', '/garage/api/invitations/accept', static fn () => (new InvitationController())->accept($request));
+$router->add('POST', '/garage/api/invitations/join', static fn () => (new InvitationController())->join($request));
+
+$router->add('GET', '/garage/api/garages/{id}/members', static fn (array $parameters) => (new MemberController())->list($request, (int) $parameters['id']));
+$router->add('POST', '/garage/api/garages/{id}/invitations', static fn (array $parameters) => (new MemberController())->invite($request, (int) $parameters['id']));
+$router->add('DELETE', '/garage/api/garages/{id}/invitations/{invitationId}', static fn (array $parameters) => (new MemberController())->revokeInvitation($request, (int) $parameters['id'], (int) $parameters['invitationId']));
+$router->add('PATCH', '/garage/api/garages/{id}/members/{userId}', static fn (array $parameters) => (new MemberController())->changeRole($request, (int) $parameters['id'], (int) $parameters['userId']));
+$router->add('DELETE', '/garage/api/garages/{id}/members/{userId}', static fn (array $parameters) => (new MemberController())->remove($request, (int) $parameters['id'], (int) $parameters['userId']));
 
 $router->add('POST', '/garage/api/auth/login', static fn () => (new AuthController())->login($request));
 $router->add('POST', '/garage/api/auth/refresh', static fn () => (new AuthController())->refresh($request));

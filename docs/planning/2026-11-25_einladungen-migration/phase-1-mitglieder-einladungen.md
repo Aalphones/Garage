@@ -20,15 +20,21 @@ Rating: heikel (Rechte, Cross-Modul-Kontrakt) · Modell: opusplan
 
 ## Checkliste
 
-- [ ] `025_members.sql` schreiben (Kollation und Engine wie `002_garage.sql`).
-- [ ] `InvitationRepository`: `insert` um `createdBy` erweitern; `findByHash` liefert `is_revoked`; neu `listOpen(int $garageId)` (mit Name des Einladenden per JOIN `users`), `revoke(int $id, int $garageId): bool`.
-- [ ] `InvitationService`: `createForGarage(int $garageId, string $role, ?string $email, int $days, Actor $actor)` (Inhaber-Prüfung, dann bestehendes `create` mit `garageId`), `revoke`, `join(string $token, Actor $actor)` (409 `already_member`, sonst `addMember` + Einladung als angenommen markieren), `assertUsable` um `is_revoked` ergänzen. Der Admin-Weg `create` bleibt unverändert nutzbar.
-- [ ] `GarageRepository`: `members(int $garageId)`, `memberRole(int $garageId, int $userId)`, `ownerIdsForUpdate(int $garageId)`, `changeRole`, `removeMember`.
-- [ ] Neuer `app/src/Domain/MemberService.php`: `list`, `changeRole`, `remove` mit den Regeln aus dem Kontrakt; fremde Garage → `not_found`, kein Inhaber → `forbidden`; Selbst-Entfernen erlaubt.
-- [ ] Neuer `app/src/Api/MemberController.php` (Muster `TokenController`), Routen in `app/index.php`, `invitations/join` in `InvitationController`.
-- [ ] `ApiErrors`: `last_owner` → 409, `already_member` → 409.
-- [ ] ADR-026 schreiben, ADR-006 verlinken.
-- [ ] `docs/routes.md` (neue Zeilen), `docs/models.md` (`invitations`, `password_resets`).
-- [ ] `php -l` auf alle geänderten Dateien, falls PHP lokal fehlt: CI-Syntaxprüfung nach dem Push abwarten und Ergebnis in `## Report-Back` notieren.
+- [x] `025_members.sql` schreiben (Kollation und Engine wie `002_garage.sql`).
+- [x] `InvitationRepository`: `insert` um `createdBy` erweitern; `findByHash` liefert `is_revoked`; neu `listOpen(int $garageId)` (mit Name des Einladenden per JOIN `users`), `revoke(int $id, int $garageId): bool`.
+- [x] `InvitationService`: `createForGarage(int $garageId, string $role, ?string $email, int $days, Actor $actor)` (Inhaber-Prüfung, dann bestehendes `create` mit `garageId`), `revoke`, `join(string $token, Actor $actor)` (409 `already_member`, sonst `addMember` + Einladung als angenommen markieren), `assertUsable` um `is_revoked` ergänzen. Der Admin-Weg `create` bleibt unverändert nutzbar.
+- [x] `GarageRepository`: `members(int $garageId)`, `memberRole(int $garageId, int $userId)`, `ownerIdsForUpdate(int $garageId)`, `changeRole`, `removeMember`.
+- [x] Neuer `app/src/Domain/MemberService.php`: `list`, `changeRole`, `remove` mit den Regeln aus dem Kontrakt; fremde Garage → `not_found`, kein Inhaber → `forbidden`; Selbst-Entfernen erlaubt.
+- [x] Neuer `app/src/Api/MemberController.php` (Muster `TokenController`), Routen in `app/index.php`, `invitations/join` in `InvitationController`.
+- [x] `ApiErrors`: `last_owner` → 409, `already_member` → 409.
+- [x] ADR-026 schreiben, ADR-006 verlinken.
+- [x] `docs/routes.md` (neue Zeilen), `docs/models.md` (`invitations`, `password_resets`).
+- [x] `php -l` auf alle geänderten Dateien, falls PHP lokal fehlt: CI-Syntaxprüfung nach dem Push abwarten und Ergebnis in `## Report-Back` notieren.
 
 ## Report-Back
+
+- Status: complete (2026-11-26).
+- Über den Plan hinaus: Wer die Inhaber-Rolle verliert, dessen offene Einladungen der Garage werden widerrufen (Entscheidung des Inhabers). Router um `{userId}` und `{invitationId}` erweitert. `Api\BodyField` aus `InvitationController` herausgezogen, `Domain\GarageAccess` neu. Die Admin-Route liefert zusätzlich `id`.
+- Syntaxprüfung: lokal kein PHP, Docker nicht erreichbar → CI nach dem Push.
+- Nicht ausgeführt: die Routen liefen nie gegen eine Datenbank; die Rechte-Fälle (fremde Garage, Nicht-Inhaber, letzter Inhaber, widerrufene Einladung) sind nur am Code geprüft.
+

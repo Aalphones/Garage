@@ -24,7 +24,8 @@ Quelle der Wahrheit sind die Migrationen in `app/migrations/`. Geplantes Modell 
 | `users` | `id` PK, `email` UNIQUE (klein geschrieben), `name`, `password_hash`, `status` ENUM(`aktiv`,`gesperrt`), `created_at`, `last_login_at` | `001_user.sql` |
 | `garages` | `id` PK, `name`, `created_at` | `002_garage.sql` |
 | `garage_members` | PK (`garage_id` FK, `user_id` FK), `role` ENUM(`inhaber`,`mitglied`,`lesend`), `created_at`; Index auf `user_id` | `002_garage.sql` |
-| `invitations` | `id` PK, `token_hash` CHAR(64) UNIQUE, `garage_id` FK NULL **oder** `garage_name` NULL (genau eins), `role`, `email` NULL (nur Notiz), `expires_at`, `accepted_at`, `accepted_by` FK, `created_at` | `002_garage.sql` |
+| `invitations` | `id` PK, `token_hash` CHAR(64) UNIQUE, `garage_id` FK NULL **oder** `garage_name` NULL (genau eins), `role`, `email` NULL (nur Notiz), `expires_at`, `accepted_at`, `accepted_by` FK, `created_at`; seit 025 `created_by` FK `users` NULL (NULL bei Deploy-Token und Altbestand) und `revoked_at` NULL | `002_garage.sql`, `025_members.sql` |
+| `password_resets` | `id` PK, `token_hash` CHAR(64) UNIQUE, `user_id` FK, `created_by` FK, `expires_at`, `used_at` NULL, `created_at` (ADR-026) | `025_members.sql` |
 | `tokens` | `id` PK, `user_id` FK, `token_hash` CHAR(64) UNIQUE, `kind` ENUM(`mcp`,`oauth_access`,`oauth_refresh`,`user_refresh`), `name`, `client_id` NULL, `scope`, `family` CHAR(32) NULL, `expires_at` NULL, `revoked`, `last_used_at`, `created_at`; Index `(user_id, kind, revoked)` | `003_token.sql` |
 | `login_attempts` | `id` PK, `ip_hash` CHAR(64) (HMAC, nie die IP), `attempted_at`; Index `(ip_hash, attempted_at)` | `003_token.sql` |
 | `audit_log` | `id` PK, `garage_id` NULL, `user_id` NULL, `actor`, `action`, `target`, `before_json`, `after_json`, `created_at`; Index `(garage_id, created_at)`; seit 008 zusätzlich `vehicle_id` NULL, Index `(vehicle_id, created_at)` | `004_audit.sql`, `008_record.sql` |

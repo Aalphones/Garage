@@ -37,6 +37,8 @@ final class ApiErrors
         'restore_expired' => 410,
         'already_has_file' => 409,
         'email_taken' => 409,
+        'last_owner' => 409,
+        'already_member' => 409,
         'name_taken' => 409,
         'request_expired' => 410,
         'invitation_used' => 410,
