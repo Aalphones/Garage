@@ -17,9 +17,7 @@ use PDOException;
  */
 final class InvitationService
 {
-    public const MIN_PASSWORD_LENGTH = 12;
     public const DEFAULT_DAYS = 7;
-    private const MAX_PASSWORD_BYTES = 72;
     private const MAX_NAME_LENGTH = 120;
     private const MAX_EMAIL_LENGTH = 190;
     private const MAX_DAYS = 30;
@@ -282,12 +280,6 @@ final class InvitationService
         if (strlen($email) > self::MAX_EMAIL_LENGTH || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             throw new DomainError('invalid_value', 'email ist keine gültige E-Mail-Adresse.', ['field' => 'email']);
         }
-        if (mb_strlen($password) < self::MIN_PASSWORD_LENGTH) {
-            throw new DomainError('invalid_value', 'Das Passwort braucht mindestens ' . self::MIN_PASSWORD_LENGTH . ' Zeichen.', ['field' => 'password']);
-        }
-        // bcrypt liest nur die ersten 72 Bytes; ein längeres Passwort würde still gekürzt.
-        if (strlen($password) > self::MAX_PASSWORD_BYTES) {
-            throw new DomainError('invalid_value', 'Das Passwort darf höchstens ' . self::MAX_PASSWORD_BYTES . ' Bytes lang sein.', ['field' => 'password']);
-        }
+        Validate::password($password);
     }
 }

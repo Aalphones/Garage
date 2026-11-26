@@ -13,6 +13,8 @@ use DateTimeZone;
  */
 final class Validate
 {
+    private const MIN_PASSWORD_LENGTH = 12;
+    private const MAX_PASSWORD_BYTES = 72;
     private const INT_PATTERN = '/^(0|[1-9][0-9]{0,9})$/';
     private const DECIMAL_PATTERN = '/^\d{1,9}([.,]\d{1,%d})?$/';
     private const EURO_PATTERN = '/^\d{1,7}([.,]\d{1,2})?$/';
@@ -24,6 +26,18 @@ final class Validate
     public static function invalid(string $field, string $reason, string $example): DomainError
     {
         return new DomainError('invalid_value', sprintf('Feld „%s“: %s Beispiel: %s', $field, $reason, $example), ['field' => $field]);
+    }
+
+    /** Passwortregeln (ADR-006), für Einladung und Rücksetzung; die Meldung zeigt die Oberfläche dem Menschen. */
+    public static function password(string $password): void
+    {
+        if (mb_strlen($password) < self::MIN_PASSWORD_LENGTH) {
+            throw new DomainError('invalid_value', 'Das Passwort braucht mindestens ' . self::MIN_PASSWORD_LENGTH . ' Zeichen.', ['field' => 'password']);
+        }
+        // bcrypt liest nur die ersten 72 Bytes; ein längeres Passwort würde still gekürzt.
+        if (strlen($password) > self::MAX_PASSWORD_BYTES) {
+            throw new DomainError('invalid_value', 'Das Passwort darf höchstens ' . self::MAX_PASSWORD_BYTES . ' Bytes lang sein.', ['field' => 'password']);
+        }
     }
 
     public static function date(string $field, mixed $raw, string $example): string
