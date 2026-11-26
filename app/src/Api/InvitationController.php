@@ -23,11 +23,11 @@ final class InvitationController
         try {
             $body = $request->json();
             $result = $this->service()->create(
-                self::optionalInt($body, 'garage_id'),
-                self::optionalString($body, 'garage_name'),
-                self::requiredString($body, 'role'),
-                self::optionalString($body, 'email'),
-                self::optionalInt($body, 'days') ?? self::DEFAULT_DAYS,
+                BodyField::optionalInt($body, 'garage_id'),
+                BodyField::optionalString($body, 'garage_name'),
+                BodyField::requiredString($body, 'role'),
+                BodyField::optionalString($body, 'email'),
+                BodyField::optionalInt($body, 'days') ?? self::DEFAULT_DAYS,
                 $actor
             );
         } catch (DomainError $error) {
@@ -40,7 +40,7 @@ final class InvitationController
     public function preview(Request $request): never
     {
         try {
-            $result = $this->service()->preview(self::requiredString($request->json(), 'token'));
+            $result = $this->service()->preview(BodyField::requiredString($request->json(), 'token'));
         } catch (DomainError $error) {
             ApiErrors::respond($error);
         }
@@ -55,10 +55,10 @@ final class InvitationController
         try {
             $body = $request->json();
             $result = $this->service()->accept(
-                self::requiredString($body, 'token'),
-                self::requiredString($body, 'name'),
-                self::requiredString($body, 'email'),
-                self::requiredString($body, 'password')
+                BodyField::requiredString($body, 'token'),
+                BodyField::requiredString($body, 'name'),
+                BodyField::requiredString($body, 'email'),
+                BodyField::requiredString($body, 'password')
             );
         } catch (DomainError $error) {
             ApiErrors::respond($error);
@@ -70,39 +70,5 @@ final class InvitationController
     private function service(): InvitationService
     {
         return new InvitationService(Connection::open());
-    }
-
-    /** @param array<string, mixed> $body */
-    private static function requiredString(array $body, string $field): string
-    {
-        $value = $body[$field] ?? null;
-        if (!is_string($value) || $value === '') {
-            throw new DomainError('invalid_value', $field . ' fehlt oder ist kein Text.', ['field' => $field]);
-        }
-
-        return $value;
-    }
-
-    /** @param array<string, mixed> $body */
-    private static function optionalString(array $body, string $field): ?string
-    {
-        if (!isset($body[$field])) {
-            return null;
-        }
-
-        return self::requiredString($body, $field);
-    }
-
-    /** @param array<string, mixed> $body */
-    private static function optionalInt(array $body, string $field): ?int
-    {
-        if (!isset($body[$field])) {
-            return null;
-        }
-        if (!is_int($body[$field])) {
-            throw new DomainError('invalid_value', $field . ' muss eine ganze Zahl sein.', ['field' => $field]);
-        }
-
-        return $body[$field];
     }
 }
